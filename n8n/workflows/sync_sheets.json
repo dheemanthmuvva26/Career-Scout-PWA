@@ -1,0 +1,75 @@
+{
+  "name": "sync_sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": { "interval": [{ "field": "hours", "hoursInterval": 24 }] }
+      },
+      "id": "trigger-schedule",
+      "name": "Every 24h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "documentId": { "__rl": true, "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Companies", "mode": "name" },
+        "options": { "headerRow": 1 }
+      },
+      "id": "read-companies",
+      "name": "Read Companies",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 200]
+    },
+    {
+      "parameters": {
+        "documentId": { "__rl": true, "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Roles", "mode": "name" },
+        "options": { "headerRow": 1 }
+      },
+      "id": "read-roles",
+      "name": "Read Roles",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/companies",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ name: $json.name, careers_url: $json.careers_url || '', linkedin_slug: $json.linkedin_slug || '', priority: parseInt($json.priority) || 1 }) }}"
+      },
+      "id": "upsert-company",
+      "name": "Upsert Company",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/roles",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ title: $json.role_title, keywords: ($json.keywords || '').split(',').map(k => k.trim()).filter(Boolean), tags: ($json.tags || '').split(',').map(t => t.trim()).filter(Boolean) }) }}"
+      },
+      "id": "upsert-role",
+      "name": "Upsert Role",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [700, 400]
+    }
+  ],
+  "connections": {
+    "Every 24h":      { "main": [[{ "node": "Read Companies", "type": "main", "index": 0 }, { "node": "Read Roles", "type": "main", "index": 0 }]] },
+    "Read Companies": { "main": [[{ "node": "Upsert Company", "type": "main", "index": 0 }]] },
+    "Read Roles":     { "main": [[{ "node": "Upsert Role",   "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "career-scout" }]
+}

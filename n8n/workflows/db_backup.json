@@ -1,0 +1,60 @@
+{
+  "name": "db_backup",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 2 * * *" }]
+        }
+      },
+      "id": "trigger-cron",
+      "name": "2am Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "command": "python -c \"\nimport shutil, datetime, glob, os\ntoday = datetime.date.today().isoformat()\nsrc = 'shared/jobs.db'\ndst = f'shared/backups/jobs_{today}.db'\nshutil.copy(src, dst)\nprint(f'Backed up to {dst}')\n# Keep last 30 days\nbackups = sorted(glob.glob('shared/backups/jobs_*.db'))\nfor old in backups[:-30]:\n    os.remove(old)\n    print(f'Deleted old backup: {old}')\n\""
+      },
+      "id": "run-backup",
+      "name": "Run Backup",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [{ "value1": "={{ $json.exitCode }}", "operation": "notEqual", "value2": "0" }]
+        }
+      },
+      "id": "check-result",
+      "name": "Failed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ *DB backup failed!*\n\n{{ $('Run Backup').item.json.stderr || $('Run Backup').item.json.stdout }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "id": "alert-failure",
+      "name": "Alert Failure",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [900, 200],
+      "credentials": { "telegramApi": { "id": "1", "name": "Telegram Bot" } }
+    }
+  ],
+  "connections": {
+    "2am Daily":  { "main": [[{ "node": "Run Backup",    "type": "main", "index": 0 }]] },
+    "Run Backup": { "main": [[{ "node": "Failed?",       "type": "main", "index": 0 }]] },
+    "Failed?":    { "main": [[{ "node": "Alert Failure", "type": "main", "index": 0 }], []] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "career-scout" }]
+}

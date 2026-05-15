@@ -182,17 +182,34 @@ def scraper_health():
     return get_scraper_health()
 
 
-# ── Scout trigger (Phase 1 — wired up when scrapers are implemented) ──────────
+# ── Scout trigger ─────────────────────────────────────────────────────────────
+
+_last_scout_summary: dict = {}
+
+def _run_scout_task():
+    global _last_scout_summary
+    from scrapers.pipeline import run_scout
+    try:
+        _last_scout_summary = run_scout()
+    except Exception as e:
+        _last_scout_summary = {"error": str(e)}
+
 
 @app.post("/scout")
 def trigger_scout(background_tasks: BackgroundTasks):
     """
     Triggered by n8n schedule or /scout Telegram command.
     Runs the full scout pipeline in the background.
-    Phase 1: import and call run_scout() here.
+    Returns immediately; poll GET /scout/last for the result.
     """
-    # TODO Phase 1: from scrapers.pipeline import run_scout; background_tasks.add_task(run_scout)
-    return {"ok": True, "message": "Scout triggered (pipeline wired in Phase 1)"}
+    background_tasks.add_task(_run_scout_task)
+    return {"ok": True, "message": "Scout started"}
+
+
+@app.get("/scout/last")
+def last_scout_summary():
+    """Return summary of the most recent scout run."""
+    return _last_scout_summary or {"message": "No scout run yet"}
 
 
 # ── Forge trigger (Phase 3 — wired up when forge is implemented) ───────────────
