@@ -1,0 +1,24 @@
+# Scraping
+python-jobspy
+playwright
+beautifulsoup4
+requests
+rapidfuzz
+
+# LLM
+groq
+
+# API server (bridge between n8n Docker and Python scripts)
+fastapi
+uvicorn[standard]
+
+# Storage / Config
+pyyaml
+python-dotenv
+
+# Dashboard
+streamlit
+plotly
+
+# Resume (Typst installed separately via: winget install Typst.Typst)
+# No Python package needed — forge.py shells out to `typst compile`

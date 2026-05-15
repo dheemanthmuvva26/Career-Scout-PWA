@@ -1,0 +1,29 @@
+# Environment
+.env
+
+# Shared data (never commit)
+shared/jobs.db
+shared/backups/
+shared/resumes/
+shared/cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# n8n internal data (workflows are backed up to n8n/workflows/ instead)
+.n8n/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+shared/jobs.db-shm
+shared/jobs.db-wal

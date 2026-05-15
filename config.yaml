@@ -1,0 +1,191 @@
+target_roles:
+  - "Data Scientist"
+  - "AI Engineer"
+  - "Data Analyst"
+  - "Business Intelligence Developer"
+  - "Machine Learning Engineer"
+  - "Investment Banking Analytics"
+  - "Financial Data Analyst"
+  - "Research Analyst"
+  - "Quantitative Analyst"
+  - "Data Engineer"
+  - "NLP Engineer"
+  - "Risk Analyst"
+
+locations:
+  - "Mumbai"
+  - "Pune"
+  - "Bangalore"
+  - "Hyderabad"
+  - "Remote"
+
+experience_years: [0, 3]
+
+# ── Candidate profile (used in Groq scoring prompt) ───────────────────────────
+candidate:
+  name: "Dheemanth Muvva"
+  degree: "B.Tech CSE — AI & Data Analytics, graduating 2026"
+  experience_level: "Fresher (0–1 year internships)"
+  target_sector: "Finance / BFSI / FinTech / Investment Banking"
+
+  core_skills:
+    - "Python"
+    - "SQL"
+    - "Machine Learning (scikit-learn, regression, classification)"
+    - "RAG Pipelines (LangChain, FAISS, vector databases)"
+    - "Multi-Agent Systems (LangGraph, CrewAI)"
+    - "LLMs (GPT-4, Gemini, Groq, HuggingFace Transformers)"
+    - "NLP (text classification, entity extraction, embeddings)"
+    - "Data Analytics (Pandas, NumPy, EDA, hypothesis testing)"
+    - "BI & Visualization (Power BI, Tableau, Plotly, Streamlit)"
+    - "Graph Databases (Neo4j, Graph RAG)"
+    - "Statistical Analysis"
+    - "API Development (FastAPI, REST)"
+
+  internships:
+    - "Data Science Intern — Blackbuck Engineers (ML, regression, 300k+ records)"
+    - "Data Analytics Intern — Innologic Technologies (Power BI, DAX, EDA)"
+    - "AI Intern — Arqonz Global (Dialogflow CX + GPT-4, conversational AI)"
+
+  notable_projects:
+    - "Graph RAG pipeline over Neo4j (25+ entity types) for AP Government"
+    - "Multi-provider agentic VS Code extension (8+ LLM backends)"
+    - "Semantic chart-selection contracts for AI query app"
+
+  strong_match_roles:
+    - "Data Scientist (Finance)"
+    - "AI Engineer (FinTech)"
+    - "NLP / LLM Engineer"
+    - "Investment Banking Analytics"
+    - "Financial Research Analyst (Data)"
+    - "Risk Analytics"
+    - "Data Engineer (BFSI)"
+    - "BI Developer (Finance)"
+min_score: 3.5
+hours_old: 72
+
+schedule:
+  scout_interval_hours: 6
+  digest_time: "08:00"
+
+llm:
+  provider: groq
+  # GROQ_API_KEY via env var
+  scoring_model: llama-3.3-70b-versatile   # high volume, fast, generous rate limits
+  writing_model: openai/gpt-oss-120b        # resume rewrites + weekly insights, fewer calls
+
+scraping:
+  request_delay_seconds: 2
+  max_retries: 3
+  health_alert_threshold: 3    # consecutive failures before Telegram alert
+
+urgency:
+  hot_hours: 24
+  active_hours: 96
+  aging_hours: 240             # beyond aging = stale
+
+skill_gap:
+  trigger_count: 3             # rejections before roadmap fires
+
+follow_up:
+  nudge_days: 7
+  ghost_days: 14
+
+scoring:
+  min_score_alert: 3.5
+
+repost:
+  window_days: 30
+
+paths:
+  db: "shared/jobs.db"
+  backups: "shared/backups/"
+  resumes: "shared/resumes/"
+  cache: "shared/cache/"
+  workflows: "n8n/workflows/"
+
+sheets:
+  spreadsheet_id: "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8"           # fill after creating your Google Sheet
+  companies_tab: "Companies"
+  roles_tab: "Roles"
+
+# ── Gmail monitor ─────────────────────────────────────────────────────────────
+gmail:
+  address: "dheemanth.chowdari@gmail.com"
+  poll_interval_minutes: 30
+
+  # LinkedIn job alert parsing
+  linkedin_alerts:
+    enabled: true
+    sender: "jobs-noreply@linkedin.com"
+    # n8n Gmail node searches for this sender, parses job title + company + URL
+    # Matched jobs auto-imported to DB, scored, and Telegram-alerted if >= min_score
+
+    # Layer 1 pre-filter — job title must contain at least one of these
+    # (checked BEFORE sending to Groq — saves API calls)
+    include_title_keywords:
+      - "data"
+      - "analytics"
+      - "analyst"
+      - "scientist"
+      - "science"
+      - "engineer"
+      - "ai"
+      - "ml"
+      - "machine learning"
+      - "intelligence"
+      - "insights"
+      - "quant"
+      - "quantitative"
+      - "research"
+      - "nlp"
+      - "llm"
+      - "bi"
+      - "business intelligence"
+      - "reporting"
+      - "dashboard"
+      - "visualization"
+      - "modelling"
+      - "modeling"
+      - "statistical"
+      - "risk analyst"
+      - "credit analyst"
+      - "investment analyst"
+
+    # Layer 2 exclusion — job title contains any of these → skip entirely
+    # No matter what, these are not DS/Analytics roles
+    exclude_title_keywords:
+      - "chartered accountant"
+      - "ca "
+      - "cpa"
+      - "cfo"
+      - "controller"
+      - "auditor"
+      - "tax manager"
+      - "tax consultant"
+      - "compliance officer"
+      - "legal"
+      - "hr manager"
+      - "recruiter"
+      - "talent acquisition"
+      - "relationship manager"
+      - "branch manager"
+      - "sales manager"
+      - "teller"
+      - "cashier"
+      - "back office"
+      - "operations executive"
+      - "treasury manager"
+      - "finance manager"
+      - "accounts manager"
+      - "accounts executive"
+      - "bookkeeper"
+      - "payroll"
+
+  # Application outcome detection
+  outcome_detection:
+    enabled: true
+    rejection_keywords: ["unfortunately", "not moving forward", "other candidates",
+                         "regret to inform", "not selected", "position has been filled"]
+    interview_keywords: ["interview", "pleased to invite", "next steps", "schedule a call"]
+    offer_keywords: ["offer", "pleased to extend", "job offer", "compensation"]
