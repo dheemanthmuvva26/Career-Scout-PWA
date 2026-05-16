@@ -1,0 +1,49 @@
+id: data_scientist
+display_name: "Data Scientist / ML Engineer"
+
+# Tags that trigger this profile (matched against job's tags_matched)
+match_tags:
+  - data_scientist
+  - ml
+  - ai_engineer
+  - machine_learning
+  - nlp
+  - llm
+  - genai
+
+summary_focus: >
+  Emphasise ML pipeline experience, model evaluation, Python proficiency,
+  and any LLM/RAG projects. Highlight quantified impact metrics.
+
+# Skill categories shown on resume, in this order
+skills_order:
+  - programming
+  - ml_frameworks
+  - llm_rag
+  - data_tools
+  - databases
+  - other
+
+# Experience bullets selected if job has any of these tags
+experience_tags:
+  - ml
+  - data_scientist
+  - ai_engineer
+  - python
+  - nlp
+  - llm
+  - rag
+
+# Projects selected if tagged with any of these
+project_tags:
+  - ml
+  - data_scientist
+  - llm
+  - rag
+  - genai
+  - graph
+  - ai_engineer
+
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 2

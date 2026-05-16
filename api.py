@@ -301,13 +301,14 @@ def insights_signals():
 def trigger_forge(job_id: str):
     """
     Triggered by /resume <id> Telegram command via n8n.
-    Phase 3: import and call forge.forge(job_id) here.
+    Runs the full forge pipeline: DB → optimizer → Typst → PDF.
     """
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    # TODO Phase 3: from forge.forge import generate_resume; result = generate_resume(job_id)
-    return {"ok": True, "message": f"Forge triggered for job {job_id} (wired in Phase 3)"}
+    from forge.forge import generate_resume, _telegram_message
+    result = generate_resume(job_id)
+    return {**result, "telegram_message": _telegram_message(result)}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

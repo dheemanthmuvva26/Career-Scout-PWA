@@ -193,12 +193,12 @@
       ]}},
       "position": [1200, 1540], "typeVersion": 3.4 },
 
-    { "id": "fmt-resume", "name": "Resume Placeholder", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "📄 Resume Forge is coming in Phase 3. Stay tuned!", "type": "string" }
-      ]}},
-      "position": [960, 1660], "typeVersion": 3.4 },
+    { "id": "api-resume", "name": "POST /forge/:id", "type": "n8n-nodes-base.httpRequest",
+      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/forge/{{ $('Parse Command').first().json.args[0] }}", "responseFormat": "json" },
+      "position": [960, 1660], "typeVersion": 4.2 },
+    { "id": "fmt-resume", "name": "Format Resume", "type": "n8n-nodes-base.code",
+      "parameters": { "jsCode": "const r = $json;\nconst chatId = $('Parse Command').first().json.chatId;\nreturn [{ json: { chatId, text: r.telegram_message || r.error || 'Resume generation failed.' } }];" },
+      "position": [1200, 1660], "typeVersion": 2 },
 
     { "id": "api-digest", "name": "GET /jobs/digest", "type": "n8n-nodes-base.httpRequest",
       "parameters": { "method": "GET", "url": "http://host.docker.internal:8000/jobs/digest?limit=5", "responseFormat": "json" },
@@ -254,7 +254,7 @@
       [{ "node": "POST /roles",       "type": "main", "index": 0 }],
       [{ "node": "GET /stats",        "type": "main", "index": 0 }],
       [{ "node": "POST /scout",       "type": "main", "index": 0 }],
-      [{ "node": "Resume Placeholder","type": "main", "index": 0 }],
+      [{ "node": "POST /forge/:id",   "type": "main", "index": 0 }],
       [{ "node": "GET /jobs/digest",  "type": "main", "index": 0 }],
       [{ "node": "Unknown Command",   "type": "main", "index": 0 }]
     ]},
@@ -271,7 +271,8 @@
     "POST /roles":        { "main": [[{ "node": "Format Add Role",     "type": "main", "index": 0 }]] },
     "GET /stats":         { "main": [[{ "node": "Format Stats",        "type": "main", "index": 0 }]] },
     "POST /scout":        { "main": [[{ "node": "Format Scout",        "type": "main", "index": 0 }]] },
-    "Resume Placeholder": { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
+    "POST /forge/:id":    { "main": [[{ "node": "Format Resume",        "type": "main", "index": 0 }]] },
+    "Format Resume":      { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
     "GET /jobs/digest":   { "main": [[{ "node": "Format Digest",       "type": "main", "index": 0 }]] },
     "Unknown Command":    { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
     "Format Jobs":        { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },

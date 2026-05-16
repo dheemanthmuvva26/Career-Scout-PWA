@@ -1,0 +1,118 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# MASTER PROFILE — fill this in before using Resume Forge
+# Every bullet is tagged so the AI optimizer can pick the right ones per job.
+# Tags map to profile configs in forge/profiles/*.yaml
+# ══════════════════════════════════════════════════════════════════════════════
+
+personal:
+  name: "Your Full Name"
+  email: "your.email@example.com"
+  phone: "+91 XXXXX XXXXX"
+  location: "Hyderabad, India"
+  linkedin: "linkedin.com/in/yourprofile"
+  github: "github.com/yourusername"
+
+education:
+  - degree: "B.Tech in Computer Science (AI & Data Science)"
+    institution: "Your University / College Name"
+    location: "Hyderabad, India"
+    graduation: "May 2026"
+    gpa: "X.X / 10"
+    highlights:
+      - "Relevant coursework: Machine Learning, Deep Learning, Statistics, DBMS, Data Structures"
+
+skills:
+  # Fill in what you actually know — remove what you don't
+  programming:   ["Python", "SQL", "R"]
+  ml_frameworks: ["scikit-learn", "PyTorch", "TensorFlow", "Hugging Face Transformers"]
+  data_tools:    ["Pandas", "NumPy", "PySpark", "Matplotlib", "Seaborn"]
+  llm_rag:       ["LangChain", "LlamaIndex", "RAG", "Prompt Engineering", "OpenAI API"]
+  bi_tools:      ["Power BI", "Tableau", "MS Excel", "DAX"]
+  databases:     ["PostgreSQL", "SQLite", "Neo4j", "MongoDB", "ChromaDB"]
+  cloud:         ["AWS (S3, EC2)", "Google Cloud", "Azure ML"]
+  other:         ["Git", "Docker", "FastAPI", "Streamlit", "Linux"]
+
+experience:
+  - company: "Company Name 1"
+    role: "Data Science Intern"
+    location: "Hyderabad, India"
+    dates: "Jun 2025 – Aug 2025"
+    tags: ["ml", "python", "data_scientist", "ai_engineer"]
+    bullets:
+      - text: "Built an end-to-end ML pipeline for X that improved Y by Z% using scikit-learn and Python"
+        tags: ["ml", "python", "data_scientist"]
+      - text: "Developed a RAG-based question-answering system using LangChain and ChromaDB, reducing manual lookup time by X%"
+        tags: ["llm", "rag", "ai_engineer", "genai"]
+      - text: "Automated data preprocessing for a dataset of X records using Pandas, cutting ETL time from X hours to Y minutes"
+        tags: ["data_engineer", "python", "data_analyst"]
+      - text: "Created interactive Power BI dashboards tracking KPIs for the business team, used by X stakeholders"
+        tags: ["bi", "bi_developer", "data_analyst"]
+
+  - company: "Company Name 2"
+    role: "Machine Learning Intern"
+    location: "Remote"
+    dates: "Jan 2025 – Mar 2025"
+    tags: ["ml", "python", "data_scientist"]
+    bullets:
+      - text: "Fine-tuned a BERT model for sentiment classification achieving X% accuracy on domain-specific data"
+        tags: ["ml", "nlp", "data_scientist", "ai_engineer"]
+      - text: "Deployed a FastAPI inference endpoint serving X requests/day with sub-100ms latency"
+        tags: ["ml", "python", "ai_engineer"]
+      - text: "Wrote SQL queries to extract and aggregate training data from a X-row PostgreSQL database"
+        tags: ["sql", "data_analyst", "data_scientist"]
+
+projects:
+  - name: "Project Name 1"
+    description: "One-line description of what it does"
+    tech: ["Python", "LangChain", "FastAPI", "ChromaDB"]
+    tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist"]
+    github: "github.com/yourusername/project1"
+    bullets:
+      - text: "Built a multi-agent RAG system that answers queries over X documents with Y% accuracy"
+        tags: ["llm", "rag", "ai_engineer"]
+      - text: "Implemented a FastAPI backend with streaming responses, handling X concurrent users"
+        tags: ["ai_engineer", "python"]
+
+  - name: "Project Name 2"
+    description: "One-line description"
+    tech: ["Python", "scikit-learn", "Streamlit", "SQL"]
+    tags: ["ml", "data_scientist", "data_analyst"]
+    github: "github.com/yourusername/project2"
+    bullets:
+      - text: "Trained and evaluated X ML models (XGBoost, Random Forest, Logistic Regression) achieving X% AUC"
+        tags: ["ml", "data_scientist"]
+      - text: "Built a Streamlit dashboard to visualize model predictions and feature importance for non-technical users"
+        tags: ["data_scientist", "data_analyst", "bi"]
+
+  - name: "Project Name 3"
+    description: "One-line description"
+    tech: ["Power BI", "SQL", "Python"]
+    tags: ["bi", "bi_developer", "data_analyst"]
+    github: ""
+    bullets:
+      - text: "Designed a Power BI report with X pages and Y DAX measures tracking business KPIs in real-time"
+        tags: ["bi", "bi_developer"]
+      - text: "Wrote complex SQL queries joining X tables to build the underlying data model"
+        tags: ["sql", "data_analyst", "bi_developer"]
+
+  - name: "Project Name 4"
+    description: "Graph-based knowledge system or similar"
+    tech: ["Python", "Neo4j", "NetworkX"]
+    tags: ["graph", "data_scientist", "ai_engineer"]
+    github: "github.com/yourusername/project4"
+    bullets:
+      - text: "Modelled a knowledge graph with X nodes and Y relationships using Neo4j and Cypher"
+        tags: ["graph", "data_scientist"]
+      - text: "Applied graph algorithms (PageRank, community detection) to surface insights from the network"
+        tags: ["graph", "ai_engineer", "data_scientist"]
+
+certifications:
+  # Add real certifications — remove placeholder entries
+  - name: "Google Data Analytics Professional Certificate"
+    issuer: "Google / Coursera"
+    date: "2025"
+    tags: ["data_analyst", "bi"]
+  - name: "AWS Cloud Practitioner"
+    issuer: "Amazon Web Services"
+    date: "2025"
+    tags: ["cloud", "ai_engineer"]

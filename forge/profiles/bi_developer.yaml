@@ -1,0 +1,41 @@
+id: bi_developer
+display_name: "BI Developer / Data Analyst"
+
+match_tags:
+  - bi_developer
+  - bi
+  - data_analyst
+  - reporting
+  - dashboard
+  - visualization
+  - business_intelligence
+
+summary_focus: >
+  Lead with SQL, Power BI / Tableau, and data pipeline skills.
+  Emphasise stakeholder-facing dashboards and business impact.
+
+skills_order:
+  - programming
+  - bi_tools
+  - databases
+  - data_tools
+  - ml_frameworks
+  - other
+
+experience_tags:
+  - bi
+  - bi_developer
+  - data_analyst
+  - sql
+  - python
+  - reporting
+
+project_tags:
+  - bi
+  - bi_developer
+  - data_analyst
+  - sql
+
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 2

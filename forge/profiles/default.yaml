@@ -1,0 +1,39 @@
+id: default
+display_name: "Data / AI Role"
+
+# Fallback — used when no specific profile matches
+match_tags: []
+
+summary_focus: >
+  Balanced profile covering ML, data analysis, and software skills.
+  Use when job tags don't clearly map to data_scientist or bi_developer.
+
+skills_order:
+  - programming
+  - ml_frameworks
+  - data_tools
+  - bi_tools
+  - databases
+  - llm_rag
+  - other
+
+experience_tags:
+  - ml
+  - python
+  - data_scientist
+  - bi
+  - data_analyst
+  - sql
+  - ai_engineer
+
+project_tags:
+  - ml
+  - python
+  - llm
+  - bi
+  - data_scientist
+  - data_analyst
+
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 2
