@@ -9,12 +9,15 @@ Graceful degradation: if Groq is unavailable, llm.score() already returns
 a fallback JSON with score=-1. This module stores that and moves on.
 """
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Optional
 import yaml
 
 from core import db, llm
+
+_HASH_FILE = Path("shared/.config_hash")
 
 
 _config: dict | None = None
@@ -126,6 +129,26 @@ def score_job(job: dict) -> dict:
 
     db.update_job_score(job["id"], score_val, detail, tags)
     return detail
+
+
+def flag_for_rescore() -> dict:
+    """
+    Check if config.yaml has changed since last run. If so, reset all active
+    job scores so they get re-evaluated on the next score_pending() call.
+    Returns {"triggered": bool, "flagged": int}.
+    """
+    cfg_path = Path(__file__).parent.parent / "config.yaml"
+    current_hash = hashlib.sha256(cfg_path.read_bytes()).hexdigest()
+
+    _HASH_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if _HASH_FILE.exists():
+        stored = _HASH_FILE.read_text().strip()
+        if stored == current_hash:
+            return {"triggered": False, "flagged": 0}
+
+    flagged = db.flag_all_for_rescore()
+    _HASH_FILE.write_text(current_hash)
+    return {"triggered": True, "flagged": flagged}
 
 
 def score_pending(batch_size: int = 50) -> dict:

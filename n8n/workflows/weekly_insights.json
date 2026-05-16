@@ -1,0 +1,127 @@
+{
+  "name": "weekly_insights",
+  "nodes": [
+    {
+      "id": "trigger-weekly",
+      "name": "Every Sunday 9am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 0" }]
+        }
+      },
+      "position": [200, 300],
+      "typeVersion": 1.1
+    },
+    {
+      "id": "get-weekly",
+      "name": "GET /insights/weekly",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:8000/insights/weekly",
+        "responseFormat": "json"
+      },
+      "position": [440, 200],
+      "typeVersion": 4.2
+    },
+    {
+      "id": "get-gaps",
+      "name": "GET /insights/gaps",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:8000/insights/gaps",
+        "responseFormat": "json"
+      },
+      "position": [440, 400],
+      "typeVersion": 4.2
+    },
+    {
+      "id": "get-signals",
+      "name": "GET /insights/signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "http://host.docker.internal:8000/insights/signals",
+        "responseFormat": "json"
+      },
+      "position": [440, 600],
+      "typeVersion": 4.2
+    },
+    {
+      "id": "send-weekly-report",
+      "name": "Send Weekly Report",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.report }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "position": [680, 200],
+      "typeVersion": 1.1,
+      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+    },
+    {
+      "id": "split-gap-msgs",
+      "name": "Split Gap Messages",
+      "type": "n8n-nodes-base.splitOut",
+      "parameters": { "fieldToSplitOut": "messages" },
+      "position": [680, 400],
+      "typeVersion": 1
+    },
+    {
+      "id": "send-gap-msgs",
+      "name": "Send Gap Roadmaps",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.messages }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "position": [920, 400],
+      "typeVersion": 1.1,
+      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+    },
+    {
+      "id": "split-signal-msgs",
+      "name": "Split Signal Messages",
+      "type": "n8n-nodes-base.splitOut",
+      "parameters": { "fieldToSplitOut": "messages" },
+      "position": [680, 600],
+      "typeVersion": 1
+    },
+    {
+      "id": "send-signal-msgs",
+      "name": "Send Hiring Signals",
+      "type": "n8n-nodes-base.telegram",
+      "parameters": {
+        "operation": "sendMessage",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.messages }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "position": [920, 600],
+      "typeVersion": 1.1,
+      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+    }
+  ],
+  "connections": {
+    "Every Sunday 9am": {
+      "main": [[
+        { "node": "GET /insights/weekly",  "type": "main", "index": 0 },
+        { "node": "GET /insights/gaps",    "type": "main", "index": 0 },
+        { "node": "GET /insights/signals", "type": "main", "index": 0 }
+      ]]
+    },
+    "GET /insights/weekly":  { "main": [[{ "node": "Send Weekly Report",    "type": "main", "index": 0 }]] },
+    "GET /insights/gaps":    { "main": [[{ "node": "Split Gap Messages",    "type": "main", "index": 0 }]] },
+    "GET /insights/signals": { "main": [[{ "node": "Split Signal Messages", "type": "main", "index": 0 }]] },
+    "Split Gap Messages":    { "main": [[{ "node": "Send Gap Roadmaps",     "type": "main", "index": 0 }]] },
+    "Split Signal Messages": { "main": [[{ "node": "Send Hiring Signals",   "type": "main", "index": 0 }]] }
+  },
+  "active": true,
+  "settings": { "executionOrder": "v1" }
+}

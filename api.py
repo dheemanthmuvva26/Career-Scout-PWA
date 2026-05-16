@@ -22,6 +22,7 @@ from core.db import (
     get_scraper_health, get_unscored_jobs,
     get_active_companies, get_active_roles,
     upsert_company, upsert_role,
+    get_jobs_for_auto_ghost,
 )
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
@@ -57,6 +58,20 @@ def list_jobs(
     limit: int = 50,
 ):
     return get_jobs(status=status, min_score=min_score, urgency=urgency, limit=limit)
+
+
+@app.get("/jobs/digest")
+def digest(limit: int = 5):
+    """Today's top jobs: score ≥ min_score, urgency hot or active, sorted by score."""
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load((Path(__file__).parent / "config.yaml").read_text())
+    min_score = cfg.get("min_score", 3.5)
+
+    hot    = get_jobs(min_score=min_score, urgency="hot",    limit=limit)
+    active = get_jobs(min_score=min_score, urgency="active", limit=limit)
+    combined = {j["id"]: j for j in hot + active}
+    return sorted(combined.values(), key=lambda j: j["score"], reverse=True)[:limit]
 
 
 @app.get("/jobs/{job_id}")
@@ -99,21 +114,62 @@ def add_note(job_id: str, body: NoteBody):
     return {"ok": True}
 
 
+# ── Apply (sets status + follow_up_due in one call) ───────────────────────────
+
+@app.post("/jobs/{job_id}/apply")
+def apply_job(job_id: str):
+    """Mark job as applied: status=applied, outcome=pending, follow_up_due=now+7d."""
+    from datetime import datetime, timedelta, timezone
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    update_job_status(job_id, "applied")
+    update_job_outcome(job_id, "pending")
+    due = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+    set_follow_up_due(job_id, due)
+    return {
+        "ok": True,
+        "title": job["title"],
+        "company": job["company"],
+        "follow_up_due": due[:10],
+    }
+
+
 # ── Follow-up jobs due ─────────────────────────────────────────────────────────
 
 @app.get("/followups")
 def followups():
-    """Jobs that are applied, pending outcome, and past follow_up_due date."""
+    """
+    Returns two lists:
+      nudge   — applied+pending with follow_up_due < now (send 7-day reminder)
+      auto_ghost — applied+pending with follow_up_due < now-7 days (14+ days, auto-ghost)
+    """
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
-    jobs = get_jobs(status="applied", min_score=0.0, limit=200)
-    due = [
-        j for j in jobs
-        if j.get("outcome") == "pending"
-        and j.get("follow_up_due")
-        and j["follow_up_due"] < now
+    all_applied = get_jobs(status="applied", min_score=0.0, limit=500)
+    pending = [
+        j for j in all_applied
+        if j.get("outcome") == "pending" and j.get("follow_up_due")
     ]
-    return due
+    nudge = [j for j in pending if j["follow_up_due"] < now]
+    auto_ghost = get_jobs_for_auto_ghost()
+    auto_ghost_ids = {j["id"] for j in auto_ghost}
+    # nudge list should exclude jobs already in auto_ghost bucket
+    nudge_only = [j for j in nudge if j["id"] not in auto_ghost_ids]
+    return {"nudge": nudge_only, "auto_ghost": auto_ghost}
+
+
+@app.post("/followups/auto-ghost")
+def auto_ghost():
+    """Auto-ghost all jobs 14+ days applied with no outcome. Returns ghosted list."""
+    jobs = get_jobs_for_auto_ghost()
+    ghosted = []
+    for j in jobs:
+        update_job_outcome(j["id"], "ghosted")
+        ghosted.append({"id": j["id"], "title": j["title"], "company": j["company"]})
+    return {"ghosted": ghosted, "count": len(ghosted)}
+
+
 
 
 # ── Companies ─────────────────────────────────────────────────────────────────
@@ -210,6 +266,33 @@ def trigger_scout(background_tasks: BackgroundTasks):
 def last_scout_summary():
     """Return summary of the most recent scout run."""
     return _last_scout_summary or {"message": "No scout run yet"}
+
+
+# ── Insights triggers ─────────────────────────────────────────────────────────
+
+@app.get("/insights/weekly")
+def insights_weekly():
+    """Run the weekly report and return the Telegram-formatted string."""
+    from insights.weekly import build_report
+    return {"report": build_report()}
+
+
+@app.get("/insights/gaps")
+def insights_gaps():
+    """Check skill gap thresholds and return new roadmap messages."""
+    from insights.gaps import check_and_fire
+    return {"messages": check_and_fire()}
+
+
+@app.get("/insights/signals")
+def insights_signals():
+    """Return hiring signal messages for companies crossing the threshold."""
+    from insights.signals import hiring_signal_messages
+    import yaml
+    from pathlib import Path
+    cfg = yaml.safe_load((Path(__file__).parent / "config.yaml").read_text())
+    threshold = cfg.get("hiring_signal", {}).get("threshold", 5)
+    return {"messages": hiring_signal_messages(threshold)}
 
 
 # ── Forge trigger (Phase 3 — wired up when forge is implemented) ───────────────

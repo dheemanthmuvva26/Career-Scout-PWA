@@ -89,7 +89,7 @@ def init_db() -> None:
 
         CREATE TABLE IF NOT EXISTS insights (
             id                      INTEGER PRIMARY KEY AUTOINCREMENT,
-            week_start              TEXT NOT NULL,
+            week_start              TEXT NOT NULL UNIQUE,
             missing_skills_json     TEXT,
             rejection_count         INTEGER DEFAULT 0,
             interview_count         INTEGER DEFAULT 0,
@@ -389,6 +389,71 @@ def get_stats() -> dict:
         "total": total, "new": new, "applied": applied,
         "interviews": interviews, "offers": offers, "unscored": unscored,
     }
+
+
+# ── Insights ──────────────────────────────────────────────────────────────────
+
+def upsert_insight(data: dict) -> None:
+    """Insert or replace weekly insight row (keyed by week_start)."""
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO insights (
+                week_start, missing_skills_json, rejection_count,
+                interview_count, offer_count, response_rate_by_source,
+                llm_summary, created_at
+            ) VALUES (
+                :week_start, :missing_skills_json, :rejection_count,
+                :interview_count, :offer_count, :response_rate_by_source,
+                :llm_summary, :created_at
+            )
+            ON CONFLICT(week_start) DO UPDATE SET
+                missing_skills_json     = excluded.missing_skills_json,
+                rejection_count         = excluded.rejection_count,
+                interview_count         = excluded.interview_count,
+                offer_count             = excluded.offer_count,
+                response_rate_by_source = excluded.response_rate_by_source,
+                llm_summary             = excluded.llm_summary
+        """, {
+            "week_start": data["week_start"],
+            "missing_skills_json": data.get("missing_skills_json", "{}"),
+            "rejection_count": data.get("rejection_count", 0),
+            "interview_count": data.get("interview_count", 0),
+            "offer_count": data.get("offer_count", 0),
+            "response_rate_by_source": data.get("response_rate_by_source", "{}"),
+            "llm_summary": data.get("llm_summary", ""),
+            "created_at": now_iso(),
+        })
+
+
+def flag_all_for_rescore() -> int:
+    """
+    Reset score to -1 for all active, non-expired jobs so score_pending()
+    will re-evaluate them on the next scout run.
+    Returns the number of jobs flagged.
+    """
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE jobs SET score=-1, scored_at=NULL, updated_at=? "
+            "WHERE status IN ('new') AND urgency != 'stale'",
+            (now_iso(),)
+        )
+    return cur.rowcount
+
+
+def get_jobs_for_auto_ghost() -> list[dict]:
+    """
+    Jobs that are applied+pending but follow_up_due was more than 7 days ago,
+    meaning 14+ days have passed since the application with no outcome update.
+    """
+    with connect() as conn:
+        rows = conn.execute("""
+            SELECT * FROM jobs
+            WHERE status = 'applied'
+              AND outcome = 'pending'
+              AND follow_up_due IS NOT NULL
+              AND follow_up_due < datetime('now', '-7 days')
+        """).fetchall()
+    return [dict(r) for r in rows]
 
 
 if __name__ == "__main__":
