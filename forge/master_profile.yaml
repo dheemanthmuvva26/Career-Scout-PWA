@@ -1,118 +1,96 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# MASTER PROFILE — fill this in before using Resume Forge
-# Every bullet is tagged so the AI optimizer can pick the right ones per job.
-# Tags map to profile configs in forge/profiles/*.yaml
-# ══════════════════════════════════════════════════════════════════════════════
-
 personal:
-  name: "Your Full Name"
-  email: "your.email@example.com"
-  phone: "+91 XXXXX XXXXX"
+  name: "Dheemanth Muvva"
+  email: "Dheemanth.muvva26@gmail.com"
+  phone: "+91 9848818604"
   location: "Hyderabad, India"
-  linkedin: "linkedin.com/in/yourprofile"
-  github: "github.com/yourusername"
+  linkedin: "linkedin.com/in/dheemanth-muvva"
+  github: "github.com/Dheemanth2610"
 
 education:
-  - degree: "B.Tech in Computer Science (AI & Data Science)"
-    institution: "Your University / College Name"
-    location: "Hyderabad, India"
+  - degree: "B.Tech, CSE — Artificial Intelligence & Data Analytics"
+    institution: "Sri Ramachandra Institute of Higher Education"
+    location: "Chennai, Tamil Nadu"
     graduation: "May 2026"
-    gpa: "X.X / 10"
+    gpa: "8.40 / 10"
     highlights:
-      - "Relevant coursework: Machine Learning, Deep Learning, Statistics, DBMS, Data Structures"
+      - "Relevant coursework: Machine Learning, NLP, Knowledge Graphs, Data Structures, Statistics, DBMS"
 
 skills:
-  # Fill in what you actually know — remove what you don't
-  programming:   ["Python", "SQL", "R"]
-  ml_frameworks: ["scikit-learn", "PyTorch", "TensorFlow", "Hugging Face Transformers"]
-  data_tools:    ["Pandas", "NumPy", "PySpark", "Matplotlib", "Seaborn"]
-  llm_rag:       ["LangChain", "LlamaIndex", "RAG", "Prompt Engineering", "OpenAI API"]
-  bi_tools:      ["Power BI", "Tableau", "MS Excel", "DAX"]
-  databases:     ["PostgreSQL", "SQLite", "Neo4j", "MongoDB", "ChromaDB"]
-  cloud:         ["AWS (S3, EC2)", "Google Cloud", "Azure ML"]
-  other:         ["Git", "Docker", "FastAPI", "Streamlit", "Linux"]
+  programming:   ["Python", "SQL", "Java", "Git"]
+  ml_frameworks: ["scikit-learn", "Random Forest", "Decision Tree", "NLP", "Agentic AI"]
+  llm_rag:       ["LangChain", "RAG", "Prompt Engineering", "OpenAI API", "Gemini API", "Knowledge Graphs", "FAISS"]
+  data_tools:    ["Pandas", "NumPy", "Excel"]
+  bi_tools:      ["Power BI", "Tableau", "Streamlit"]
+  databases:     ["MySQL", "MongoDB", "Neo4j"]
+  other:         ["TypeScript", "VS Code Extension API", "Dialogflow CX"]
 
 experience:
-  - company: "Company Name 1"
-    role: "Data Science Intern"
-    location: "Hyderabad, India"
-    dates: "Jun 2025 – Aug 2025"
-    tags: ["ml", "python", "data_scientist", "ai_engineer"]
+  - company: "Arqonz Global Private Limited"
+    role: "Artificial Intelligence Intern"
+    location: "Remote"
+    dates: "Aug 2024 – Oct 2024"
+    tags: ["ai_engineer", "llm", "genai", "python", "data_scientist"]
     bullets:
-      - text: "Built an end-to-end ML pipeline for X that improved Y by Z% using scikit-learn and Python"
-        tags: ["ml", "python", "data_scientist"]
-      - text: "Developed a RAG-based question-answering system using LangChain and ChromaDB, reducing manual lookup time by X%"
-        tags: ["llm", "rag", "ai_engineer", "genai"]
-      - text: "Automated data preprocessing for a dataset of X records using Pandas, cutting ETL time from X hours to Y minutes"
-        tags: ["data_engineer", "python", "data_analyst"]
-      - text: "Created interactive Power BI dashboards tracking KPIs for the business team, used by X stakeholders"
+      - text: "Developed a Dialogflow CX + GPT-4 conversational AI system with webhook-based integrations to automate customer interactions and lead qualification workflows"
+        tags: ["ai_engineer", "llm", "genai"]
+      - text: "Engineered a hybrid NLU pipeline combining intent classification and generative AI fallback for handling multi-turn and out-of-scope user queries"
+        tags: ["ai_engineer", "llm", "nlp", "genai"]
+
+  - company: "Innologic Technologies Pvt. Ltd."
+    role: "Data Analytics Intern"
+    location: "Hyderabad"
+    dates: "Feb 2024 – Apr 2024"
+    tags: ["data_analyst", "bi", "bi_developer", "python", "sql"]
+    bullets:
+      - text: "Performed exploratory data analysis on 20,000+ automobile sales records using Python, Pandas, and NumPy to identify business trends and customer insights"
+        tags: ["data_analyst", "python", "data_scientist"]
+      - text: "Created interactive Power BI dashboards with drill-through analysis and visual storytelling to support data-driven decision making"
         tags: ["bi", "bi_developer", "data_analyst"]
 
-  - company: "Company Name 2"
-    role: "Machine Learning Intern"
-    location: "Remote"
-    dates: "Jan 2025 – Mar 2025"
-    tags: ["ml", "python", "data_scientist"]
+  - company: "Blackbuck Engineers Pvt. Ltd."
+    role: "Data Science Intern"
+    location: "Hyderabad"
+    dates: "May 2023 – Jul 2023"
+    tags: ["data_scientist", "ml", "python"]
     bullets:
-      - text: "Fine-tuned a BERT model for sentiment classification achieving X% accuracy on domain-specific data"
-        tags: ["ml", "nlp", "data_scientist", "ai_engineer"]
-      - text: "Deployed a FastAPI inference endpoint serving X requests/day with sub-100ms latency"
-        tags: ["ml", "python", "ai_engineer"]
-      - text: "Wrote SQL queries to extract and aggregate training data from a X-row PostgreSQL database"
-        tags: ["sql", "data_analyst", "data_scientist"]
+      - text: "Trained and optimised flight price prediction models using Random Forest and Decision Tree on a 300,000+ record dataset, achieving 90%+ prediction accuracy"
+        tags: ["ml", "data_scientist", "python"]
+      - text: "Applied feature engineering, statistical analysis, and model evaluation using RMSE, MAE, and R² metrics to improve predictive performance"
+        tags: ["ml", "data_scientist", "python"]
 
 projects:
-  - name: "Project Name 1"
-    description: "One-line description of what it does"
-    tech: ["Python", "LangChain", "FastAPI", "ChromaDB"]
-    tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist"]
-    github: "github.com/yourusername/project1"
+  - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
+    description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph"
+    tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq"]
+    tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph"]
+    github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Built a multi-agent RAG system that answers queries over X documents with Y% accuracy"
-        tags: ["llm", "rag", "ai_engineer"]
-      - text: "Implemented a FastAPI backend with streaming responses, handling X concurrent users"
-        tags: ["ai_engineer", "python"]
+      - text: "Architected a Graph RAG pipeline using Neo4j, LangChain, FAISS, and Gemini to support natural-language governance queries across 25+ entity types over a knowledge graph with 538k+ nodes and 2M+ relationships"
+        tags: ["llm", "rag", "graph", "ai_engineer", "genai"]
+      - text: "Engineered a 9-stage NL-to-Cypher workflow with semantic entity resolution, hallucination reduction, and schema-aware query generation for accurate graph retrieval"
+        tags: ["llm", "rag", "nlp", "ai_engineer", "knowledge_graph"]
+      - text: "Implemented a 3-layer semantic caching system and multi-provider LLM orchestration (Gemini, Cerebras, Groq) to optimise latency, reliability, and response efficiency"
+        tags: ["llm", "genai", "ai_engineer", "graph"]
 
-  - name: "Project Name 2"
-    description: "One-line description"
-    tech: ["Python", "scikit-learn", "Streamlit", "SQL"]
-    tags: ["ml", "data_scientist", "data_analyst"]
-    github: "github.com/yourusername/project2"
+  - name: "AI Coder — Agentic VS Code Extension"
+    description: "Agentic AI-powered VS Code extension for automated code generation and developer workflows"
+    tech: ["TypeScript", "VS Code Extension API", "OpenAI API", "Claude API", "Gemini API", "Groq", "Ollama"]
+    tags: ["ai_engineer", "llm", "genai", "agentic"]
+    github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Trained and evaluated X ML models (XGBoost, Random Forest, Logistic Regression) achieving X% AUC"
-        tags: ["ml", "data_scientist"]
-      - text: "Built a Streamlit dashboard to visualize model predictions and feature importance for non-technical users"
-        tags: ["data_scientist", "data_analyst", "bi"]
-
-  - name: "Project Name 3"
-    description: "One-line description"
-    tech: ["Power BI", "SQL", "Python"]
-    tags: ["bi", "bi_developer", "data_analyst"]
-    github: ""
-    bullets:
-      - text: "Designed a Power BI report with X pages and Y DAX measures tracking business KPIs in real-time"
-        tags: ["bi", "bi_developer"]
-      - text: "Wrote complex SQL queries joining X tables to build the underlying data model"
-        tags: ["sql", "data_analyst", "bi_developer"]
-
-  - name: "Project Name 4"
-    description: "Graph-based knowledge system or similar"
-    tech: ["Python", "Neo4j", "NetworkX"]
-    tags: ["graph", "data_scientist", "ai_engineer"]
-    github: "github.com/yourusername/project4"
-    bullets:
-      - text: "Modelled a knowledge graph with X nodes and Y relationships using Neo4j and Cypher"
-        tags: ["graph", "data_scientist"]
-      - text: "Applied graph algorithms (PageRank, community detection) to surface insights from the network"
-        tags: ["graph", "ai_engineer", "data_scientist"]
+      - text: "Designed an agentic AI-powered VS Code extension using TypeScript and VS Code Extension APIs to automate code generation, project understanding, and developer workflows"
+        tags: ["ai_engineer", "llm", "genai", "agentic"]
+      - text: "Integrated a multi-provider LLM orchestration layer supporting OpenAI, Claude, Gemini, Groq, and Ollama with real-time streaming workflows"
+        tags: ["ai_engineer", "llm", "genai"]
+      - text: "Implemented buffered diff-based review workflows and autonomous tool-use reasoning loops for controlled AI-assisted code modification and debugging"
+        tags: ["ai_engineer", "llm", "agentic", "genai"]
 
 certifications:
-  # Add real certifications — remove placeholder entries
+  - name: "GenAI Powered Data Analytics"
+    issuer: "Forage"
+    date: "2025"
+    tags: ["data_analyst", "genai", "ai_engineer"]
   - name: "Google Data Analytics Professional Certificate"
     issuer: "Google / Coursera"
-    date: "2025"
+    date: "In Progress"
     tags: ["data_analyst", "bi"]
-  - name: "AWS Cloud Practitioner"
-    issuer: "Amazon Web Services"
-    date: "2025"
-    tags: ["cloud", "ai_engineer"]
