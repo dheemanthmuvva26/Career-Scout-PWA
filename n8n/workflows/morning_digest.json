@@ -4,70 +4,150 @@
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
         },
         "timezone": "Asia/Kolkata"
       },
-      "id": "trigger-cron",
+      "id": "df1bd443-57cf-43e6-98ad-19d1f049c6fa",
       "name": "8am IST",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [240, 300]
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:8000/jobs?status=new&min_score=3.5&limit=5",
         "options": {}
       },
-      "id": "get-jobs",
+      "id": "0a9e4e2c-8122-482e-a52e-676d2cfcb5a6",
       "name": "Get Hot/Active Jobs",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [460, 300]
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:8000/stats",
         "options": {}
       },
-      "id": "get-stats",
+      "id": "d7e63f47-8e97-4c38-97fd-a43d205c52dd",
       "name": "Get Stats",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [460, 500]
+      "typeVersion": 4,
+      "position": [
+        460,
+        500
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "number": [{ "value1": "={{ $('Get Hot/Active Jobs').item.json.length }}", "operation": "larger", "value2": 0 }]
+          "number": [
+            {
+              "value1": "={{ $('Get Hot/Active Jobs').item.json.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
         }
       },
-      "id": "check-jobs",
+      "id": "79b516bc-5b6e-4708-9fa1-a626bfe673ea",
       "name": "Has Jobs?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [700, 300]
+      "position": [
+        700,
+        300
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=☀️ *Good morning, Dheemanth!*\n\n📊 Pipeline: {{ $('Get Stats').item.json.new }} new  |  {{ $('Get Stats').item.json.applied }} applied  |  {{ $('Get Stats').item.json.interviews }} interviews\n\n🆕 *Top matches since yesterday (score ≥ 3.5):*\n{{ $('Get Hot/Active Jobs').item.json.filter(j => ['hot','active'].includes(j.urgency)).slice(0,5).map(j => `${ j.urgency === 'hot' ? '🔴' : '🟡' } *${j.title}* @ ${j.company}\\n   ⭐ ${j.score?.toFixed(1)}  📍 ${j.location || '?'}\\n   ID: \\`${j.id}\\``).join('\\n\\n') }}\n\nReply /jobs for full list",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "send-digest",
+      "id": "fbf283c5-416d-4655-b58b-489d7c84e5bf",
       "name": "Send Digest",
       "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.1,
-      "position": [940, 300],
-      "credentials": { "telegramApi": { "id": "1", "name": "Telegram Bot" } }
+      "typeVersion": 1,
+      "position": [
+        940,
+        300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "8am IST":            { "main": [[{ "node": "Get Hot/Active Jobs", "type": "main", "index": 0 }, { "node": "Get Stats", "type": "main", "index": 0 }]] },
-    "Get Hot/Active Jobs": { "main": [[{ "node": "Has Jobs?",          "type": "main", "index": 0 }]] },
-    "Has Jobs?":          { "main": [[{ "node": "Send Digest",         "type": "main", "index": 0 }], []] }
+    "8am IST": {
+      "main": [
+        [
+          {
+            "node": "Get Hot/Active Jobs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Hot/Active Jobs": {
+      "main": [
+        [
+          {
+            "node": "Has Jobs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Jobs?": {
+      "main": [
+        [
+          {
+            "node": "Send Digest",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "career-scout" }]
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "career-scout"
+    }
+  ],
+  "versionId": "952daf8f-ae84-4e40-8c07-7b66364025bc",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {}
 }

@@ -3,37 +3,73 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "hours", "hoursInterval": 24 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
       },
-      "id": "trigger-schedule",
+      "id": "95b4d31e-44ec-4677-8be5-179f05e7182b",
       "name": "Every 24h",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [240, 300]
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
-        "documentId": { "__rl": true, "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "Companies", "mode": "name" },
-        "options": { "headerRow": 1 }
+        "documentId": {
+          "__rl": true,
+          "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Companies",
+          "mode": "name"
+        },
+        "options": {
+          "headerRow": 1
+        }
       },
-      "id": "read-companies",
+      "id": "e79a7591-5ad5-4843-abd6-44d96ac4c7f0",
       "name": "Read Companies",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [460, 200]
+      "position": [
+        460,
+        200
+      ]
     },
     {
       "parameters": {
-        "documentId": { "__rl": true, "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "Roles", "mode": "name" },
-        "options": { "headerRow": 1 }
+        "documentId": {
+          "__rl": true,
+          "value": "1yuGAVABxYC-3nNSkUsqVFk1wmuh69AM6ZSukZVxKxs8",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Roles",
+          "mode": "name"
+        },
+        "options": {
+          "headerRow": 1
+        }
       },
-      "id": "read-roles",
+      "id": "771623ab-2d9d-4f24-adc3-6d4f3c8ec77d",
       "name": "Read Roles",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
-      "position": [460, 400]
+      "position": [
+        460,
+        400
+      ]
     },
     {
       "parameters": {
@@ -43,11 +79,14 @@
         "contentType": "json",
         "body": "={{ JSON.stringify({ name: $json.name, careers_url: $json.careers_url || '', linkedin_slug: $json.linkedin_slug || '', priority: parseInt($json.priority) || 1 }) }}"
       },
-      "id": "upsert-company",
+      "id": "3a085726-d6a4-4688-8ef5-9f1815081491",
       "name": "Upsert Company",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [700, 200]
+      "typeVersion": 4,
+      "position": [
+        700,
+        200
+      ]
     },
     {
       "parameters": {
@@ -57,19 +96,68 @@
         "contentType": "json",
         "body": "={{ JSON.stringify({ title: $json.role_title, keywords: ($json.keywords || '').split(',').map(k => k.trim()).filter(Boolean), tags: ($json.tags || '').split(',').map(t => t.trim()).filter(Boolean) }) }}"
       },
-      "id": "upsert-role",
+      "id": "74cd5b52-9435-4217-8894-424215f502c1",
       "name": "Upsert Role",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [700, 400]
+      "typeVersion": 4,
+      "position": [
+        700,
+        400
+      ]
     }
   ],
   "connections": {
-    "Every 24h":      { "main": [[{ "node": "Read Companies", "type": "main", "index": 0 }, { "node": "Read Roles", "type": "main", "index": 0 }]] },
-    "Read Companies": { "main": [[{ "node": "Upsert Company", "type": "main", "index": 0 }]] },
-    "Read Roles":     { "main": [[{ "node": "Upsert Role",   "type": "main", "index": 0 }]] }
+    "Every 24h": {
+      "main": [
+        [
+          {
+            "node": "Read Companies",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Companies": {
+      "main": [
+        [
+          {
+            "node": "Upsert Company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Roles": {
+      "main": [
+        [
+          {
+            "node": "Upsert Role",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "career-scout" }]
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "career-scout"
+    }
+  ],
+  "versionId": "8955b849-b253-4f6c-8a37-e6b46d7db90a",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {}
 }

@@ -1,296 +1,97 @@
 {
   "name": "telegram_bot",
+  "versionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {},
   "nodes": [
     {
-      "id": "tg-trigger",
+      "id": "11111111-1111-1111-1111-111111111111",
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
-      "parameters": { "updates": ["message"] },
-      "position": [200, 400],
-      "typeVersion": 1.1,
-      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+      "position": [
+        200,
+        300
+      ],
+      "typeVersion": 1,
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram"
+        }
+      }
     },
     {
-      "id": "parse-cmd",
-      "name": "Parse Command",
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Handle Command",
       "type": "n8n-nodes-base.code",
+      "position": [
+        480,
+        300
+      ],
+      "typeVersion": 2,
       "parameters": {
-        "jsCode": "const text = ($input.first().json.message?.text || '').trim();\nconst parts = text.split(/\\s+/);\nconst raw = parts[0] || '';\nconst cmd = raw.startsWith('/') ? raw.substring(1).toLowerCase() : '';\nconst args = parts.slice(1);\n// Normalise /add company vs /add role\nlet command = cmd;\nif (cmd === 'add' && args[0]) {\n  command = 'add_' + args[0].toLowerCase();\n  args.shift();\n}\nconst chatId = $input.first().json.message?.chat?.id;\nreturn [{ json: { command, args, chatId, rawText: text } }];"
-      },
-      "position": [440, 400],
-      "typeVersion": 2
+        "jsCode": "const msg = $input.first().json.message || {};\nconst text = (msg.text || '').trim();\nconst chatId = msg.chat?.id;\nif (!text.startsWith('/')) return [{ json: { chatId, text: 'Send a command starting with /' } }];\n\nconst parts = text.split(/\\s+/);\nconst rawCmd = parts[0].replace('/', '').toLowerCase();\nconst args = parts.slice(1);\nconst BASE = 'http://host.docker.internal:8000';\nconst urg = { hot: '\\u{1F534}', active: '\\u{1F7E1}', aging: '\\u26AA', stale: '\\u{1F480}' };\n\nasync function api(method, path, body) {\n  try {\n    const opts = { method };\n    if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }\n    const res = await fetch(BASE + path, opts);\n    return await res.json();\n  } catch(e) { return { error: String(e) }; }\n}\n\nlet cmd = rawCmd;\nlet a = args;\nif (cmd === 'add' && args[0]) { cmd = 'add_' + args[0].toLowerCase(); a = args.slice(1); }\n\nlet reply = '';\n\nif (cmd === 'jobs') {\n  const jobs = await api('GET', '/jobs?status=new&min_score=3.5&limit=5');\n  const list = Array.isArray(jobs) ? jobs : [];\n  if (!list.length) { reply = 'No new jobs right now.'; }\n  else {\n    const lines = list.map(j => `${urg[j.urgency]||'\\u26AA'} *${j.title}* @ ${j.company} (${(j.score||0).toFixed(1)}\\u2605)\\n  ${j.location||'N/A'} | /job ${j.id}`);\n    reply = `\\u{1F5C2} *Top new jobs:*\\n\\n${lines.join('\\n\\n')}`;\n  }\n} else if (cmd === 'job') {\n  const j = await api('GET', `/jobs/${a[0]}`);\n  if (!j || !j.id) { reply = 'Job not found.'; }\n  else {\n    let d = {};\n    try { d = typeof j.score_detail==='string' ? JSON.parse(j.score_detail) : (j.score_detail||{}); } catch(e){}\n    const matched = (d.matched_skills||[]).join(', ')||'N/A';\n    const missing = (d.missing_skills||[]).join(', ')||'None';\n    reply = `${urg[j.urgency]||'\\u26AA'} *${j.title}* @ ${j.company}\\n${j.location||'N/A'} | Score: ${(j.score||0).toFixed(1)}\\u2605 | ${j.status}\\n\\n\\u{1F4A1} ${d.fit_summary||'No summary.'}\\n\\n\\u2705 Matched: ${matched}\\n\\u274C Missing: ${missing}\\n\\n/apply ${j.id}`;\n  }\n} else if (cmd === 'apply') {\n  const r = await api('POST', `/jobs/${a[0]}/apply`);\n  reply = r.ok ? `\\u2705 Applied to *${r.title}* @ ${r.company}\\nFollow-up set for ${r.follow_up_due}.` : `\\u274C ${r.detail||'Error'}`;\n} else if (cmd === 'interview') {\n  await api('POST', `/jobs/${a[0]}/outcome`, {outcome:'interview'});\n  reply = '\\u{1F389} *Interview!* Marked. Good luck!';\n} else if (cmd === 'offer') {\n  await api('POST', `/jobs/${a[0]}/outcome`, {outcome:'offer'});\n  reply = '\\u{1F38A} *OFFER received!* Congratulations!';\n} else if (cmd === 'rejected') {\n  await api('POST', `/jobs/${a[0]}/outcome`, {outcome:'rejected', rejection_reason: a.slice(1).join(' ')||null});\n  reply = '\\u{1F44E} Marked as rejected. On to the next one.';\n} else if (cmd === 'ghosted') {\n  await api('POST', `/jobs/${a[0]}/outcome`, {outcome:'ghosted'});\n  reply = '\\u{1F47B} Marked as ghosted.';\n} else if (cmd === 'note') {\n  await api('POST', `/jobs/${a[0]}/note`, {text: a.slice(1).join(' ')});\n  reply = '\\u{1F4DD} Note saved.';\n} else if (cmd === 'blacklist') {\n  await api('POST', `/companies/blacklist?name=${encodeURIComponent(a.join(' '))}`);\n  reply = '\\u{1F6AB} Company blacklisted. No more alerts from them.';\n} else if (cmd === 'add_company') {\n  await api('POST', '/companies', {name:a[0], careers_url:a[1]||'', linkedin_slug:a[2]||''});\n  reply = '\\u{1F3E2} Company added to watchlist.';\n} else if (cmd === 'add_role') {\n  await api('POST', '/roles', {title: a.join(' ')});\n  reply = '\\u{1F3AF} Role added to watchlist.';\n} else if (cmd === 'stats') {\n  const s = await api('GET', '/stats');\n  reply = `\\u{1F4CA} *Career Scout Stats*\\n\\nTotal: ${s.total}\\nNew: ${s.new}\\nApplied: ${s.applied}\\nInterviews: ${s.interviews}\\nOffers: ${s.offers}\\nUnscored: ${s.unscored}`;\n} else if (cmd === 'scout') {\n  await api('POST', '/scout');\n  reply = '\\u{1F50D} Scout started. Watch for alerts!';\n} else if (cmd === 'resume') {\n  const r = await api('POST', `/forge/${a[0]}`);\n  reply = r.telegram_message || r.error || 'Resume generation failed.';\n} else if (cmd === 'digest') {\n  const jobs = await api('GET', '/jobs/digest?limit=5');\n  const list = Array.isArray(jobs) ? jobs : [];\n  if (!list.length) { reply = 'No high-scoring jobs today.'; }\n  else {\n    const lines = list.map(j => `${urg[j.urgency]||'\\u26AA'} *${j.title}* @ ${j.company} (${(j.score||0).toFixed(1)}\\u2605)\\n  ${j.location||'N/A'} | /job ${j.id}`);\n    reply = `\\u2600\\uFE0F *Today's top matches:*\\n\\n${lines.join('\\n\\n')}\\n\\nReply /jobs for full list.`;\n  }\n} else {\n  reply = '\\u2753 Unknown command.\\n\\nAvailable:\\n/jobs /job <id> /apply <id>\\n/interview <id> /offer <id>\\n/rejected <id> /ghosted <id>\\n/note <id> <text> /blacklist <name>\\n/add company <name> <url>\\n/add role <title>\\n/stats /scout /digest /resume <id>';\n}\n\nreturn [{ json: { chatId, text: reply } }];"
+      }
     },
     {
-      "id": "route",
-      "name": "Route Command",
-      "type": "n8n-nodes-base.switch",
-      "parameters": {
-        "dataPropertyName": "command",
-        "rules": {
-          "rules": [
-            { "value": "jobs",       "outputKey": "jobs" },
-            { "value": "job",        "outputKey": "job" },
-            { "value": "apply",      "outputKey": "apply" },
-            { "value": "interview",  "outputKey": "interview" },
-            { "value": "offer",      "outputKey": "offer" },
-            { "value": "rejected",   "outputKey": "rejected" },
-            { "value": "ghosted",    "outputKey": "ghosted" },
-            { "value": "note",       "outputKey": "note" },
-            { "value": "blacklist",  "outputKey": "blacklist" },
-            { "value": "add_company","outputKey": "add_company" },
-            { "value": "add_role",   "outputKey": "add_role" },
-            { "value": "stats",      "outputKey": "stats" },
-            { "value": "scout",      "outputKey": "scout" },
-            { "value": "resume",     "outputKey": "resume" },
-            { "value": "digest",     "outputKey": "digest" }
-          ]
-        },
-        "fallbackOutput": "none"
-      },
-      "position": [680, 400],
-      "typeVersion": 3
-    },
-
-    { "id": "api-jobs", "name": "GET /jobs", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "GET", "url": "http://host.docker.internal:8000/jobs?status=new&min_score=3.5&limit=5", "responseFormat": "json" },
-      "position": [960, 100], "typeVersion": 4.2 },
-    { "id": "fmt-jobs", "name": "Format Jobs", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const jobs = Array.isArray($json) ? $json : [$json];\nconst chatId = $('Parse Command').first().json.chatId;\nif (!jobs.length) return [{ json: { chatId, text: 'No new jobs matching your criteria right now.' } }];\nconst urgEmoji = { hot: '🔴', active: '🟡', aging: '⚪', stale: '💀' };\nconst lines = jobs.map((j, i) =>\n  `${urgEmoji[j.urgency] || '⚪'} *${j.title}* @ ${j.company} (${(j.score||0).toFixed(1)}★)\\n  📍 ${j.location || 'N/A'} | /job ${j.id}`\n);\nreturn [{ json: { chatId, text: `🗂 *Top new jobs:*\\n\\n${lines.join('\\n\\n')}` } }];" },
-      "position": [1200, 100], "typeVersion": 2 },
-
-    { "id": "api-job", "name": "GET /job/:id", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "GET", "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}", "responseFormat": "json" },
-      "position": [960, 220], "typeVersion": 4.2 },
-    { "id": "fmt-job", "name": "Format Job Detail", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const j = $json;\nconst chatId = $('Parse Command').first().json.chatId;\nlet detail = {};\ntry { detail = typeof j.score_detail === 'string' ? JSON.parse(j.score_detail) : (j.score_detail || {}); } catch(e){}\nconst matched = (detail.matched_skills || []).join(', ') || 'N/A';\nconst missing = (detail.missing_skills || []).join(', ') || 'None';\nconst urgEmoji = { hot: '🔴', active: '🟡', aging: '⚪', stale: '💀' };\nconst text = `${urgEmoji[j.urgency]||'⚪'} *${j.title}* @ ${j.company}\\n📍 ${j.location || 'N/A'} | Source: ${j.source || 'N/A'}\\nScore: ${(j.score||0).toFixed(1)}★  |  Status: ${j.status}\\n\\n💡 ${detail.fit_summary || 'No summary.'}\\n\\n✅ Matched: ${matched}\\n❌ Missing: ${missing}\\n\\n/apply ${j.id}  |  /note ${j.id} <text>`;\nreturn [{ json: { chatId, text } }];" },
-      "position": [1200, 220], "typeVersion": 2 },
-
-    { "id": "api-apply", "name": "POST /apply", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/apply", "responseFormat": "json" },
-      "position": [960, 340], "typeVersion": 4.2 },
-    { "id": "fmt-apply", "name": "Format Apply", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const r = $json;\nconst chatId = $('Parse Command').first().json.chatId;\nreturn [{ json: { chatId, text: `✅ Applied to *${r.title}* @ ${r.company}\\nFollow-up reminder set for ${r.follow_up_due}.` } }];" },
-      "position": [1200, 340], "typeVersion": 2 },
-
-    { "id": "api-interview", "name": "POST /interview", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/outcome", "sendBody": true, "contentType": "json", "body": "{ \"outcome\": \"interview\" }", "responseFormat": "json" },
-      "position": [960, 460], "typeVersion": 4.2 },
-    { "id": "fmt-interview", "name": "Format Interview", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🎉 *Interview!* Marked. Good luck!", "type": "string" }
-      ]}},
-      "position": [1200, 460], "typeVersion": 3.4 },
-
-    { "id": "api-offer", "name": "POST /offer", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/outcome", "sendBody": true, "contentType": "json", "body": "{ \"outcome\": \"offer\" }", "responseFormat": "json" },
-      "position": [960, 580], "typeVersion": 4.2 },
-    { "id": "fmt-offer", "name": "Format Offer", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🎊 *OFFER received!* Marked. Congratulations!", "type": "string" }
-      ]}},
-      "position": [1200, 580], "typeVersion": 3.4 },
-
-    { "id": "api-rejected", "name": "POST /rejected", "type": "n8n-nodes-base.httpRequest",
-      "parameters": {
-        "method": "POST",
-        "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/outcome",
-        "sendBody": true, "contentType": "json",
-        "body": "={{ JSON.stringify({ outcome: 'rejected', rejection_reason: $('Parse Command').first().json.args.slice(1).join(' ') || null }) }}",
-        "responseFormat": "json"
-      },
-      "position": [960, 700], "typeVersion": 4.2 },
-    { "id": "fmt-rejected", "name": "Format Rejected", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "👎 Marked as rejected. On to the next one.", "type": "string" }
-      ]}},
-      "position": [1200, 700], "typeVersion": 3.4 },
-
-    { "id": "api-ghosted", "name": "POST /ghosted", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/outcome", "sendBody": true, "contentType": "json", "body": "{ \"outcome\": \"ghosted\" }", "responseFormat": "json" },
-      "position": [960, 820], "typeVersion": 4.2 },
-    { "id": "fmt-ghosted", "name": "Format Ghosted", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "👻 Marked as ghosted.", "type": "string" }
-      ]}},
-      "position": [1200, 820], "typeVersion": 3.4 },
-
-    { "id": "api-note", "name": "POST /note", "type": "n8n-nodes-base.httpRequest",
-      "parameters": {
-        "method": "POST",
-        "url": "=http://host.docker.internal:8000/jobs/{{ $('Parse Command').first().json.args[0] }}/note",
-        "sendBody": true, "contentType": "json",
-        "body": "={{ JSON.stringify({ text: $('Parse Command').first().json.args.slice(1).join(' ') }) }}",
-        "responseFormat": "json"
-      },
-      "position": [960, 940], "typeVersion": 4.2 },
-    { "id": "fmt-note", "name": "Format Note", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "📝 Note saved.", "type": "string" }
-      ]}},
-      "position": [1200, 940], "typeVersion": 3.4 },
-
-    { "id": "api-blacklist", "name": "POST /blacklist", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/companies/blacklist?name={{ $('Parse Command').first().json.args.join(' ') }}", "responseFormat": "json" },
-      "position": [960, 1060], "typeVersion": 4.2 },
-    { "id": "fmt-blacklist", "name": "Format Blacklist", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🚫 Company blacklisted. No more alerts from them.", "type": "string" }
-      ]}},
-      "position": [1200, 1060], "typeVersion": 3.4 },
-
-    { "id": "api-add-company", "name": "POST /companies", "type": "n8n-nodes-base.httpRequest",
-      "parameters": {
-        "method": "POST",
-        "url": "http://host.docker.internal:8000/companies",
-        "sendBody": true, "contentType": "json",
-        "body": "={{ JSON.stringify({ name: $('Parse Command').first().json.args[0], careers_url: $('Parse Command').first().json.args[1] || '', linkedin_slug: $('Parse Command').first().json.args[2] || '' }) }}",
-        "responseFormat": "json"
-      },
-      "position": [960, 1180], "typeVersion": 4.2 },
-    { "id": "fmt-add-company", "name": "Format Add Company", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🏢 Company added to watchlist.", "type": "string" }
-      ]}},
-      "position": [1200, 1180], "typeVersion": 3.4 },
-
-    { "id": "api-add-role", "name": "POST /roles", "type": "n8n-nodes-base.httpRequest",
-      "parameters": {
-        "method": "POST",
-        "url": "http://host.docker.internal:8000/roles",
-        "sendBody": true, "contentType": "json",
-        "body": "={{ JSON.stringify({ title: $('Parse Command').first().json.args.join(' ') }) }}",
-        "responseFormat": "json"
-      },
-      "position": [960, 1300], "typeVersion": 4.2 },
-    { "id": "fmt-add-role", "name": "Format Add Role", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🎯 Role added to watchlist.", "type": "string" }
-      ]}},
-      "position": [1200, 1300], "typeVersion": 3.4 },
-
-    { "id": "api-stats", "name": "GET /stats", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "GET", "url": "http://host.docker.internal:8000/stats", "responseFormat": "json" },
-      "position": [960, 1420], "typeVersion": 4.2 },
-    { "id": "fmt-stats", "name": "Format Stats", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const s = $json;\nconst chatId = $('Parse Command').first().json.chatId;\nreturn [{ json: { chatId, text: `📊 *Career Scout Stats*\\n\\nTotal tracked: ${s.total}\\nNew: ${s.new}\\nApplied: ${s.applied}\\nInterviews: ${s.interviews}\\nOffers: ${s.offers}\\nUnscored: ${s.unscored}` } }];" },
-      "position": [1200, 1420], "typeVersion": 2 },
-
-    { "id": "api-scout", "name": "POST /scout", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "http://host.docker.internal:8000/scout", "responseFormat": "json" },
-      "position": [960, 1540], "typeVersion": 4.2 },
-    { "id": "fmt-scout", "name": "Format Scout", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "🔍 Scout pipeline started. You'll receive alerts for new matches shortly.", "type": "string" }
-      ]}},
-      "position": [1200, 1540], "typeVersion": 3.4 },
-
-    { "id": "api-resume", "name": "POST /forge/:id", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "POST", "url": "=http://host.docker.internal:8000/forge/{{ $('Parse Command').first().json.args[0] }}", "responseFormat": "json" },
-      "position": [960, 1660], "typeVersion": 4.2 },
-    { "id": "fmt-resume", "name": "Format Resume", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const r = $json;\nconst chatId = $('Parse Command').first().json.chatId;\nreturn [{ json: { chatId, text: r.telegram_message || r.error || 'Resume generation failed.' } }];" },
-      "position": [1200, 1660], "typeVersion": 2 },
-
-    { "id": "api-digest", "name": "GET /jobs/digest", "type": "n8n-nodes-base.httpRequest",
-      "parameters": { "method": "GET", "url": "http://host.docker.internal:8000/jobs/digest?limit=5", "responseFormat": "json" },
-      "position": [960, 1780], "typeVersion": 4.2 },
-    { "id": "fmt-digest", "name": "Format Digest", "type": "n8n-nodes-base.code",
-      "parameters": { "jsCode": "const jobs = Array.isArray($json) ? $json : [$json];\nconst chatId = $('Parse Command').first().json.chatId;\nif (!jobs.length) return [{ json: { chatId, text: 'No high-scoring jobs found today. Check back later.' } }];\nconst urgEmoji = { hot: '🔴', active: '🟡', aging: '⚪', stale: '💀' };\nconst lines = jobs.map(j =>\n  `${urgEmoji[j.urgency]||'⚪'} *${j.title}* @ ${j.company} (${(j.score||0).toFixed(1)}★)\\n  📍 ${j.location||'N/A'} | /job ${j.id}`\n);\nreturn [{ json: { chatId, text: `☀️ *Today's top matches:*\\n\\n${lines.join('\\n\\n')}\\n\\nReply /jobs for full list.` } }];" },
-      "position": [1200, 1780], "typeVersion": 2 },
-
-    { "id": "fmt-unknown", "name": "Unknown Command", "type": "n8n-nodes-base.set",
-      "parameters": { "assignments": { "assignments": [
-        { "name": "chatId", "value": "={{ $('Parse Command').first().json.chatId }}", "type": "string" },
-        { "name": "text", "value": "❓ Unknown command.\n\nAvailable: /jobs /job /apply /interview /offer /rejected /ghosted /note /blacklist /add /stats /scout /digest /resume", "type": "string" }
-      ]}},
-      "position": [960, 1900], "typeVersion": 3.4 },
-
-    {
-      "id": "merge-responses",
-      "name": "Merge Responses",
-      "type": "n8n-nodes-base.merge",
-      "parameters": { "mode": "passThrough", "output": "input1" },
-      "position": [1440, 980],
-      "typeVersion": 3
-    },
-    {
-      "id": "send-reply",
+      "id": "33333333-3333-3333-3333-333333333333",
       "name": "Send Reply",
       "type": "n8n-nodes-base.telegram",
+      "position": [
+        760,
+        300
+      ],
+      "typeVersion": 1,
       "parameters": {
         "operation": "sendMessage",
         "chatId": "={{ $json.chatId }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "position": [1680, 980],
-      "typeVersion": 1.1,
-      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram"
+        }
+      }
     }
   ],
   "connections": {
-    "Telegram Trigger": { "main": [[{ "node": "Parse Command", "type": "main", "index": 0 }]] },
-    "Parse Command":    { "main": [[{ "node": "Route Command", "type": "main", "index": 0 }]] },
-    "Route Command": { "main": [
-      [{ "node": "GET /jobs",         "type": "main", "index": 0 }],
-      [{ "node": "GET /job/:id",      "type": "main", "index": 0 }],
-      [{ "node": "POST /apply",       "type": "main", "index": 0 }],
-      [{ "node": "POST /interview",   "type": "main", "index": 0 }],
-      [{ "node": "POST /offer",       "type": "main", "index": 0 }],
-      [{ "node": "POST /rejected",    "type": "main", "index": 0 }],
-      [{ "node": "POST /ghosted",     "type": "main", "index": 0 }],
-      [{ "node": "POST /note",        "type": "main", "index": 0 }],
-      [{ "node": "POST /blacklist",   "type": "main", "index": 0 }],
-      [{ "node": "POST /companies",   "type": "main", "index": 0 }],
-      [{ "node": "POST /roles",       "type": "main", "index": 0 }],
-      [{ "node": "GET /stats",        "type": "main", "index": 0 }],
-      [{ "node": "POST /scout",       "type": "main", "index": 0 }],
-      [{ "node": "POST /forge/:id",   "type": "main", "index": 0 }],
-      [{ "node": "GET /jobs/digest",  "type": "main", "index": 0 }],
-      [{ "node": "Unknown Command",   "type": "main", "index": 0 }]
-    ]},
-    "GET /jobs":          { "main": [[{ "node": "Format Jobs",         "type": "main", "index": 0 }]] },
-    "GET /job/:id":       { "main": [[{ "node": "Format Job Detail",   "type": "main", "index": 0 }]] },
-    "POST /apply":        { "main": [[{ "node": "Format Apply",        "type": "main", "index": 0 }]] },
-    "POST /interview":    { "main": [[{ "node": "Format Interview",    "type": "main", "index": 0 }]] },
-    "POST /offer":        { "main": [[{ "node": "Format Offer",        "type": "main", "index": 0 }]] },
-    "POST /rejected":     { "main": [[{ "node": "Format Rejected",     "type": "main", "index": 0 }]] },
-    "POST /ghosted":      { "main": [[{ "node": "Format Ghosted",      "type": "main", "index": 0 }]] },
-    "POST /note":         { "main": [[{ "node": "Format Note",         "type": "main", "index": 0 }]] },
-    "POST /blacklist":    { "main": [[{ "node": "Format Blacklist",    "type": "main", "index": 0 }]] },
-    "POST /companies":    { "main": [[{ "node": "Format Add Company",  "type": "main", "index": 0 }]] },
-    "POST /roles":        { "main": [[{ "node": "Format Add Role",     "type": "main", "index": 0 }]] },
-    "GET /stats":         { "main": [[{ "node": "Format Stats",        "type": "main", "index": 0 }]] },
-    "POST /scout":        { "main": [[{ "node": "Format Scout",        "type": "main", "index": 0 }]] },
-    "POST /forge/:id":    { "main": [[{ "node": "Format Resume",        "type": "main", "index": 0 }]] },
-    "Format Resume":      { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "GET /jobs/digest":   { "main": [[{ "node": "Format Digest",       "type": "main", "index": 0 }]] },
-    "Unknown Command":    { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Jobs":        { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Job Detail":  { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Apply":       { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Interview":   { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Offer":       { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Rejected":    { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Ghosted":     { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Note":        { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Blacklist":   { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Add Company": { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Add Role":    { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Stats":       { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Scout":       { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Format Digest":      { "main": [[{ "node": "Merge Responses",     "type": "main", "index": 0 }]] },
-    "Merge Responses":    { "main": [[{ "node": "Send Reply",          "type": "main", "index": 0 }]] }
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Handle Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Command": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" }
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
 }

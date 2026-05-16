@@ -3,120 +3,270 @@
   "nodes": [
     {
       "parameters": {
-        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
       },
-      "id": "trigger-schedule",
+      "id": "39d6e193-f53e-4db2-80aa-56abf9d89167",
       "name": "Every 6h",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.1,
-      "position": [240, 300]
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://host.docker.internal:8000/scout",
-        "options": { "timeout": 10000 }
+        "options": {
+          "timeout": 10000
+        }
       },
-      "id": "trigger-scout",
+      "id": "55427a4a-3778-49c7-8321-c1abebe8f5c5",
       "name": "Trigger Scout",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [460, 300]
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ]
     },
     {
       "parameters": {
         "amount": 300,
         "unit": "seconds"
       },
-      "id": "wait-for-pipeline",
+      "id": "44313580-8865-4de6-8f6d-545e3f4c8bc8",
       "name": "Wait 5min",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
-      "position": [680, 300]
+      "position": [
+        680,
+        300
+      ]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:8000/scout/last",
         "options": {}
       },
-      "id": "get-summary",
+      "id": "e18a9f5c-2981-4344-83c0-2e523994bdf5",
       "name": "Get Summary",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [900, 300]
+      "typeVersion": 4,
+      "position": [
+        900,
+        300
+      ]
     },
     {
       "parameters": {
         "url": "http://host.docker.internal:8000/jobs?status=new&min_score=3.5&limit=10",
         "options": {}
       },
-      "id": "get-new-jobs",
+      "id": "8a61dbf3-3b6a-45ab-bd73-4b7e31e3bed4",
       "name": "Get New Jobs",
       "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [1120, 300]
+      "typeVersion": 4,
+      "position": [
+        1120,
+        300
+      ]
     },
     {
       "parameters": {
         "conditions": {
-          "number": [{ "value1": "={{ $json.length }}", "operation": "larger", "value2": 0 }]
+          "number": [
+            {
+              "value1": "={{ $json.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
         }
       },
-      "id": "check-jobs",
+      "id": "c7c0f371-9ab6-4080-a111-c4495e61ac7e",
       "name": "Has New Jobs?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1340, 300]
+      "position": [
+        1340,
+        300
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=🔍 *Scout run complete*\n\nFound: {{ $('Get Summary').item.json.raw_scraped }} raw\nNew: {{ $('Get Summary').item.json.inserted }}\nMerged: {{ $('Get Summary').item.json.merged }}\nScored: {{ $('Get Summary').item.json.scored }}\n\n{{ $json.length > 0 ? '🆕 *Top matches (score ≥ 3.5):*' : 'No new matches above threshold.' }}\n{{ $json.map(j => `${ j.urgency === 'hot' ? '🔴' : '🟡' } *${j.title}* @ ${j.company}\\n   ⭐ ${j.score?.toFixed(1)}  📍 ${j.location || '?'}\\n   ID: \\`${j.id}\\``).join('\\n\\n') }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "send-alert",
+      "id": "bd8fc246-d93b-486e-a437-9a31d4d4d4cc",
       "name": "Send Job Alert",
       "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.1,
-      "position": [1560, 200],
-      "credentials": { "telegramApi": { "id": "1", "name": "Telegram Bot" } }
+      "typeVersion": 1,
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot"
+        }
+      }
     },
     {
       "parameters": {
         "conditions": {
-          "number": [{ "value1": "={{ ($('Get Summary').item.json.health_alerts || []).length }}", "operation": "larger", "value2": 0 }]
+          "number": [
+            {
+              "value1": "={{ ($('Get Summary').item.json.health_alerts || []).length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
         }
       },
-      "id": "check-health",
+      "id": "4d6e1ca3-3d40-4459-b08d-c51a00478055",
       "name": "Health Alerts?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [1340, 500]
+      "position": [
+        1340,
+        500
+      ]
     },
     {
       "parameters": {
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "=⚠️ *Scraper health alerts:*\n{{ $('Get Summary').item.json.health_alerts.join('\\n') }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "id": "send-health-alert",
+      "id": "952d0229-bcc6-48b9-9d59-164e5dbca7cd",
       "name": "Send Health Alert",
       "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.1,
-      "position": [1560, 500],
-      "credentials": { "telegramApi": { "id": "1", "name": "Telegram Bot" } }
+      "typeVersion": 1,
+      "position": [
+        1560,
+        500
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "1",
+          "name": "Telegram Bot"
+        }
+      }
     }
   ],
   "connections": {
-    "Every 6h":       { "main": [[{ "node": "Trigger Scout",    "type": "main", "index": 0 }]] },
-    "Trigger Scout":  { "main": [[{ "node": "Wait 5min",        "type": "main", "index": 0 }]] },
-    "Wait 5min":      { "main": [[{ "node": "Get Summary",      "type": "main", "index": 0 }]] },
-    "Get Summary":    { "main": [[{ "node": "Get New Jobs",     "type": "main", "index": 0 }, { "node": "Check Health",  "type": "main", "index": 0 }]] },
-    "Get New Jobs":   { "main": [[{ "node": "Has New Jobs?",    "type": "main", "index": 0 }]] },
-    "Has New Jobs?":  { "main": [[{ "node": "Send Job Alert",   "type": "main", "index": 0 }], []] },
-    "Health Alerts?": { "main": [[{ "node": "Send Health Alert","type": "main", "index": 0 }], []] }
+    "Every 6h": {
+      "main": [
+        [
+          {
+            "node": "Trigger Scout",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Scout": {
+      "main": [
+        [
+          {
+            "node": "Wait 5min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5min": {
+      "main": [
+        [
+          {
+            "node": "Get Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Summary": {
+      "main": [
+        [
+          {
+            "node": "Get New Jobs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Check Health",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get New Jobs": {
+      "main": [
+        [
+          {
+            "node": "Has New Jobs?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has New Jobs?": {
+      "main": [
+        [
+          {
+            "node": "Send Job Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Health Alerts?": {
+      "main": [
+        [
+          {
+            "node": "Send Health Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" },
-  "tags": [{ "name": "career-scout" }]
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    {
+      "name": "career-scout"
+    }
+  ],
+  "versionId": "1fb0c66f-5df9-4711-bc50-c32225333610",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {}
 }

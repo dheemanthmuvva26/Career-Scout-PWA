@@ -2,17 +2,27 @@
   "name": "gmail_monitor",
   "nodes": [
     {
-      "id": "trigger-gmail",
+      "id": "4148091b-c48a-4366-9b9a-eeb690283f8f",
       "name": "Every 30 Minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "parameters": {
-        "rule": { "interval": [{ "field": "minutes", "minutesInterval": 30 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 30
+            }
+          ]
+        }
       },
-      "position": [200, 300],
-      "typeVersion": 1.1
+      "position": [
+        200,
+        300
+      ],
+      "typeVersion": 1
     },
     {
-      "id": "get-applied",
+      "id": "09d1d1d7-8141-4b93-8bc9-ddd7e554bab4",
       "name": "GET Applied Jobs",
       "type": "n8n-nodes-base.httpRequest",
       "parameters": {
@@ -20,87 +30,194 @@
         "url": "http://host.docker.internal:8000/jobs?status=applied&min_score=0&limit=100",
         "responseFormat": "json"
       },
-      "position": [440, 300],
-      "typeVersion": 4.2
+      "position": [
+        440,
+        300
+      ],
+      "typeVersion": 4
     },
     {
-      "id": "build-gmail-query",
+      "id": "5cb95489-b95c-4b67-8a9e-17a967c8b83c",
       "name": "Build Gmail Query",
       "type": "n8n-nodes-base.code",
       "parameters": {
         "jsCode": "const jobs = Array.isArray($json) ? $json : [];\nconst companies = [...new Set(jobs.map(j => j.company).filter(Boolean))];\nif (!companies.length) return [{ json: { query: '', companies: [] } }];\n// Build OR query: (from:company1 OR from:company2 ...) with outcome keywords\nconst companyQ = companies.slice(0, 15).map(c => `\"${c}\"`).join(' OR ');\nconst query = `(${companyQ}) (interview OR offer OR unfortunately OR regret OR \"not selected\" OR \"move forward\") newer_than:1d`;\nreturn [{ json: { query, companies } }];"
       },
-      "position": [680, 300],
+      "position": [
+        680,
+        300
+      ],
       "typeVersion": 2
     },
     {
-      "id": "search-gmail",
+      "id": "37aea385-8e54-4413-8d5e-2829353d03ee",
       "name": "Search Gmail",
       "type": "n8n-nodes-base.gmail",
       "parameters": {
         "operation": "getAll",
         "filters": {
           "q": "={{ $json.query }}",
-          "labelIds": ["INBOX"]
+          "labelIds": [
+            "INBOX"
+          ]
         },
         "returnAll": false,
         "limit": 20
       },
-      "position": [920, 300],
-      "typeVersion": 2.1,
-      "credentials": { "gmailOAuth2": { "id": "gmail-creds", "name": "Gmail" } }
+      "position": [
+        920,
+        300
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-creds",
+          "name": "Gmail"
+        }
+      }
     },
     {
-      "id": "match-emails",
+      "id": "1b678da6-259f-498a-a044-da0acb589da8",
       "name": "Match Emails to Jobs",
       "type": "n8n-nodes-base.code",
       "parameters": {
         "jsCode": "const emails = Array.isArray($json) ? $json : [$json];\nconst appliedJobs = $('GET Applied Jobs').all().map(i => i.json);\n\nconst rejectionKw = ['unfortunately','not moving forward','other candidates','regret to inform','not selected','position has been filled'];\nconst interviewKw = ['interview','pleased to invite','next steps','schedule a call'];\nconst offerKw    = ['offer','pleased to extend','job offer','compensation package'];\n\nconst results = [];\nfor (const email of emails) {\n  const subj = (email.subject || '').toLowerCase();\n  const from = (email.from || '').toLowerCase();\n  const snippet = (email.snippet || '').toLowerCase();\n  const body = subj + ' ' + from + ' ' + snippet;\n\n  // Find matching applied job by company name in from/subject\n  const matchedJob = appliedJobs.find(j => {\n    const co = (j.company || '').toLowerCase();\n    return body.includes(co) && co.length > 3;\n  });\n  if (!matchedJob) continue;\n\n  let detectedOutcome = null;\n  let emoji = '';\n  if (offerKw.some(k => body.includes(k)))       { detectedOutcome = 'offer';     emoji = '🎊'; }\n  else if (interviewKw.some(k => body.includes(k))) { detectedOutcome = 'interview'; emoji = '🎉'; }\n  else if (rejectionKw.some(k => body.includes(k))) { detectedOutcome = 'rejected';  emoji = '👎'; }\n\n  if (!detectedOutcome) continue;\n\n  results.push({\n    jobId: matchedJob.id,\n    title: matchedJob.title,\n    company: matchedJob.company,\n    detectedOutcome,\n    emoji,\n    emailSubject: email.subject || '(no subject)',\n    text: `${emoji} *Email detected from ${matchedJob.company}*\\n\"${email.subject || ''}\"\\n\\nDetected outcome: *${detectedOutcome}*\\n\\nConfirm:\\n/${detectedOutcome} ${matchedJob.id}  |  /ignore`\n  });\n}\nreturn results.map(r => ({ json: r }));"
       },
-      "position": [1160, 300],
+      "position": [
+        1160,
+        300
+      ],
       "typeVersion": 2
     },
     {
-      "id": "check-has-matches",
+      "id": "cbf12115-536f-4973-bae6-f58eb8ff785f",
       "name": "Has Matches?",
       "type": "n8n-nodes-base.if",
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": false },
-          "conditions": [{ "leftValue": "={{ $json.jobId }}", "rightValue": "", "operator": { "type": "string", "operation": "notEmpty" } }]
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.jobId }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ]
         }
       },
-      "position": [1400, 300],
+      "position": [
+        1400,
+        300
+      ],
       "typeVersion": 2
     },
     {
-      "id": "send-email-alert",
+      "id": "00378bd8-01af-4b73-bb13-28cf02b6e737",
       "name": "Send Email Alert",
       "type": "n8n-nodes-base.telegram",
       "parameters": {
         "operation": "sendMessage",
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "position": [1640, 200],
-      "typeVersion": 1.1,
-      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+      "position": [
+        1640,
+        200
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram"
+        }
+      }
     }
   ],
   "connections": {
-    "Every 30 Minutes":   { "main": [[{ "node": "GET Applied Jobs",         "type": "main", "index": 0 }]] },
-    "GET Applied Jobs":   { "main": [[{ "node": "Build Gmail Query",         "type": "main", "index": 0 }]] },
-    "Build Gmail Query":  { "main": [[{ "node": "Search Gmail",              "type": "main", "index": 0 }]] },
-    "Search Gmail":       { "main": [[{ "node": "Match Emails to Jobs",      "type": "main", "index": 0 }]] },
-    "Match Emails to Jobs": { "main": [[{ "node": "Has Matches?",            "type": "main", "index": 0 }]] },
+    "Every 30 Minutes": {
+      "main": [
+        [
+          {
+            "node": "GET Applied Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Applied Jobs": {
+      "main": [
+        [
+          {
+            "node": "Build Gmail Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gmail Query": {
+      "main": [
+        [
+          {
+            "node": "Search Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Gmail": {
+      "main": [
+        [
+          {
+            "node": "Match Emails to Jobs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Match Emails to Jobs": {
+      "main": [
+        [
+          {
+            "node": "Has Matches?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Has Matches?": {
       "main": [
-        [{ "node": "Send Email Alert", "type": "main", "index": 0 }],
+        [
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" }
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9ca92be0-6735-462a-a302-37289cf97539",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {},
+  "tags": []
 }

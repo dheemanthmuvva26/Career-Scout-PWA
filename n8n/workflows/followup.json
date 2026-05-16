@@ -2,17 +2,27 @@
   "name": "followup",
   "nodes": [
     {
-      "id": "trigger-followup",
+      "id": "f7c47b01-6ecd-402c-a770-84c7bf6e4cf9",
       "name": "Every 6 Hours",
       "type": "n8n-nodes-base.scheduleTrigger",
       "parameters": {
-        "rule": { "interval": [{ "field": "hours", "hoursInterval": 6 }] }
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
       },
-      "position": [200, 300],
-      "typeVersion": 1.1
+      "position": [
+        200,
+        300
+      ],
+      "typeVersion": 1
     },
     {
-      "id": "get-followups",
+      "id": "6c4e6311-0737-4585-83cf-16bc0f3c9414",
       "name": "GET /followups",
       "type": "n8n-nodes-base.httpRequest",
       "parameters": {
@@ -20,11 +30,14 @@
         "url": "http://host.docker.internal:8000/followups",
         "responseFormat": "json"
       },
-      "position": [440, 300],
-      "typeVersion": 4.2
+      "position": [
+        440,
+        300
+      ],
+      "typeVersion": 4
     },
     {
-      "id": "auto-ghost",
+      "id": "dd14e002-17a5-4c9d-8068-75e76682803d",
       "name": "POST /followups/auto-ghost",
       "type": "n8n-nodes-base.httpRequest",
       "parameters": {
@@ -32,89 +45,181 @@
         "url": "http://host.docker.internal:8000/followups/auto-ghost",
         "responseFormat": "json"
       },
-      "position": [680, 300],
-      "typeVersion": 4.2
+      "position": [
+        680,
+        300
+      ],
+      "typeVersion": 4
     },
     {
-      "id": "notify-ghosted",
+      "id": "b436b3c7-28c1-458e-8d03-dad627075623",
       "name": "Notify Ghosted",
       "type": "n8n-nodes-base.code",
       "parameters": {
         "jsCode": "const ghosted = $json.ghosted || [];\nconst messages = [];\nfor (const j of ghosted) {\n  messages.push({ text: `👻 Auto-marked as ghosted (14 days, no update):\\n*${j.title}* @ ${j.company}\\nJob ID: ${j.id}` });\n}\nif (ghosted.length === 0) {\n  return [];\n}\nreturn messages.map(m => ({ json: m }));"
       },
-      "position": [920, 300],
+      "position": [
+        920,
+        300
+      ],
       "typeVersion": 2
     },
     {
-      "id": "send-ghost-telegram",
+      "id": "4bba384f-0b2b-4e59-9f01-993825f2177f",
       "name": "Send Ghost Notifications",
       "type": "n8n-nodes-base.telegram",
       "parameters": {
         "operation": "sendMessage",
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "position": [1160, 300],
-      "typeVersion": 1.1,
-      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+      "position": [
+        1160,
+        300
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram"
+        }
+      }
     },
     {
-      "id": "split-nudges",
+      "id": "4c2fcb9b-2dc3-4bf6-bd89-f3f0bcaf3ddb",
       "name": "Split Nudge List",
       "type": "n8n-nodes-base.splitInBatches",
-      "parameters": { "batchSize": 1 },
-      "position": [440, 500],
+      "parameters": {
+        "batchSize": 1
+      },
+      "position": [
+        440,
+        500
+      ],
       "typeVersion": 3
     },
     {
-      "id": "format-nudge",
+      "id": "86047524-6373-4a61-9151-c3efb2034ca3",
       "name": "Format Nudge Message",
       "type": "n8n-nodes-base.code",
       "parameters": {
         "jsCode": "const j = $json;\nconst due = j.follow_up_due ? j.follow_up_due.substring(0, 10) : '?';\nreturn [{ json: {\n  text: `⏰ *Follow-up due:* ${j.title} @ ${j.company}\\nApplied on: ${due}\\n\\nUpdate status:\\n/interview ${j.id}  |  /rejected ${j.id}  |  /ghosted ${j.id}`\n}}];"
       },
-      "position": [680, 500],
+      "position": [
+        680,
+        500
+      ],
       "typeVersion": 2
     },
     {
-      "id": "send-nudge-telegram",
+      "id": "ebcb35c5-e516-4326-91cc-628067314829",
       "name": "Send Follow-up Nudge",
       "type": "n8n-nodes-base.telegram",
       "parameters": {
         "operation": "sendMessage",
         "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
         "text": "={{ $json.text }}",
-        "additionalFields": { "parse_mode": "Markdown" }
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
       },
-      "position": [920, 500],
-      "typeVersion": 1.1,
-      "credentials": { "telegramApi": { "id": "telegram-creds", "name": "Telegram" } }
+      "position": [
+        920,
+        500
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-creds",
+          "name": "Telegram"
+        }
+      }
     }
   ],
   "connections": {
     "Every 6 Hours": {
-      "main": [[ { "node": "GET /followups", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "GET /followups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "GET /followups": {
-      "main": [[
-        { "node": "POST /followups/auto-ghost", "type": "main", "index": 0 },
-        { "node": "Split Nudge List",           "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "POST /followups/auto-ghost",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Nudge List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "POST /followups/auto-ghost": {
-      "main": [[ { "node": "Notify Ghosted", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Notify Ghosted",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Notify Ghosted": {
-      "main": [[ { "node": "Send Ghost Notifications", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Send Ghost Notifications",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Split Nudge List": {
-      "main": [[ { "node": "Format Nudge Message", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Format Nudge Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Format Nudge Message": {
-      "main": [[ { "node": "Send Follow-up Nudge", "type": "main", "index": 0 } ]]
+      "main": [
+        [
+          {
+            "node": "Send Follow-up Nudge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true,
-  "settings": { "executionOrder": "v1" }
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a9269696-dc55-49ce-803d-a2b655d6eb85",
+  "meta": {
+    "instanceId": "career-scout"
+  },
+  "pinData": {},
+  "tags": []
 }
