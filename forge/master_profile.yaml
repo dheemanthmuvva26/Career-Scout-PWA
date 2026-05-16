@@ -60,13 +60,15 @@ experience:
 
 projects:
   - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
-    description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph"
-    tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq"]
-    tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph"]
+    description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph, with an interactive analytics dashboard"
+    tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq", "Streamlit"]
+    tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph", "bi", "bi_developer", "data_analyst"]
     github: "github.com/Dheemanth2610"
     bullets:
       - text: "Architected a Graph RAG pipeline using Neo4j, LangChain, FAISS, and Gemini to support natural-language governance queries across 25+ entity types over a knowledge graph with 538k+ nodes and 2M+ relationships"
         tags: ["llm", "rag", "graph", "ai_engineer", "genai"]
+      - text: "Built a Streamlit analytics dashboard enabling stakeholders to explore and visualise governance data, query results, and entity relationships without writing code"
+        tags: ["bi", "bi_developer", "data_analyst", "data_scientist"]
       - text: "Engineered a 9-stage NL-to-Cypher workflow with semantic entity resolution, hallucination reduction, and schema-aware query generation for accurate graph retrieval"
         tags: ["llm", "rag", "nlp", "ai_engineer", "knowledge_graph"]
       - text: "Implemented a 3-layer semantic caching system and multi-provider LLM orchestration (Gemini, Cerebras, Groq) to optimise latency, reliability, and response efficiency"
