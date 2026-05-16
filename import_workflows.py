@@ -1,34 +1,27 @@
 """
-n8n workflow auto-importer.
+n8n workflow auto-importer — uses docker exec + n8n CLI (no API key needed).
 
-Reads every JSON in n8n/workflows/ and upserts it via the n8n REST API.
-  - New workflow  -> POST  /api/v1/workflows
-  - Already exists by name -> PUT /api/v1/workflows/{id}  (overwrites)
+How it works:
+  1. Detects the running n8n container name automatically
+  2. Copies n8n/workflows/*.json into the container via docker cp
+  3. Runs: docker exec <container> n8n import:workflow --input=<file>
+     for each workflow in dependency order
 
-Setup (one-time):
-  1. Open http://localhost:5678
-  2. Top-right avatar -> Settings -> API -> Create an API key
-  3. Copy the key and add to .env:  N8N_API_KEY=n8n_api_...
-  4. Run:  python import_workflows.py
+Usage:
+  python import_workflows.py
 
-n8n must be running (docker-compose up -d) before you run this.
+Requirements:
+  - Docker must be running
+  - n8n container must be up:  docker-compose up -d
+  - Run from the project root:  C:\\Users\\dheem\\Documents\\career-scout
 """
 
-import json
-import os
+import subprocess
 import sys
 from pathlib import Path
 
-import requests
-from dotenv import load_dotenv
-
-load_dotenv()
-
-N8N_URL       = os.getenv("N8N_URL", "http://localhost:5678")
-API_KEY       = os.getenv("N8N_API_KEY", "")
 WORKFLOWS_DIR = Path("n8n/workflows")
 
-# Import in a sensible order: seed data first, then pipelines, then bots
 IMPORT_ORDER = [
     "sync_sheets",
     "scout",
@@ -41,103 +34,79 @@ IMPORT_ORDER = [
 ]
 
 
-def _session() -> requests.Session:
-    s = requests.Session()
-    s.headers.update({"X-N8N-API-KEY": API_KEY, "Content-Type": "application/json"})
-    return s
+def _container_name() -> str:
+    """Find the running n8n container name."""
+    result = subprocess.run(
+        ["docker", "ps", "--filter", "name=n8n", "--format", "{{.Names}}"],
+        capture_output=True, text=True,
+    )
+    names = [n.strip() for n in result.stdout.strip().splitlines() if n.strip()]
+    if not names:
+        print("ERROR: No running n8n container found.")
+        print("  Start it with:  docker-compose up -d")
+        sys.exit(1)
+    return names[0]
 
 
-def _existing(s: requests.Session) -> dict[str, str]:
-    """Return {workflow_name: workflow_id} for every workflow already in n8n."""
-    r = s.get(f"{N8N_URL}/api/v1/workflows", params={"limit": 250})
-    r.raise_for_status()
-    return {w["name"]: w["id"] for w in r.json().get("data", [])}
-
-
-def _upsert(s: requests.Session, path: Path, existing: dict[str, str]) -> tuple[str, str]:
-    """
-    Import one workflow file. Returns (action, workflow_id).
-    action is 'created' or 'updated'.
-    """
-    data = json.loads(path.read_text(encoding="utf-8"))
-
-    # Strip top-level 'id' so n8n assigns its own on creation
-    data.pop("id", None)
-
-    name = data.get("name", path.stem)
-
-    if name in existing:
-        wf_id = existing[name]
-        r = s.put(f"{N8N_URL}/api/v1/workflows/{wf_id}", json=data)
-        r.raise_for_status()
-        return "updated", wf_id
-    else:
-        r = s.post(f"{N8N_URL}/api/v1/workflows", json=data)
-        r.raise_for_status()
-        wf_id = r.json().get("id", "?")
-        return "created", wf_id
+def _run(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
+    return subprocess.run(cmd, capture_output=True, text=True, check=check)
 
 
 def main() -> None:
-    # ── Pre-flight checks ──────────────────────────────────────────────────────
-    if not API_KEY:
-        print("ERROR: N8N_API_KEY is not set.")
-        print()
-        print("  1. Open http://localhost:5678")
-        print("  2. Top-right avatar -> Settings -> API -> Create an API key")
-        print("  3. Add to .env:  N8N_API_KEY=n8n_api_xxxxx")
-        print("  4. Re-run this script.")
-        sys.exit(1)
+    container = _container_name()
+    print(f"Found n8n container: {container}\n")
 
-    s = _session()
-    try:
-        s.get(f"{N8N_URL}/api/v1/workflows", params={"limit": 1}).raise_for_status()
-    except Exception as e:
-        print(f"ERROR: Cannot reach n8n at {N8N_URL}")
-        print(f"  Make sure it is running:  docker-compose up -d")
-        print(f"  Details: {e}")
-        sys.exit(1)
+    # Create a temp directory inside the container
+    _run(["docker", "exec", container, "mkdir", "-p", "/tmp/cs_workflows"])
 
-    existing = _existing(s)
+    # Build ordered file list
+    all_files  = {f.stem: f for f in WORKFLOWS_DIR.glob("*.json")}
+    ordered    = [all_files[n] for n in IMPORT_ORDER if n in all_files]
+    remainder  = [f for stem, f in all_files.items() if stem not in IMPORT_ORDER]
+    files      = ordered + remainder
 
-    # ── Build ordered file list ────────────────────────────────────────────────
-    all_files = {f.stem: f for f in WORKFLOWS_DIR.glob("*.json")}
-    ordered   = [all_files[name] for name in IMPORT_ORDER if name in all_files]
-    remainder = [f for stem, f in all_files.items() if stem not in IMPORT_ORDER]
-    files     = ordered + remainder
-
-    print(f"Importing {len(files)} workflows into {N8N_URL}\n")
+    print(f"Importing {len(files)} workflows into container '{container}'...\n")
 
     ok = failed = 0
     for path in files:
-        try:
-            action, wf_id = _upsert(s, path, existing)
-            tag = "NEW    " if action == "created" else "UPDATED"
-            print(f"  {tag}  {path.stem}  (id: {wf_id})")
-            ok += 1
-        except requests.HTTPError as e:
-            body = ""
-            try: body = e.response.json()
-            except Exception: pass
-            print(f"  FAILED  {path.stem}:  HTTP {e.response.status_code}  {body}")
+        # Copy file into container
+        dest = f"{container}:/tmp/cs_workflows/{path.name}"
+        cp = _run(["docker", "cp", str(path), dest], check=False)
+        if cp.returncode != 0:
+            print(f"  FAILED  {path.stem}  (docker cp failed: {cp.stderr.strip()})")
             failed += 1
-        except Exception as e:
-            print(f"  FAILED  {path.stem}:  {e}")
+            continue
+
+        # Import via n8n CLI
+        imp = _run(
+            ["docker", "exec", container,
+             "n8n", "import:workflow",
+             f"--input=/tmp/cs_workflows/{path.name}"],
+            check=False,
+        )
+        if imp.returncode == 0:
+            print(f"  OK      {path.stem}")
+            ok += 1
+        else:
+            err = (imp.stderr or imp.stdout or "unknown error").strip()
+            print(f"  FAILED  {path.stem}  ({err[:120]})")
             failed += 1
 
-    # ── Summary ────────────────────────────────────────────────────────────────
+    # Cleanup temp dir
+    _run(["docker", "exec", container, "rm", "-rf", "/tmp/cs_workflows"], check=False)
+
     print(f"\n{ok} imported, {failed} failed")
 
     if ok:
         print()
         print("Next steps:")
         print("  1. Open http://localhost:5678")
-        print("  2. For each workflow that uses Telegram/Gmail/Google Sheets:")
-        print("     click the node -> select your saved credential")
-        print("  3. Activate the workflows (toggle top-right in each workflow)")
+        print("  2. For each workflow: click Telegram / Gmail / Google Sheets")
+        print("     nodes and select your saved credential")
+        print("  3. Activate each workflow (toggle in top-right of workflow)")
         print()
-        print("  telegram_bot: also copy the webhook URL from the Telegram Trigger")
-        print("  node and register it with Telegram:")
+        print("  telegram_bot: copy the webhook URL from the Telegram Trigger")
+        print("  node, then register it with Telegram:")
         print("  https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WEBHOOK_URL>")
 
 
