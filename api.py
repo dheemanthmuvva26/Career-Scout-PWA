@@ -311,6 +311,30 @@ def trigger_forge(job_id: str):
     return {**result, "telegram_message": _telegram_message(result)}
 
 
+# ── DB Backup ─────────────────────────────────────────────────────────────────
+
+@app.post("/backup")
+def run_backup():
+    """Backup jobs.db to shared/backups/ — called by n8n db_backup workflow."""
+    import shutil, glob
+    from pathlib import Path
+    from datetime import date
+    src = Path("shared/jobs.db")
+    if not src.exists():
+        raise HTTPException(status_code=404, detail="jobs.db not found")
+    backup_dir = Path("shared/backups")
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    dst = backup_dir / f"jobs_{date.today().isoformat()}.db"
+    shutil.copy(src, dst)
+    # Keep last 30 days
+    backups = sorted(backup_dir.glob("jobs_*.db"))
+    deleted = []
+    for old in backups[:-30]:
+        old.unlink()
+        deleted.append(old.name)
+    return {"ok": True, "backup": str(dst), "deleted": deleted}
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
