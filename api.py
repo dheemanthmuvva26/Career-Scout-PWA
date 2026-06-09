@@ -31,7 +31,7 @@ app = FastAPI(title="Career Scout API", version="1.0.0")
 @app.on_event("startup")
 def startup():
     init_db()
-    print("✓ DB initialised")
+    print("DB initialised")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

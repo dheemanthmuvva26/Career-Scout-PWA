@@ -31,16 +31,23 @@ IMPORT_ORDER = [
 
 
 def _container_name() -> str:
+    # List containers with port info so we can prefer the one bound to 5678
     result = subprocess.run(
-        ["docker", "ps", "--filter", "name=n8n", "--format", "{{.Names}}"],
+        ["docker", "ps", "--filter", "name=n8n", "--format", "{{.Names}}\t{{.Ports}}"],
         capture_output=True, text=True,
     )
-    names = [n.strip() for n in result.stdout.strip().splitlines() if n.strip()]
-    if not names:
+    rows = [r.strip() for r in result.stdout.strip().splitlines() if r.strip()]
+    if not rows:
         print("ERROR: No running n8n container found.")
         print("  Start it with:  docker-compose up -d")
         sys.exit(1)
-    return names[0]
+    # Prefer the container that has 5678 exposed to the host
+    for row in rows:
+        parts = row.split("\t", 1)
+        if len(parts) == 2 and "5678" in parts[1] and "0.0.0.0" in parts[1]:
+            return parts[0]
+    # Fallback: first container found
+    return rows[0].split("\t")[0]
 
 
 def _import_one(container: str, path: Path) -> tuple[bool, str]:
@@ -58,7 +65,9 @@ def _import_one(container: str, path: Path) -> tuple[bool, str]:
     for field in ("meta", "pinData", "tags"):
         data.pop(field, None)
 
-    payload = json.dumps(data, ensure_ascii=False)
+    # ensure_ascii=True so the payload stays pure ASCII — no emoji/Unicode issues
+    # on Windows where subprocess text mode defaults to cp1252
+    payload = json.dumps(data, ensure_ascii=True).encode("utf-8")
     dest    = f"/tmp/wf_{path.stem}.json"
 
     # Write JSON into the container and immediately import — no docker cp needed
@@ -67,12 +76,13 @@ def _import_one(container: str, path: Path) -> tuple[bool, str]:
          f"cat > {dest} && n8n import:workflow --input={dest} && rm -f {dest}"],
         input=payload,
         capture_output=True,
-        text=True,
+        # Use bytes mode (no text=True) to avoid Windows cp1252 encoding errors
     )
 
     if result.returncode == 0:
         return True, ""
-    return False, (result.stderr or result.stdout or "unknown error").strip()
+    err = result.stderr or result.stdout or b"unknown error"
+    return False, err.decode("utf-8", errors="replace").strip()
 
 
 def main() -> None:
