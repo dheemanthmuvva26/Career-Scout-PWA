@@ -2,48 +2,42 @@
 
 import { useState } from "react";
 import { api, type Job } from "@/lib/api";
-import Tooltip from "./Tooltip";
 
-const URGENCY: Record<string, { dot: string; label: string; color: string }> = {
-  hot:    { dot: "●", label: "Hot — posted within 24h",       color: "text-red-400" },
-  active: { dot: "●", label: "Active — posted within 7 days", color: "text-yellow-400" },
-  aging:  { dot: "●", label: "Aging — over 7 days old",       color: "text-slate-400" },
-  stale:  { dot: "●", label: "Stale — likely expired",        color: "text-slate-600" },
+const URGENCY: Record<string, { label: string; color: string }> = {
+  hot:    { label: "Hot",    color: "#ef4444" },
+  active: { label: "Active", color: "#f59e0b" },
+  aging:  { label: "Aging",  color: "#52525b" },
+  stale:  { label: "Stale",  color: "#3f3f46" },
 };
 
-const scoreColor = (s: number) =>
-  s >= 4 ? "text-green-400" : s >= 3 ? "text-yellow-400" : "text-red-400";
+const scoreColor = (s: number) => s >= 4 ? "#22c55e" : s >= 3 ? "#f59e0b" : "#ef4444";
 
-const scoreLabel = (s: number) =>
-  s >= 4 ? "Strong match" : s >= 3 ? "Decent match" : "Weak match";
-
-type Props = { job: Job; onUpdate?: (id: string, changes: Partial<Job>) => void; compact?: boolean; };
+type Props = { job: Job; onUpdate?: (id: string, changes: Partial<Job>) => void; compact?: boolean };
 
 export default function JobCard({ job, onUpdate, compact = false }: Props) {
-  const [expanded, setExpanded] = useState(false);
-  const [note, setNote] = useState("");
+  const [expanded, setExpanded]   = useState(false);
   const [addingNote, setAddingNote] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
+  const [note, setNote]           = useState("");
+  const [busy, setBusy]           = useState<string | null>(null);
+  const [flash, setFlash]         = useState<string | null>(null);
 
-  const sid = job.short_id || job.id;
-  const tags: string[] = Array.isArray(job.tags_matched) ? job.tags_matched : [];
-  const detail = (job.score_detail as Record<string, unknown>) || {};
+  const sid  = job.short_id || job.id;
+  const tags: string[]    = Array.isArray(job.tags_matched) ? job.tags_matched : [];
+  const detail            = (job.score_detail as Record<string, unknown>) || {};
   const missing: string[] = Array.isArray((detail as Record<string, string[]>).missing_skills)
-    ? (detail as Record<string, string[]>).missing_skills.slice(0, 3)
-    : [];
-  const urgencyInfo = URGENCY[job.urgency] || URGENCY.aging;
+    ? (detail as Record<string, string[]>).missing_skills.slice(0, 3) : [];
+  const urg = URGENCY[job.urgency] || URGENCY.aging;
 
-  async function doAction(action: string) {
+  async function act(action: string) {
     setBusy(action);
     try {
-      if (action === "apply")     { await api.apply(sid);                     onUpdate?.(job.id, { status: "applied" }); }
-      if (action === "skip")      { await api.setStatus(sid, "skipped");       onUpdate?.(job.id, { status: "skipped" }); }
-      if (action === "interview") { await api.setOutcome(sid, "interview");    onUpdate?.(job.id, { outcome: "interview" }); }
-      if (action === "rejected")  { await api.setOutcome(sid, "rejected");     onUpdate?.(job.id, { outcome: "rejected" }); }
-      if (action === "ghosted")   { await api.setOutcome(sid, "ghosted");      onUpdate?.(job.id, { status: "ghosted" }); }
-      setDone(action);
-      setTimeout(() => setDone(null), 1500);
+      if (action === "apply")     { await api.apply(sid);                  onUpdate?.(job.id, { status: "applied" }); }
+      if (action === "skip")      { await api.setStatus(sid, "skipped");    onUpdate?.(job.id, { status: "skipped" }); }
+      if (action === "interview") { await api.setOutcome(sid, "interview"); onUpdate?.(job.id, { outcome: "interview" }); }
+      if (action === "rejected")  { await api.setOutcome(sid, "rejected");  onUpdate?.(job.id, { outcome: "rejected" }); }
+      if (action === "ghosted")   { await api.setOutcome(sid, "ghosted");   onUpdate?.(job.id, { status: "ghosted" }); }
+      setFlash(action);
+      setTimeout(() => setFlash(null), 1800);
     } catch (e) { console.error(e); }
     setBusy(null);
   }
@@ -58,149 +52,162 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
   }
 
   return (
-    <div className="card-glow rounded-2xl p-4 mb-3 transition-all">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 text-xs mb-1">
-            <Tooltip text={urgencyInfo.label} position="top">
-              <span className={`cursor-default ${urgencyInfo.color} text-[10px]`}>{urgencyInfo.dot}</span>
-            </Tooltip>
-            <span className="text-slate-300 font-semibold truncate">{job.company}</span>
-            {job.posted_date && (
-              <span className="ml-auto text-slate-600 shrink-0 tabular-nums">{job.posted_date.slice(0, 10)}</span>
+    <div className="card mb-3 overflow-hidden">
+      {/* Top accent line for urgency */}
+      <div className="h-0.5" style={{ background: urg.color, opacity: 0.6 }} />
+
+      <div className="p-4">
+        {/* Header */}
+        <div className="flex items-start gap-3 mb-3">
+          {/* Company initial */}
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
+            style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
+            {job.company?.charAt(0)?.toUpperCase() ?? "?"}
+          </div>
+
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-xs font-medium truncate" style={{ color: "var(--text-2)" }}>{job.company}</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                style={{ background: `${urg.color}18`, color: urg.color }}>
+                {urg.label}
+              </span>
+            </div>
+            <p className="font-semibold leading-snug" style={{ color: "var(--text)", fontSize: "0.95rem" }}>{job.title}</p>
+            {job.location && (
+              <p className="text-xs mt-0.5 truncate" style={{ color: "var(--text-3)" }}>{job.location}</p>
             )}
           </div>
-          <p className="font-bold text-white leading-snug">{job.title}</p>
-          {job.location && (
-            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 shrink-0"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-              {job.location}
-            </p>
+
+          {job.score > 0 && (
+            <div className="shrink-0 text-right">
+              <div className="text-base font-bold tabular-nums" style={{ color: scoreColor(job.score) }}>
+                {job.score.toFixed(1)}
+              </div>
+              <div className="text-[10px]" style={{ color: "var(--text-3)" }}>/ 5.0</div>
+            </div>
           )}
         </div>
 
-        {job.score > 0 && (
-          <Tooltip text={`${scoreLabel(job.score)} — ${job.score.toFixed(1)}/5.0`} position="left">
-            <div className={`text-sm font-bold shrink-0 px-2 py-1 rounded-lg bg-slate-800 ${scoreColor(job.score)} cursor-default`}>
-              ★ {job.score.toFixed(1)}
-            </div>
-          </Tooltip>
-        )}
-      </div>
-
-      {/* Skills */}
-      {!compact && (tags.length > 0 || missing.length > 0) && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          {tags.slice(0, 3).map((t) => (
-            <Tooltip key={t} text={`You have this skill — ${t}`} position="top">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-300 border border-green-800/40 cursor-default">✓ {t}</span>
-            </Tooltip>
-          ))}
-          {missing.map((t) => (
-            <Tooltip key={t} text={`Missing skill — consider adding ${t} to your profile`} position="top">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-red-900/30 text-red-400 border border-red-800/30 cursor-default">✗ {t}</span>
-            </Tooltip>
-          ))}
-        </div>
-      )}
-
-      {/* Expanded description */}
-      {expanded && job.description && (
-        <div className="text-xs text-slate-300 leading-relaxed max-h-48 overflow-y-auto no-scrollbar border-t border-slate-800 pt-3 mb-2 whitespace-pre-wrap">
-          {job.description.slice(0, 1500)}{job.description.length > 1500 && "…"}
-        </div>
-      )}
-
-      {/* Note input */}
-      {addingNote && (
-        <div className="flex gap-2 mb-2">
-          <input
-            autoFocus
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && saveNote()}
-            placeholder="Add a note… (Enter to save)"
-            className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-blue-500 transition"
-          />
-          <button
-            onClick={saveNote}
-            disabled={busy === "note"}
-            className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium disabled:opacity-50 transition"
-          >
-            {busy === "note" ? "…" : "Save"}
-          </button>
-        </div>
-      )}
-
-      {/* Notes display */}
-      {job.notes && (
-        <div className="text-xs text-slate-400 bg-slate-800/60 rounded-xl px-3 py-2 mb-2 border-l-2 border-blue-800">
-          {job.notes}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-1.5 flex-wrap">
-        {job.status === "new" && (
-          <>
-            <Tooltip text="Mark this job as applied" position="top">
-              <button onClick={() => doAction("apply")} disabled={!!busy}
-                className={`flex-1 min-w-0 py-2 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 ${done === "apply" ? "bg-green-500" : "bg-green-700 hover:bg-green-600"}`}>
-                {done === "apply" ? "✓ Applied!" : busy === "apply" ? "…" : "✅ Apply"}
-              </button>
-            </Tooltip>
-            <Tooltip text="Skip this job — won't apply" position="top">
-              <button onClick={() => doAction("skip")} disabled={!!busy}
-                className="flex-1 min-w-0 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold transition-all active:scale-95 disabled:opacity-50">
-                {busy === "skip" ? "…" : "❌ Skip"}
-              </button>
-            </Tooltip>
-          </>
-        )}
-        {job.status === "applied" && job.outcome === "pending" && (
-          <>
-            <Tooltip text="You received an interview!" position="top">
-              <button onClick={() => doAction("interview")} disabled={!!busy}
-                className={`flex-1 min-w-0 py-2 rounded-xl text-white text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 ${done === "interview" ? "bg-purple-500" : "bg-purple-700 hover:bg-purple-600"}`}>
-                {done === "interview" ? "✓ Saved!" : busy === "interview" ? "…" : "🎉 Interview"}
-              </button>
-            </Tooltip>
-            <Tooltip text="Application was rejected" position="top">
-              <button onClick={() => doAction("rejected")} disabled={!!busy}
-                className="flex-1 min-w-0 py-2 rounded-xl bg-red-900 hover:bg-red-800 text-white text-xs font-semibold transition-all active:scale-95 disabled:opacity-50">
-                {busy === "rejected" ? "…" : "👎 Rejected"}
-              </button>
-            </Tooltip>
-            <Tooltip text="No response in 14+ days" position="top">
-              <button onClick={() => doAction("ghosted")} disabled={!!busy}
-                className="flex-1 min-w-0 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold transition-all active:scale-95 disabled:opacity-50">
-                {busy === "ghosted" ? "…" : "👻 Ghost"}
-              </button>
-            </Tooltip>
-          </>
+        {/* Skill chips */}
+        {!compact && (tags.length > 0 || missing.length > 0) && (
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {tags.slice(0, 3).map((t) => (
+              <span key={t} className="text-xs px-2.5 py-1 rounded-full font-medium"
+                style={{ background: "rgba(34,197,94,0.1)", color: "#86efac", border: "1px solid rgba(34,197,94,0.2)" }}>
+                ✓ {t}
+              </span>
+            ))}
+            {missing.map((t) => (
+              <span key={t} className="text-xs px-2.5 py-1 rounded-full font-medium"
+                style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.15)" }}>
+                ✗ {t}
+              </span>
+            ))}
+          </div>
         )}
 
-        {/* Utility buttons */}
-        <Tooltip text={expanded ? "Collapse description" : "Read full job description"} position="top">
+        {/* Job description (expanded) */}
+        {expanded && job.description && (
+          <div className="text-xs leading-relaxed max-h-48 overflow-y-auto no-scrollbar mb-3 pt-3"
+            style={{ color: "var(--text-2)", borderTop: "1px solid var(--border)" }}>
+            {job.description.slice(0, 1500)}{job.description.length > 1500 && "…"}
+          </div>
+        )}
+
+        {/* Note display */}
+        {job.notes && (
+          <div className="text-xs px-3 py-2 rounded-xl mb-3"
+            style={{ background: "var(--surface-2)", color: "var(--text-2)", borderLeft: "2px solid var(--accent)" }}>
+            {job.notes}
+          </div>
+        )}
+
+        {/* Note input */}
+        {addingNote && (
+          <div className="flex gap-2 mb-3">
+            <input autoFocus value={note} onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveNote()}
+              placeholder="Add a note… (Enter to save)" />
+            <button onClick={saveNote} disabled={busy === "note"}
+              className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50"
+              style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+              {busy === "note" ? "…" : "Save"}
+            </button>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          {job.status === "new" && (
+            <>
+              <button onClick={() => act("apply")} disabled={!!busy}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: flash === "apply" ? "#15803d" : "rgba(34,197,94,0.15)", color: flash === "apply" ? "#fff" : "#86efac", border: "1px solid rgba(34,197,94,0.2)" }}>
+                {flash === "apply" ? "Applied ✓" : busy === "apply" ? "…" : "Apply"}
+              </button>
+              <button onClick={() => act("skip")} disabled={!!busy}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
+                style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
+                {busy === "skip" ? "…" : "Skip"}
+              </button>
+            </>
+          )}
+          {job.status === "applied" && job.outcome === "pending" && (
+            <>
+              <button onClick={() => act("interview")} disabled={!!busy}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 disabled:opacity-50"
+                style={{ background: "rgba(168,85,247,0.12)", color: "#d8b4fe", border: "1px solid rgba(168,85,247,0.2)" }}>
+                {flash === "interview" ? "Saved ✓" : busy === "interview" ? "…" : "Interview"}
+              </button>
+              <button onClick={() => act("rejected")} disabled={!!busy}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 disabled:opacity-50"
+                style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.15)" }}>
+                {busy === "rejected" ? "…" : "Rejected"}
+              </button>
+              <button onClick={() => act("ghosted")} disabled={!!busy}
+                className="flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 disabled:opacity-50"
+                style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+                {busy === "ghosted" ? "…" : "Ghosted"}
+              </button>
+            </>
+          )}
+
+          {/* Utility */}
           <button onClick={() => setExpanded(!expanded)}
-            className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition">
-            {expanded ? "▲" : "📋"}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+            style={{ background: "var(--surface-2)", color: expanded ? "var(--accent)" : "var(--text-3)", border: "1px solid var(--border)" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              {expanded
+                ? <path d="M18 15l-6-6-6 6" strokeLinecap="round" strokeLinejoin="round"/>
+                : <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>}
+            </svg>
           </button>
-        </Tooltip>
-        <Tooltip text={addingNote ? "Cancel note" : "Add a private note to this job"} position="top">
           <button onClick={() => setAddingNote(!addingNote)}
-            className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition">
-            📝
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+            style={{ background: addingNote ? "rgba(99,102,241,0.15)" : "var(--surface-2)", color: addingNote ? "var(--accent)" : "var(--text-3)", border: `1px solid ${addingNote ? "rgba(99,102,241,0.3)" : "var(--border)"}` }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round"/>
+            </svg>
           </button>
-        </Tooltip>
-        {job.url && (
-          <Tooltip text="Open original job posting" position="top">
+          {job.url && (
             <a href={job.url} target="_blank" rel="noopener noreferrer"
-              className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs transition flex items-center">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
+              style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" strokeLinecap="round"/>
+                <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
             </a>
-          </Tooltip>
+          )}
+        </div>
+
+        {/* Date footer */}
+        {job.posted_date && (
+          <p className="text-[10px] mt-2 text-right" style={{ color: "var(--text-3)" }}>
+            Posted {job.posted_date.slice(0, 10)}
+          </p>
         )}
       </div>
     </div>

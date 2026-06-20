@@ -35,75 +35,109 @@ export default function ForgePage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6">
-      <h1 className="text-xl font-bold text-white mb-1">Resume Forge</h1>
-      <p className="text-slate-400 text-sm mb-5">Generate an ATS-optimised PDF tailored to a job.</p>
+    <div className="pt-8 pb-4 fade-up">
+      <h1 className="mb-1" style={{ color: "var(--text)" }}>Resume Forge</h1>
+      <p className="text-sm mb-6" style={{ color: "var(--text-3)" }}>Generate an ATS-optimised PDF tailored to a job</p>
 
-      {/* Job selector */}
-      <label className="block text-sm text-slate-400 mb-2">Select a job</label>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Select a job</p>
+
       {loading ? (
-        <div className="h-12 rounded-xl bg-slate-800 animate-pulse mb-4" />
+        <div className="space-y-2 mb-6">
+          {[1, 2, 3].map((i) => <div key={i} className="skeleton h-16 rounded-xl" />)}
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="card p-6 text-center mb-6">
+          <p className="text-sm" style={{ color: "var(--text-3)" }}>No jobs found. Scout or import first.</p>
+        </div>
       ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto no-scrollbar mb-5">
-          {jobs.length === 0 && (
-            <p className="text-slate-500 text-sm">No jobs found. Import or scout first.</p>
-          )}
-          {jobs.map((job) => (
-            <button
-              key={job.id}
-              onClick={() => { setSelected(job); setResult(null); }}
-              className={`w-full text-left rounded-xl px-4 py-3 border transition ${
-                selected?.id === job.id
-                  ? "border-blue-500 bg-blue-900/20"
-                  : "border-slate-700 bg-slate-800 hover:border-slate-600"
-              }`}
-            >
-              <div className="font-medium text-white text-sm">{job.title}</div>
-              <div className="text-xs text-slate-400">{job.company} · {job.location}</div>
-            </button>
-          ))}
+        <div className="space-y-2 max-h-64 overflow-y-auto no-scrollbar mb-6">
+          {jobs.map((job) => {
+            const isSelected = selected?.id === job.id;
+            return (
+              <button key={job.id} onClick={() => { setSelected(job); setResult(null); }}
+                className="w-full text-left card card-press px-4 py-3 transition"
+                style={{
+                  background: isSelected ? "rgba(99,102,241,0.1)" : "var(--surface)",
+                  borderColor: isSelected ? "rgba(99,102,241,0.4)" : "var(--border)",
+                }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
+                    style={{ background: isSelected ? "rgba(99,102,241,0.2)" : "var(--surface-2)", color: isSelected ? "var(--accent)" : "var(--text-3)" }}>
+                    {job.company?.charAt(0)?.toUpperCase() ?? "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-sm truncate" style={{ color: "var(--text)" }}>{job.title}</div>
+                    <div className="text-xs truncate" style={{ color: "var(--text-3)" }}>{job.company}{job.location ? ` · ${job.location}` : ""}</div>
+                  </div>
+                  {isSelected && (
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0" style={{ color: "var(--accent)" }}>
+                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                    </svg>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {selected && (
-        <div className="rounded-2xl border border-blue-700 bg-blue-900/20 p-4 mb-5">
-          <div className="text-sm text-blue-300 font-medium">{selected.title}</div>
-          <div className="text-xs text-slate-400">{selected.company} · {selected.short_id || selected.id}</div>
-        </div>
-      )}
-
-      <button
-        onClick={forge}
-        disabled={!selected || forging}
-        className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition disabled:opacity-40"
-      >
-        {forging ? "Forging... (this takes 15-30s)" : "⚡ Generate Resume"}
+      <button onClick={forge} disabled={!selected || forging}
+        className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
+        style={{ background: "var(--accent)", color: "#fff" }}>
+        {forging ? (
+          <>
+            <svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round"/>
+            </svg>
+            Forging… (15–30s)
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Generate Resume
+          </>
+        )}
       </button>
 
       {forging && (
-        <div className="mt-4 text-center text-slate-400 text-sm animate-pulse">
-          Analysing JD · Extracting keywords · Optimising...
-        </div>
+        <p className="text-xs text-center mt-3" style={{ color: "var(--text-3)" }}>
+          Analysing JD · Extracting keywords · Optimising match…
+        </p>
       )}
 
       {result && (
         <div className="mt-5">
           {result.error ? (
-            <div className="rounded-xl bg-red-900/30 border border-red-800 text-red-300 px-4 py-3 text-sm">
-              {result.error}
+            <div className="card p-4 flex gap-3 items-start"
+              style={{ borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0 mt-0.5" style={{ color: "#ef4444" }}>
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <p className="text-sm" style={{ color: "#fca5a5" }}>{result.error}</p>
             </div>
           ) : (
-            <div className="rounded-2xl border border-green-700 bg-green-900/20 p-4 text-center">
-              <div className="text-2xl mb-2">✅</div>
-              <p className="text-green-300 font-medium mb-3">Resume generated!</p>
+            <div className="card p-5 text-center"
+              style={{ borderColor: "rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.06)" }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3"
+                style={{ background: "rgba(34,197,94,0.15)" }}>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6" style={{ color: "#22c55e" }}>
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+              </div>
+              <p className="font-semibold mb-1" style={{ color: "#86efac" }}>Resume generated!</p>
+              <p className="text-xs mb-4" style={{ color: "var(--text-3)" }}>Tailored and ATS-optimised</p>
               {result.pdf_path && (
-                <a
-                  href={`${apiBase}/resumes/${result.pdf_path.split(/[\\/]/).pop()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-6 py-2 rounded-xl bg-green-700 hover:bg-green-600 text-white text-sm font-medium transition"
-                >
-                  📥 Download PDF
+                <a href={`${apiBase}/resumes/${result.pdf_path.split(/[\\/]/).pop()}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95"
+                  style={{ background: "rgba(34,197,94,0.2)", color: "#86efac", border: "1px solid rgba(34,197,94,0.3)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round"/>
+                    <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  Download PDF
                 </a>
               )}
             </div>

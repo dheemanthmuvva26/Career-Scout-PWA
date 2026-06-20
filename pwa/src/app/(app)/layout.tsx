@@ -3,11 +3,13 @@ import BottomNav from "@/components/BottomNav";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="sidebar-layout min-h-screen" style={{ background: "var(--background)" }}>
-      <BottomNav />
-      <main className="sidebar-content flex-1 pb-20 lg:pb-8 overflow-y-auto">
-        {children}
+    <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
+      <main className="flex-1 overflow-y-auto pb-24">
+        <div className="max-w-lg mx-auto px-4">
+          {children}
+        </div>
       </main>
+      <BottomNav />
     </div>
   );
 }

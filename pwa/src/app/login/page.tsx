@@ -33,62 +33,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--background)" }}>
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center px-5 safe-top" style={{ background: "var(--bg)" }}>
+      <div className="w-full max-w-sm fade-up">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="text-4xl mb-2">🎯</div>
-          <h1 className="text-2xl font-bold text-white">Career Scout</h1>
-          <p className="text-slate-400 text-sm mt-1">Your AI career assistant</p>
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "var(--accent)", boxShadow: "0 0 40px rgba(99,102,241,0.3)" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h1 style={{ color: "var(--text)" }}>Career Scout</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>Your AI-powered job search assistant</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
-            />
-          </div>
+        {/* Mode toggle */}
+        <div className="flex rounded-xl p-1 mb-5" style={{ background: "var(--surface-2)" }}>
+          {(["signin", "signup"] as const).map((m) => (
+            <button key={m} onClick={() => { setMode(m); setError(""); setMessage(""); }}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold transition"
+              style={{
+                background: mode === m ? "var(--surface)" : "transparent",
+                color: mode === m ? "var(--text)" : "var(--text-3)",
+                boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.4)" : "none",
+              }}>
+              {m === "signin" ? "Sign in" : "Sign up"}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input type="email" placeholder="Email address"
+            value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password"
+            value={password} onChange={(e) => setPassword(e.target.value)} required />
 
           {error && (
-            <p className="text-red-400 text-sm text-center">{error}</p>
+            <div className="rounded-xl px-3 py-2.5 text-xs"
+              style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
+              {error}
+            </div>
           )}
           {message && (
-            <p className="text-green-400 text-sm text-center">{message}</p>
+            <div className="rounded-xl px-3 py-2.5 text-xs"
+              style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)", color: "#86efac" }}>
+              {message}
+            </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition disabled:opacity-50"
-          >
-            {loading ? "..." : mode === "signin" ? "Sign In" : "Create Account"}
+          <button type="submit" disabled={loading}
+            className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
+            style={{ background: "var(--accent)", color: "#fff" }}>
+            {loading ? "…" : mode === "signin" ? "Sign In" : "Create Account"}
           </button>
         </form>
-
-        <p className="text-center text-slate-500 text-sm mt-4">
-          {mode === "signin" ? "No account? " : "Have an account? "}
-          <button
-            onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(""); setMessage(""); }}
-            className="text-blue-400 hover:text-blue-300"
-          >
-            {mode === "signin" ? "Sign up" : "Sign in"}
-          </button>
-        </p>
       </div>
     </div>
   );

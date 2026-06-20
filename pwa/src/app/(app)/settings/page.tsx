@@ -43,31 +43,27 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 pt-6 pb-8">
-      <h1 className="text-xl font-bold text-white mb-5">Settings</h1>
+    <div className="pt-8 pb-4 fade-up">
+      <h1 className="mb-1" style={{ color: "var(--text)" }}>Settings</h1>
+      <p className="text-sm mb-6" style={{ color: "var(--text-3)" }}>Configure your job search preferences</p>
 
       {/* Target Roles */}
       <section className="mb-6">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Target Roles</h2>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Target Roles</p>
         <div className="flex gap-2 mb-3">
-          <input
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
+          <input value={newRole} onChange={(e) => setNewRole(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addRole()}
-            placeholder="e.g. Data Analyst"
-            className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={addRole}
-            disabled={saving === "role"}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm disabled:opacity-50"
-          >
-            Add
+            placeholder="e.g. Data Analyst" />
+          <button onClick={addRole} disabled={saving === "role"}
+            className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
+            style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+            {saving === "role" ? "…" : "Add"}
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {roles.map((r) => (
-            <span key={r.title} className="px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-sm text-white">
+            <span key={r.title} className="text-sm px-3 py-1.5 rounded-full"
+              style={{ background: "rgba(99,102,241,0.1)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.2)" }}>
               {r.title}
             </span>
           ))}
@@ -76,31 +72,25 @@ export default function SettingsPage() {
 
       {/* Target Companies */}
       <section className="mb-6">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Target Companies</h2>
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Target Companies</p>
         <div className="flex gap-2 mb-3">
-          <input
-            value={newCompany}
-            onChange={(e) => setNewCompany(e.target.value)}
+          <input value={newCompany} onChange={(e) => setNewCompany(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addCompany()}
-            placeholder="e.g. Google"
-            className="flex-1 px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-white text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500"
-          />
-          <button
-            onClick={addCompany}
-            disabled={saving === "company"}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm disabled:opacity-50"
-          >
-            Add
+            placeholder="e.g. Google" />
+          <button onClick={addCompany} disabled={saving === "company"}
+            className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
+            style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+            {saving === "company" ? "…" : "Add"}
           </button>
         </div>
-        <div className="space-y-1">
+        <div className="space-y-2">
           {companies.filter((c) => !c.blacklisted).map((c) => (
-            <div key={c.name} className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-800 border border-slate-700">
-              <span className="text-sm text-white">{c.name}</span>
+            <div key={c.name} className="card flex items-center justify-between px-4 py-3">
+              <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{c.name}</span>
               <button
                 onClick={() => api.blacklist(c.name).then(() => setCompanies((prev) => prev.filter((x) => x.name !== c.name)))}
-                className="text-xs text-red-400 hover:text-red-300"
-              >
+                className="text-xs font-medium transition active:scale-95 px-3 py-1.5 rounded-lg"
+                style={{ color: "#fca5a5", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)" }}>
                 Blacklist
               </button>
             </div>
@@ -110,11 +100,10 @@ export default function SettingsPage() {
 
       {/* Account */}
       <section>
-        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">Account</h2>
-        <button
-          onClick={signOut}
-          className="w-full py-3 rounded-xl border border-red-800 text-red-400 hover:bg-red-900/20 text-sm font-medium transition"
-        >
+        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Account</p>
+        <button onClick={signOut}
+          className="w-full py-3.5 rounded-xl text-sm font-semibold transition active:scale-95"
+          style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.2)" }}>
           Sign Out
         </button>
       </section>
