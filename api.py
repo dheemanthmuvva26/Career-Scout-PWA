@@ -8,6 +8,7 @@ Start: python api.py  (or: uvicorn api:app --reload --port 8000)
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -27,11 +28,22 @@ from core.db import (
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://careerscout-pwa.vercel.app", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _API_KEY = os.getenv("API_KEY", "")
 _OPEN_PATHS = {"/health", "/"}
 
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
+    # Allow CORS preflight through without auth
+    if request.method == "OPTIONS":
+        return await call_next(request)
     if _API_KEY and request.url.path not in _OPEN_PATHS:
         key = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
         if key != _API_KEY:
