@@ -6,7 +6,7 @@ n8n (Docker) calls this via HTTP Request nodes using host.docker.internal:8000
 Start: python api.py  (or: uvicorn api:app --reload --port 8000)
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -26,6 +26,17 @@ from core.db import (
 )
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
+
+_API_KEY = os.getenv("API_KEY", "")
+_OPEN_PATHS = {"/health", "/"}
+
+@app.middleware("http")
+async def require_api_key(request: Request, call_next):
+    if _API_KEY and request.url.path not in _OPEN_PATHS:
+        key = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
+        if key != _API_KEY:
+            return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
+    return await call_next(request)
 
 # Initialise DB on startup
 @app.on_event("startup")
