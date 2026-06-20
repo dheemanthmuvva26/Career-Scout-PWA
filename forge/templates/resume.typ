@@ -6,7 +6,7 @@
 
 #set page(
   paper: "us-letter",
-  margin: (x: 0.55in, y: 0.45in),
+  margin: (x: 0.5in, y: 0.3in),
 )
 
 #set text(
@@ -15,62 +15,47 @@
   fallback: true,
 )
 
-#set par(leading: 0.52em, justify: false)
+#set par(leading: 0.45em, justify: false)
 
 #show heading.where(level: 1): it => {
-  v(5pt)
-  text(weight: "bold", size: 11pt)[#it.body]
-  v(-4pt)
-  line(length: 100%, stroke: 0.6pt)
-  v(1pt)
-}
-
-#show heading.where(level: 2): it => {
-  v(3pt)
-  text(weight: "bold")[#it.body]
+  v(2pt)
+  text(weight: "bold", style: "italic", size: 12pt)[#it.body]
+  v(-8pt)
+  line(length: 100%, stroke: 0.5pt)
+  v(2pt)
 }
 
 // ── HEADER ────────────────────────────────────────────────────────────────────
 #align(center)[
-  #text(size: 20pt, weight: "bold")[<<NAME>>]
+  #text(size: 22pt, weight: "bold")[<<NAME>>]
   #linebreak()
-  #text(size: 10pt)[
-    <<LOCATION>> #h(6pt) | #h(6pt) <<EMAIL>> #h(6pt) | #h(6pt) <<PHONE>>
-    #linebreak()
-    <<LINKEDIN>> #h(6pt) | #h(6pt) <<GITHUB>>
-  ]
+  #v(3pt)
+  #text(size: 10pt)[<<CONTACT_LINE>>]
 ]
-
-#v(4pt)
 
 // ── SUMMARY ───────────────────────────────────────────────────────────────────
 = Summary
 
 <<SUMMARY>>
 
+// ── EDUCATION ─────────────────────────────────────────────────────────────────
+= Education
+
+<<EDUCATION_BLOCK>>
+
 // ── SKILLS ────────────────────────────────────────────────────────────────────
 = Skills
 
 <<SKILLS_BLOCK>>
-
-// ── EDUCATION ─────────────────────────────────────────────────────────────────
-= Education
-
-== <<ED_DEGREE>> | <<ED_INSTITUTION>>
-
-#text(style: "italic")[<<ED_DATES>>] #h(1fr) GPA: <<ED_GPA>>
-
-<<ED_HIGHLIGHTS>>
-
-// ── EXPERIENCE ────────────────────────────────────────────────────────────────
-= Experience
-
-<<EXPERIENCE_BLOCK>>
 
 // ── PROJECTS ──────────────────────────────────────────────────────────────────
 = Projects
 
 <<PROJECTS_BLOCK>>
 
-// ── CERTIFICATIONS ────────────────────────────────────────────────────────────
+// ── INTERNSHIPS ───────────────────────────────────────────────────────────────
+= Internships
+
+<<EXPERIENCE_BLOCK>>
+
 <<CERTIFICATIONS_BLOCK>>

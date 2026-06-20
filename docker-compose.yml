@@ -8,6 +8,7 @@ services:
       - GENERIC_TIMEZONE=Asia/Kolkata
       - TZ=Asia/Kolkata
       - N8N_SECURE_COOKIE=false
+      - N8N_RUNNERS_ENABLED=false
       - WEBHOOK_URL=https://multilaminated-tracie-welcomingly.ngrok-free.dev/
       - N8N_EDITOR_BASE_URL=https://multilaminated-tracie-welcomingly.ngrok-free.dev/
     volumes:

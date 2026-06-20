@@ -1,0 +1,109 @@
+import { createClient } from "./supabase/client";
+
+const BASE = process.env.NEXT_PUBLIC_API_URL!;
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY!;
+
+async function apiFetch(path: string, init?: RequestInit) {
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY,
+  };
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+
+  const res = await fetch(BASE + path, { ...init, headers });
+  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+  return res.json();
+}
+
+export type Job = {
+  id: string;
+  short_id: string;
+  title: string;
+  company: string;
+  location: string;
+  url: string;
+  description: string;
+  score: number;
+  score_detail: Record<string, unknown>;
+  tags_matched: string[];
+  status: string;
+  outcome: string;
+  urgency: string;
+  posted_date: string;
+  created_at: string;
+  updated_at: string;
+  follow_up_due: string | null;
+  resume_path: string | null;
+  notes: string | null;
+};
+
+export type Stats = {
+  total: number;
+  new: number;
+  applied: number;
+  interview: number;
+  offer: number;
+  rejected: number;
+  ghosted: number;
+  response_rate: number;
+  interview_rate: number;
+};
+
+export const api = {
+  stats: (): Promise<Stats> => apiFetch("/stats"),
+
+  jobs: (params?: Record<string, string>): Promise<Job[]> => {
+    const q = params ? "?" + new URLSearchParams(params).toString() : "";
+    return apiFetch(`/jobs${q}`);
+  },
+
+  job: (id: string): Promise<Job> => apiFetch(`/jobs/${id}`),
+
+  apply: (id: string) =>
+    apiFetch(`/jobs/${id}/apply`, { method: "POST" }),
+
+  setStatus: (id: string, status: string) =>
+    apiFetch(`/jobs/${id}/status`, {
+      method: "POST",
+      body: JSON.stringify({ status }),
+    }),
+
+  setOutcome: (id: string, outcome: string, rejection_reason?: string) =>
+    apiFetch(`/jobs/${id}/outcome`, {
+      method: "POST",
+      body: JSON.stringify({ outcome, rejection_reason }),
+    }),
+
+  note: (id: string, note: string) =>
+    apiFetch(`/jobs/${id}/note`, {
+      method: "POST",
+      body: JSON.stringify({ note }),
+    }),
+
+  forge: (id: string) =>
+    apiFetch(`/forge/${id}`, { method: "POST" }),
+
+  scout: () => apiFetch("/scout", { method: "POST" }),
+
+  companies: () => apiFetch("/companies"),
+  addCompany: (name: string, url?: string) =>
+    apiFetch("/companies", { method: "POST", body: JSON.stringify({ name, url }) }),
+  blacklist: (name: string) =>
+    apiFetch("/companies/blacklist", { method: "POST", body: JSON.stringify({ name }) }),
+
+  roles: () => apiFetch("/roles"),
+  addRole: (title: string) =>
+    apiFetch("/roles", { method: "POST", body: JSON.stringify({ title }) }),
+
+  insights: () => apiFetch("/insights/weekly"),
+  gaps: () => apiFetch("/insights/gaps"),
+  signals: () => apiFetch("/insights/signals"),
+
+  importJob: (url: string) =>
+    apiFetch("/import", { method: "POST", body: JSON.stringify({ url }) }),
+};

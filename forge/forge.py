@@ -53,6 +53,13 @@ def _load_master() -> dict:
 
 # ── Typst rendering ───────────────────────────────────────────────────────────
 
+_ACRONYMS = {"ml", "ai", "bi", "llm", "rag", "nlp", "sql", "etl", "api"}
+
+
+def _label_word(word: str) -> str:
+    return word.upper() if word.lower() in _ACRONYMS else word.capitalize()
+
+
 def _skills_block(skills_section: dict, skills_order: list[str]) -> str:
     lines = []
     seen = set()
@@ -65,7 +72,7 @@ def _skills_block(skills_section: dict, skills_order: list[str]) -> str:
         items = skills_section[key]
         if not items:
             continue
-        label = key.replace("_", " ").title()
+        label = " ".join(_label_word(w) for w in key.replace("_", " ").split())
         lines.append(f"*{label}:* {', '.join(items)}")
     return " \\ \n".join(lines)   # Typst line break between rows
 
@@ -74,26 +81,50 @@ def _experience_block(selected_experience: list[dict]) -> str:
     blocks = []
     for exp in selected_experience:
         bullets = "\n".join(f"- {b}" for b in exp.get("bullets", []))
-        loc = f" | {exp['location']}" if exp.get("location") else ""
-        blocks.append(
-            f"== {exp.get('role', '')} | {exp.get('company', '')}\n"
-            f"#text(style: \"italic\")[{exp.get('dates', '')}]{loc}\n\n"
-            f"{bullets}"
+        loc = f", {exp['location']}" if exp.get("location") else ""
+        header = (
+            f"*{exp.get('role', '')} — {exp.get('company', '')}{loc}*"
+            f" #h(1fr) {exp.get('dates', '')}"
         )
+        blocks.append(f"{header}\n{bullets}")
     return "\n\n".join(blocks)
 
 
-def _projects_block(selected_projects: list[dict]) -> str:
+def _projects_block(selected_projects: list[dict], master_projects: list[dict]) -> str:
+    sponsors = {p["name"]: p["sponsor"] for p in master_projects if p.get("sponsor")}
     blocks = []
     for proj in selected_projects:
+        name = proj.get("name", "")
         tech_str = ", ".join(proj.get("tech", []))
         bullets = "\n".join(f"- {b}" for b in proj.get("bullets", []))
-        gh = proj.get("github", "")
-        gh_line = f" | #link(\"{gh}\")[GitHub]" if gh else ""
-        blocks.append(
-            f"== {proj.get('name', '')} | _{tech_str}_{gh_line}\n\n"
-            f"{bullets}"
+        header = f"*{name}*"
+        sponsor = sponsors.get(name)
+        if sponsor:
+            header += f" #h(1fr) {_escape_typst(sponsor)}"
+        if tech_str:
+            header += f"\n_{tech_str}_"
+        blocks.append(f"{header}\n{bullets}")
+    return "\n\n".join(blocks)
+
+
+def _education_block(education: list[dict]) -> str:
+    blocks = []
+    for i, ed in enumerate(education):
+        gpa = ed.get("gpa", "")
+        gpa_part = f"GPA: {_escape_typst(str(gpa))} #h(8pt) " if gpa else ""
+        dates = ed.get("graduation", ed.get("dates", ""))
+        loc = f", {ed['location']}" if ed.get("location") else ""
+        header = (
+            f"*{_escape_typst(ed.get('degree', ''))}*"
+            f" #h(1fr) {gpa_part}#text(style: \"italic\")[{_escape_typst(dates)}]"
         )
+        institution_line = f"{_escape_typst(ed.get('institution', ''))}{_escape_typst(loc)}"
+        block = f"{header} #linebreak()\n{institution_line}"
+        if i == 0:
+            highlights = "\n".join(f"- {_escape_typst(h)}" for h in ed.get("highlights", []))
+            if highlights:
+                block += f"\n{highlights}"
+        blocks.append(block)
     return "\n\n".join(blocks)
 
 
@@ -101,41 +132,57 @@ def _certs_block(certifications: list[dict]) -> str:
     if not certifications:
         return ""
     lines = "\n".join(
-        f"- {c.get('name')} — {c.get('issuer')} ({c.get('date', '')})"
+        f"- {_escape_typst(c.get('name', ''))} — {_escape_typst(c.get('issuer', ''))} "
+        f"({_escape_typst(c.get('date', ''))})"
         for c in certifications
     )
     return f"= Certifications\n\n{lines}"
+
+
+def _escape_typst(s: str) -> str:
+    """Escape characters that Typst markup would otherwise interpret
+    (e.g. '@' in an email address starts a label reference)."""
+    for ch in ("\\", "@", "#", "_", "*", "<", ">", "$", "`"):
+        s = s.replace(ch, "\\" + ch)
+    return s
+
+
+def _typst_str(s: str) -> str:
+    """Escape characters for embedding inside a Typst string literal ("...")."""
+    return s.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def _contact_line(p: dict) -> str:
+    parts = []
+    if p.get("email"):
+        parts.append(_escape_typst(p["email"]))
+    if p.get("phone"):
+        parts.append(_escape_typst(p["phone"]))
+    if p.get("github"):
+        url = p["github"] if p["github"].startswith("http") else f"https://{p['github']}"
+        parts.append(f'#link("{_typst_str(url)}")[GitHub]')
+    if p.get("linkedin"):
+        url = p["linkedin"] if p["linkedin"].startswith("http") else f"https://{p['linkedin']}"
+        parts.append(f'#link("{_typst_str(url)}")[LinkedIn]')
+    return " #h(6pt) | #h(6pt) ".join(parts)
 
 
 def _render(master: dict, optimized: dict, profile_config: dict) -> str:
     """Fill the template placeholders and return a complete .typ string."""
     template = _TEMPLATE.read_text(encoding="utf-8")
     p  = master.get("personal", {})
-    ed = (master.get("education") or [{}])[0]
-
-    ed_highlights = "\n".join(
-        f"- {h}" for h in ed.get("highlights", [])
-    )
 
     replacements = {
-        "<<NAME>>":             p.get("name", "Your Name"),
-        "<<LOCATION>>":         p.get("location", ""),
-        "<<EMAIL>>":            p.get("email", ""),
-        "<<PHONE>>":            p.get("phone", ""),
-        "<<LINKEDIN>>":         p.get("linkedin", ""),
-        "<<GITHUB>>":           p.get("github", ""),
-        "<<SUMMARY>>":          optimized.get("summary", ""),
+        "<<NAME>>":             _escape_typst(p.get("name", "Your Name")),
+        "<<CONTACT_LINE>>":     _contact_line(p),
+        "<<SUMMARY>>":          _escape_typst(optimized.get("summary", "")),
+        "<<EDUCATION_BLOCK>>":  _education_block(master.get("education", [])),
         "<<SKILLS_BLOCK>>":     _skills_block(
                                     optimized.get("skills_section", master.get("skills", {})),
                                     profile_config.get("skills_order", []),
                                 ),
-        "<<ED_DEGREE>>":        ed.get("degree", ""),
-        "<<ED_INSTITUTION>>":   ed.get("institution", ""),
-        "<<ED_DATES>>":         ed.get("graduation", ed.get("dates", "")),
-        "<<ED_GPA>>":           ed.get("gpa", ""),
-        "<<ED_HIGHLIGHTS>>":    ed_highlights,
         "<<EXPERIENCE_BLOCK>>": _experience_block(optimized.get("selected_experience", [])),
-        "<<PROJECTS_BLOCK>>":   _projects_block(optimized.get("selected_projects", [])),
+        "<<PROJECTS_BLOCK>>":   _projects_block(optimized.get("selected_projects", []), master.get("projects", [])),
         "<<CERTIFICATIONS_BLOCK>>": _certs_block(master.get("certifications", [])),
     }
 
@@ -241,6 +288,7 @@ def _telegram_message(result: dict) -> str:
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Generate a tailored resume PDF for a job.")
     parser.add_argument("--job-id", required=True, help="Job ID from the DB")
     args = parser.parse_args()

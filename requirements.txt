@@ -8,9 +8,10 @@ rapidfuzz
 # LLM
 groq
 
-# API server (bridge between n8n Docker and Python scripts)
+# API server
 fastapi
 uvicorn[standard]
+psycopg2-binary
 
 # Storage / Config
 pyyaml

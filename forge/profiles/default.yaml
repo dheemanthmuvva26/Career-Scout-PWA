@@ -9,7 +9,7 @@ summary_focus: >
   Use when job tags don't clearly map to data_scientist or bi_developer.
 
 skills_order:
-  - programming
+  - languages
   - ml_frameworks
   - data_tools
   - bi_tools
@@ -34,6 +34,7 @@ project_tags:
   - data_scientist
   - data_analyst
 
-max_experience_bullets: 3
-max_projects: 3
-max_project_bullets: 2
+max_experience_roles: 2
+max_experience_bullets: 2
+max_projects: 2
+max_project_bullets: 3

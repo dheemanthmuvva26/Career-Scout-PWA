@@ -199,9 +199,9 @@ TELEGRAM_WEBHOOK_PATH = "career-scout-telegram"
 
 step("Registering Telegram webhook...")
 webhook_url = f"{ngrok_url}/webhook/{TELEGRAM_WEBHOOK_PATH}"
-result = tg("setWebhook", url=webhook_url)
+result = tg("setWebhook", url=webhook_url, allowed_updates=["message", "callback_query"])
 if result.get("ok"):
-    ok(f"Webhook set: {webhook_url}")
+    ok(f"Webhook set: {webhook_url} (messages + button taps)")
 else:
     warn(f"setWebhook failed: {result}")
 

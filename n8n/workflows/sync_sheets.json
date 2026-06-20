@@ -77,7 +77,8 @@
         "url": "http://host.docker.internal:8000/companies",
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ name: $json.name, careers_url: $json.careers_url || '', linkedin_slug: $json.linkedin_slug || '', priority: parseInt($json.priority) || 1 }) }}"
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ name: $json['Company'], careers_url: $json['Careers URL'] || '', linkedin_slug: $json['LinkedIn Slug'] || '', priority: parseInt($json['Priority']) || 1 }) }}"
       },
       "id": "3a085726-d6a4-4688-8ef5-9f1815081491",
       "name": "Upsert Company",
@@ -94,7 +95,8 @@
         "url": "http://host.docker.internal:8000/roles",
         "sendBody": true,
         "contentType": "json",
-        "body": "={{ JSON.stringify({ title: $json.role_title, keywords: ($json.keywords || '').split(',').map(k => k.trim()).filter(Boolean), tags: ($json.tags || '').split(',').map(t => t.trim()).filter(Boolean) }) }}"
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json['Role Title'], keywords: ($json['Search Keywords (comma separated)'] || '').split(',').map(k => k.trim()).filter(Boolean), tags: ($json['Tags'] || '').split(',').map(t => t.trim()).filter(Boolean) }) }}"
       },
       "id": "74cd5b52-9435-4217-8894-424215f502c1",
       "name": "Upsert Role",

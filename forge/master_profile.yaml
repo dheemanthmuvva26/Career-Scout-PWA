@@ -16,12 +16,12 @@ education:
       - "Relevant coursework: Machine Learning, NLP, Knowledge Graphs, Data Structures, Statistics, DBMS"
 
 skills:
-  programming:   ["Python", "SQL", "Java", "Git"]
-  ml_frameworks: ["scikit-learn", "Random Forest", "Decision Tree", "NLP", "Agentic AI"]
+  languages:     ["Python", "SQL", "Java"]
+  ml_frameworks: ["NLP", "Agentic AI"]
   llm_rag:       ["LangChain", "RAG", "Prompt Engineering", "OpenAI API", "Gemini API", "Knowledge Graphs", "FAISS"]
-  data_tools:    ["Pandas", "NumPy", "Excel"]
-  bi_tools:      ["Power BI", "Tableau", "Streamlit"]
-  databases:     ["MySQL", "MongoDB", "Neo4j"]
+  data_tools:    ["Pandas", "NumPy", "Excel", "MS PowerPoint"]
+  bi_tools:      ["Power BI", "Tableau"]
+  databases:     ["MongoDB", "Neo4j"]
   other:         ["TypeScript", "VS Code Extension API", "Dialogflow CX"]
 
 experience:
@@ -42,8 +42,8 @@ experience:
     dates: "Feb 2024 – Apr 2024"
     tags: ["data_analyst", "bi", "bi_developer", "python", "sql"]
     bullets:
-      - text: "Performed exploratory data analysis on 20,000+ automobile sales records using Python, Pandas, and NumPy to identify business trends and customer insights"
-        tags: ["data_analyst", "python", "data_scientist"]
+      - text: "Performed exploratory data analysis on 20,000+ automobile sales records using Python, Pandas, NumPy, and Excel pivot tables to identify business trends and customer insights"
+        tags: ["data_analyst", "python", "data_scientist", "excel"]
       - text: "Created interactive Power BI dashboards with drill-through analysis and visual storytelling to support data-driven decision making"
         tags: ["bi", "bi_developer", "data_analyst"]
 
@@ -60,6 +60,7 @@ experience:
 
 projects:
   - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
+    sponsor: "RTGS, Govt. of AP"
     description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph, with an interactive analytics dashboard"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq", "Streamlit"]
     tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph", "bi", "bi_developer", "data_analyst"]
@@ -87,6 +88,48 @@ projects:
       - text: "Implemented buffered diff-based review workflows and autonomous tool-use reasoning loops for controlled AI-assisted code modification and debugging"
         tags: ["ai_engineer", "llm", "agentic", "genai"]
 
+  - name: "Agentic Credit Risk Analyst"
+    status: "Ongoing"
+    description: "Multi-agent credit risk scoring system combining an ML default-prediction model with an agentic underwriting pipeline"
+    tech: ["Python", "scikit-learn", "XGBoost", "SHAP", "LangChain", "FAISS", "Power BI"]
+    tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst"]
+    github: "github.com/Dheemanth2610"
+    bullets:
+      - text: "Building an XGBoost-based credit default prediction model with SHAP-driven explainability for individual risk scores"
+        tags: ["ml", "data_scientist"]
+      - text: "Designing a multi-agent pipeline (data, scoring, underwriter, and policy-QA agents) using LangChain to generate explainable underwriting memos and approve/reject recommendations"
+        tags: ["ai_engineer", "agentic", "llm"]
+      - text: "Developing a Power BI dashboard for portfolio-level risk distribution and case-level drill-through"
+        tags: ["bi", "bi_developer", "data_analyst"]
+
+  - name: "Agentic Financial Filings Research Assistant"
+    status: "Ongoing"
+    description: "Multi-agent Graph RAG assistant that ingests company annual reports and filings and surfaces key learnings and insights, extending the CCKG architecture"
+    tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Groq", "Streamlit"]
+    tags: []
+    github: "github.com/Dheemanth2610"
+    bullets:
+      - text: "Extending the CCKG Graph RAG pipeline (Neo4j, LangChain, FAISS) to ingest annual reports, 10-K/10-Q filings, and earnings call transcripts and extract key learnings"
+        tags: ["llm", "rag", "graph", "ai_engineer"]
+      - text: "Designing a multi-agent pipeline (retriever, analyst, summarizer, and verifier agents) to extract financial metrics, generate insight briefs, and reduce hallucination via source verification"
+        tags: ["ai_engineer", "agentic", "llm", "genai"]
+      - text: "Building a Streamlit dashboard for cross-quarter and cross-company financial comparisons"
+        tags: ["bi", "bi_developer", "data_analyst"]
+
+  - name: "Autonomous Multi-Agent Software Engineering & Self-Healing QA Assistant"
+    description: "Stateful multi-agent framework that analyses Python codebases, generates test suites, and self-heals failing tests via an AI-driven diagnostic loop"
+    tech: ["Python", "LangGraph", "CrewAI", "Groq API", "FAISS", "SentenceTransformers", "Pytest", "Radon", "Pylint", "SQLite", "Node.js"]
+    tags: ["ai_engineer", "llm", "agentic", "rag", "genai"]
+    bullets:
+      - text: "Built a stateful, autonomous multi-agent software engineering framework using LangGraph and CrewAI to scan Python codebases, extract AST signatures, synthesize complete pytest suites, and evaluate overall codebase health scores"
+        tags: ["ai_engineer", "agentic", "llm", "genai"]
+      - text: "Engineered an isolated subprocess sandbox runner that clones target files dynamically, applies AI-synthesized code patches, and runs styling, complexity, and testing validations safely away from the host system"
+        tags: ["ai_engineer", "agentic"]
+      - text: "Implemented a self-healing diagnostic loop powered by a Groq-hosted LLM that isolates and parses traceback streams to generate precise Git-style diff suggestions, resolving test failures within a 2-retry limit"
+        tags: ["ai_engineer", "llm", "agentic", "genai"]
+      - text: "Designed a hybrid lexical-semantic RAG retriever using FAISS dense vector search and AST symbol mapping, coupled with an SQLite relational database to cache failure history and perform Jaccard-similarity matches on past remediation paths"
+        tags: ["ai_engineer", "llm", "rag"]
+
 certifications:
   - name: "GenAI Powered Data Analytics"
     issuer: "Forage"
@@ -96,3 +139,7 @@ certifications:
     issuer: "Google / Coursera"
     date: "In Progress"
     tags: ["data_analyst", "bi"]
+  - name: "Introduction to Financial Accounting"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["finance", "financial_analyst", "accounting", "financial_reporting", "budgeting"]

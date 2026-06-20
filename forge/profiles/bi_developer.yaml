@@ -15,7 +15,7 @@ summary_focus: >
   Emphasise stakeholder-facing dashboards and business impact.
 
 skills_order:
-  - programming
+  - languages
   - bi_tools
   - databases
   - data_tools
@@ -36,6 +36,7 @@ project_tags:
   - data_analyst
   - sql
 
-max_experience_bullets: 3
-max_projects: 3
-max_project_bullets: 2
+max_experience_roles: 2
+max_experience_bullets: 2
+max_projects: 2
+max_project_bullets: 3

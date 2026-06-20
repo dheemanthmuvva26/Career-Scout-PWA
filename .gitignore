@@ -27,3 +27,35 @@ build/
 Thumbs.db
 shared/jobs.db-shm
 shared/jobs.db-wal
+shared/
+
+# Personal files
+*.jpg
+*.JPG
+*.jpeg
+*.png
+*.pdf
+*.docx
+*.md
+sign.png
+resume.md
+
+# One-off scripts (not needed on Render)
+migrate_to_pg.py
+setup_supabase_schema.py
+get_telegram_chat_id.py
+update_inline_buttons_workflow.py
+exec101.json
+put_result.json
+sync_sheets_live.json
+sync_sheets_update.json
+career_scout.db
+
+# PWA — Next.js build artifacts and local env
+pwa/node_modules/
+pwa/.next/
+pwa/.env.local
+pwa/tsconfig.tsbuildinfo
+pwa/public/sw.js
+pwa/public/workbox-*.js
+pwa/public/swe-worker-*.js

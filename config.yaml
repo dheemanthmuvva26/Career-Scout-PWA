@@ -111,7 +111,7 @@ sheets:
 
 # ── Gmail monitor ─────────────────────────────────────────────────────────────
 gmail:
-  address: "dheemanth.chowdari@gmail.com"
+  address: "dheemanth.muvva26@gmail.com"
   poll_interval_minutes: 30
 
   # LinkedIn job alert parsing

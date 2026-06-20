@@ -17,7 +17,7 @@ summary_focus: >
 
 # Skill categories shown on resume, in this order
 skills_order:
-  - programming
+  - languages
   - ml_frameworks
   - llm_rag
   - data_tools
@@ -44,6 +44,7 @@ project_tags:
   - graph
   - ai_engineer
 
-max_experience_bullets: 3
-max_projects: 3
-max_project_bullets: 2
+max_experience_roles: 2
+max_experience_bullets: 2
+max_projects: 2
+max_project_bullets: 3
