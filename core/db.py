@@ -70,7 +70,17 @@ class _PgConn:
     def __init__(self):
         import psycopg2
         import psycopg2.extras
-        self._conn = psycopg2.connect(os.environ["DATABASE_URL"])
+        import urllib.parse
+        # Parse manually so psycopg2 preserves the full username (e.g. postgres.PROJECT_REF)
+        url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+        self._conn = psycopg2.connect(
+            host=url.hostname,
+            port=url.port or 5432,
+            dbname=url.path.lstrip("/"),
+            user=url.username,
+            password=url.password,
+            sslmode="require",
+        )
         self._conn.autocommit = False
         self._RDC = psycopg2.extras.RealDictCursor
 
