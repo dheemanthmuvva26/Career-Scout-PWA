@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Tooltip from "./Tooltip";
@@ -12,7 +13,7 @@ const tabs = [
   { href: "/insights",  label: "Insights", icon: "⬗",  tooltip: "Skill gaps & signals" },
 ];
 
-const SVG_ICONS: Record<string, React.ReactNode> = {
+const SVG_ICONS: Record<string, ReactNode> = {
   "/dashboard": (
     <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
       <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>

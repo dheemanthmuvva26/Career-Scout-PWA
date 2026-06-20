@@ -1,6 +1,7 @@
+import type { ReactNode } from "react";
 import BottomNav from "@/components/BottomNav";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="sidebar-layout min-h-screen" style={{ background: "var(--background)" }}>
       <BottomNav />
