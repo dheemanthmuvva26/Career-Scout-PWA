@@ -1,0 +1,25 @@
+# Scraping
+python-jobspy
+playwright
+beautifulsoup4
+requests
+rapidfuzz
+
+# LLM
+groq
+
+# API server
+fastapi
+uvicorn[standard]
+psycopg2-binary
+
+# Storage / Config
+pyyaml
+python-dotenv
+
+# Dashboard
+streamlit
+plotly
+
+# Resume (Typst installed separately via: winget install Typst.Typst)
+# No Python package needed — forge.py shells out to `typst compile`
