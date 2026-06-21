@@ -71,6 +71,15 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
             }
             for p in master_profile.get("projects", [])
         ],
+        "certifications": [
+            {
+                "name": c["name"],
+                "issuer": c.get("issuer", ""),
+                "date": c.get("date", ""),
+                "tags": c.get("tags", []),
+            }
+            for c in master_profile.get("certifications", [])
+        ],
     }
 
     prompt = f"""You are an expert ATS resume optimizer. The candidate is a fresher graduating 2026, targeting Data and AI roles in India.
@@ -103,12 +112,13 @@ CANDIDATE PROFILE (JSON):
 STRICT RULES:
 1. summary: EXACTLY 2 sentences (not 3, not 1) — be concise, mention the role title and company name, use keywords from JD ONLY for skills/domains the candidate's profile actually has. Write "Data and AI" (not "Data/AI") when describing the candidate's field. Avoid generic boilerplate phrasing (e.g. "strong data analysis and BI & visualization capabilities") — instead name 1-2 specific tools, techniques, or deliverables from the candidate's profile (e.g. Power BI dashboards, forecasting models, Python/SQL analysis) and connect them to the JD's primary function (e.g. financial planning & analysis, reporting, forecasting)
 2. ats_keywords: exact phrases lifted verbatim from the JD that appear in the candidate's profile
-3. skills_section: include ALL relevant skill categories (typically 4-6) from the candidate profile, reordered within each category to surface JD keywords first; only omit a category if it is completely irrelevant to this role
+3. skills_section: include at most 4 skill categories — choose the ones with the highest overlap with this JD; within each category keep only the 4-5 most JD-relevant items (drop low-relevance items). Reorder within each retained category to surface JD keywords first. Drop a category entirely if it has fewer than 2 items relevant to this role.
 4. selected_experience: pick exactly "Max experience roles" roles (the most relevant ones); select exactly "Max experience bullets per role" bullets per role, prioritizing the most relevant and impactful. REWRITE each selected bullet with a noticeably different sentence structure than the original (don't just swap one or two words) — reorder clauses, change the lead verb, and lead with whichever part of the bullet best matches the JD — while using the JD's own terminology ONLY for a skill, tool, or technique that is the SAME thing already present in the bullet (e.g. "exploratory data analysis" -> "data analytics", "Power BI dashboard" -> "BI & visualization", "predictive model" -> "forecasting model" if the JD says "forecasting" and the bullet is genuinely a predictive model). Lead each bullet with a strong action verb and frame its impact around the high-level themes the JD emphasizes (e.g. automation, efficiency, reporting, risk reduction, collaboration, accuracy) — connect the concrete deliverable to why it matters for this role. Do NOT change the subject matter, domain, or industry of the work — e.g. do not recast an automobile-sales analysis as "financial data analysis", or a flight-price-prediction model as "budget/financial forecasting". Every fact, tool, technology, number, and outcome from the original bullet must still be present — only the phrasing, structure, and framing change. Each bullet must come from, and only from, its own role/project's bullets in the profile — never copy or merge in a bullet from a different role or project.
 5. selected_projects: pick exactly "Max projects" projects whose tags overlap with project_tags (the most relevant ones); select exactly "Max project bullets" bullets per project — when a project has bullets spanning both technical/ML implementation and business-outcome work (e.g. dashboards, reporting, risk or decision-support), prioritize the business-outcome bullets if they align with the JD's core function, while still selecting only from that project's own bullets. ORDER the selected bullets so the one most aligned with the JD's core function comes FIRST, regardless of its order in the source profile. Apply the same rewrite constraints as rule 4.
 6. ats_score_estimate: integer 0-100 reflecting how well this resume will pass ATS for this JD
 7. NEVER include a skill, domain, or claim (in the summary, ats_keywords, or any bullet) that is not present in the profile above. If a JD keyword (e.g. "Financial Reporting", "Budgeting") names a skill/domain the candidate's profile does not have, do NOT work it into the summary, ats_keywords, or any bullet.
 8. The final resume should fill close to a full single US-letter page — use the bullet/project/skill counts above as TARGETS, not maximums to undercut. Do not pad with filler, but do not under-fill either.
+9. selected_certifications: from the certifications list in the profile, pick 1-2 whose name, issuer, or tags best match this JD's domain/keywords. If multiple are equally relevant, prefer ones with a named brand institution (Google, Wharton, etc.). If none match well, still include the single most credible one. Return the full cert object (name, issuer, date) — do not alter any fields.
 
 Respond ONLY with valid JSON — no markdown, no explanation:
 {{
@@ -133,6 +143,13 @@ Respond ONLY with valid JSON — no markdown, no explanation:
       "tech": ["..."],
       "github": "...",
       "bullets": ["..."]
+    }}
+  ],
+  "selected_certifications": [
+    {{
+      "name": "...",
+      "issuer": "...",
+      "date": "..."
     }}
   ],
   "ats_score_estimate": 0

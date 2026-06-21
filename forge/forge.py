@@ -116,7 +116,7 @@ def _education_block(education: list[dict]) -> str:
     for i, ed in enumerate(education):
         gpa = ed.get("gpa", "")
         gpa_part = f"GPA: {_escape_typst(str(gpa))} #h(8pt) " if gpa else ""
-        dates = ed.get("graduation", ed.get("dates", ""))
+        dates = ed.get("dates", ed.get("graduation", ""))
         loc = f", {ed['location']}" if ed.get("location") else ""
         header = (
             f"*{_escape_typst(ed.get('degree', ''))}*"
@@ -187,7 +187,9 @@ def _render(master: dict, optimized: dict, profile_config: dict) -> str:
                                 ),
         "<<EXPERIENCE_BLOCK>>": _experience_block(optimized.get("selected_experience", [])),
         "<<PROJECTS_BLOCK>>":   _projects_block(optimized.get("selected_projects", []), master.get("projects", [])),
-        "<<CERTIFICATIONS_BLOCK>>": _certs_block(master.get("certifications", [])),
+        "<<CERTIFICATIONS_BLOCK>>": _certs_block(
+                                    optimized.get("selected_certifications", master.get("certifications", []))
+                                ),
     }
 
     for placeholder, value in replacements.items():
