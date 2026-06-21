@@ -38,13 +38,18 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "var(--accent)", boxShadow: "0 0 40px var(--accent-30)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
+            style={{
+              background: "var(--accent-10)",
+              border: "1px solid var(--accent-40)",
+              boxShadow: "0 0 40px var(--accent-20), inset 0 0 20px var(--accent-05)",
+            }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" className="w-7 h-7"
+              style={{ filter: "drop-shadow(0 0 6px var(--accent))" }}>
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
             </svg>
           </div>
           <h1 style={{ color: "var(--text)" }}>Career Scout</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>Your AI-powered job search assistant</p>
+          <p className="text-xs mt-1 tracking-widest font-mono" style={{ color: "var(--accent)", opacity: 0.6 }}>// AI-POWERED JOB SEARCH</p>
         </div>
 
         {/* Mode toggle */}
@@ -53,9 +58,9 @@ export default function LoginPage() {
             <button key={m} onClick={() => { setMode(m); setError(""); setMessage(""); }}
               className="flex-1 py-2 rounded-lg text-sm font-semibold transition"
               style={{
-                background: mode === m ? "var(--surface)" : "transparent",
-                color: mode === m ? "var(--text)" : "var(--text-3)",
-                boxShadow: mode === m ? "0 1px 3px rgba(0,0,0,0.4)" : "none",
+                background: mode === m ? "var(--accent-10)" : "transparent",
+                color: mode === m ? "var(--accent)" : "var(--text-3)",
+                boxShadow: mode === m ? "inset 0 0 0 1px var(--accent-30)" : "none",
               }}>
               {m === "signin" ? "Sign in" : "Sign up"}
             </button>
@@ -83,7 +88,7 @@ export default function LoginPage() {
 
           <button type="submit" disabled={loading}
             className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+            style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: "0 0 20px var(--accent-25)" }}>
             {loading ? "…" : mode === "signin" ? "Sign In" : "Create Account"}
           </button>
         </form>

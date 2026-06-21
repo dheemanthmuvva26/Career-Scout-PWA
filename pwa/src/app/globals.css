@@ -4,38 +4,38 @@
 
 :root {
   /* ── Backgrounds ── */
-  --bg:        #09090b;
-  --surface:   #111113;
-  --surface-2: #18181b;
-  --border:    #27272a;
-  --border-2:  #3f3f46;
+  --bg:        #020b0f;
+  --surface:   #050f15;
+  --surface-2: #091620;
+  --border:    #0d2233;
+  --border-2:  #1a3d54;
 
-  /* ── Text ── */
-  --text:      #fafafa;
-  --text-2:    #a1a1aa;
-  --text-3:    #52525b;
+  /* ── Text — cyan-tinted hierarchy ── */
+  --text:      #e0f4ff;
+  --text-2:    #7ab8cb;
+  --text-3:    #3d6b80;
 
-  /* ── Brand accent: amber ── */
-  --accent:      #f59e0b;
-  --accent-d:    #d97706;
-  --on-accent:   #0c0800;
-  --accent-text: #fbbf24;
+  /* ── Brand accent: neon cyan ── */
+  --accent:      #00e5ff;
+  --accent-d:    #00b8d9;
+  --on-accent:   #001a1f;
+  --accent-text: #00e5ff;
 
-  /* ── Accent opacity variants (replaces all hardcoded rgba) ── */
-  --accent-05: rgba(245,158,11,0.05);
-  --accent-10: rgba(245,158,11,0.10);
-  --accent-15: rgba(245,158,11,0.15);
-  --accent-20: rgba(245,158,11,0.20);
-  --accent-25: rgba(245,158,11,0.25);
-  --accent-30: rgba(245,158,11,0.30);
-  --accent-40: rgba(245,158,11,0.40);
+  /* ── Accent opacity variants ── */
+  --accent-05: rgba(0,229,255,0.05);
+  --accent-10: rgba(0,229,255,0.10);
+  --accent-15: rgba(0,229,255,0.15);
+  --accent-20: rgba(0,229,255,0.20);
+  --accent-25: rgba(0,229,255,0.25);
+  --accent-30: rgba(0,229,255,0.30);
+  --accent-40: rgba(0,229,255,0.40);
 
-  /* ── Semantic pipeline colors ── */
-  --green:     #22c55e;
-  --amber:     #f59e0b;
-  --red:       #ef4444;
-  --purple:    #a855f7;
-  --blue:      #60a5fa;
+  /* ── Semantic pipeline colors (unchanged — hardcoded in page arrays) ── */
+  --green:  #22c55e;
+  --amber:  #f59e0b;
+  --red:    #ef4444;
+  --purple: #a855f7;
+  --blue:   #60a5fa;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; }
@@ -44,7 +44,10 @@ html { -webkit-tap-highlight-color: transparent; }
 
 body {
   color: var(--text);
-  background: var(--bg);
+  background-color: var(--bg);
+  /* Hacker dot-grid background */
+  background-image: radial-gradient(rgba(0,229,255,0.10) 1px, transparent 1px);
+  background-size: 28px 28px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
                "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -58,19 +61,27 @@ body {
 h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 1.1rem; font-weight: 600; }
 
-/* ── Gradient text utility ── */
+/* ── Gradient text: cyan → violet ── */
 .grad-text {
-  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  background: linear-gradient(135deg, #00e5ff 0%, #bf5af2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Monospace numbers — makes stats feel like a dashboard ── */
+/* ── Monospace numbers ── */
 .mono {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+
+/* ── Neon utilities ── */
+.neon-text {
+  text-shadow: 0 0 10px var(--accent-40);
+}
+.neon-box {
+  box-shadow: 0 0 0 1px var(--accent-20), 0 0 16px var(--accent-10);
 }
 
 /* ── Input base ── */
@@ -83,23 +94,29 @@ input, select, textarea {
   font-size: 15px;
   outline: none;
   width: 100%;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
 }
-input:focus, select:focus { border-color: var(--accent); }
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-10);
+}
 input::placeholder { color: var(--text-3); }
 
 /* ── Button base ── */
 button { cursor: pointer; border: none; font-family: inherit; }
 
-/* ── Card ── */
+/* ── Card — dark glass, no backdrop-filter for mobile scroll perf ── */
 .card {
-  background: var(--surface);
+  background: rgba(5, 15, 21, 0.9);
   border: 1px solid var(--border);
   border-radius: 16px;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.card:hover { border-color: var(--border-2); }
+.card:hover {
+  border-color: rgba(0,229,255,0.2);
+  box-shadow: 0 0 20px rgba(0,229,255,0.04);
+}
 
 .card-press { transition: transform 0.1s, opacity 0.1s; }
 .card-press:active { transform: scale(0.98); opacity: 0.9; }

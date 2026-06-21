@@ -79,12 +79,19 @@ export default function BottomNav() {
               key={tab.href}
               href={tab.href}
               className="flex-1 flex flex-col items-center justify-center gap-0.5 relative transition-opacity active:opacity-60"
-              style={{ color: active ? "var(--accent)" : "var(--text-3)" }}
+              style={{
+                color: active ? "var(--accent)" : "var(--text-3)",
+                filter: active ? "drop-shadow(0 0 5px var(--accent))" : "none",
+              }}
             >
               {active && (
                 <span
                   className="absolute top-0 left-1/2 -translate-x-1/2 rounded-full"
-                  style={{ width: 24, height: 2.5, background: "var(--accent)" }}
+                  style={{
+                    width: 28, height: 2,
+                    background: "var(--accent)",
+                    boxShadow: "0 0 8px var(--accent), 0 0 20px var(--accent-40)",
+                  }}
                 />
               )}
               {tab.icon(active)}
