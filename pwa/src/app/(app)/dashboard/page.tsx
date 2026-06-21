@@ -70,17 +70,29 @@ export default function DashboardPage() {
   const day  = now.getDay(); // 0=Sun, 1=Mon…
 
   useEffect(() => {
-    // Get user name from Supabase session
     createClient().auth.getUser().then(({ data }) => {
       if (data.user?.email) setName(getFirstName(data.user.email));
       else if (data.user?.user_metadata?.full_name)
         setName(data.user.user_metadata.full_name.split(" ")[0]);
     });
 
-    api.stats()
-      .then(setStats)
-      .catch(() => setError("API waking up — try again in 30s"))
-      .finally(() => setLoading(false));
+    let attempts = 0;
+    function loadStats() {
+      api.stats()
+        .then((s) => { setStats(s); setError(""); setLoading(false); })
+        .catch(() => {
+          attempts++;
+          if (attempts < 4) {
+            setError(`waking:${attempts}`);
+            setLoading(false);
+            setTimeout(loadStats, 20000);
+          } else {
+            setError("API offline — pull down to refresh");
+            setLoading(false);
+          }
+        });
+    }
+    loadStats();
   }, []);
 
   async function runScout() {
@@ -133,13 +145,23 @@ export default function DashboardPage() {
 
       {/* ── Error / Scout message ── */}
       {error && (
-        <div className="rounded-xl px-4 py-3 text-sm mb-4 flex items-center gap-2"
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-          </svg>
-          {error}
-        </div>
+        error.startsWith("waking:") ? (
+          <div className="rounded-xl px-4 py-3 text-sm mb-4 flex items-center gap-2"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
+            <svg className="spin w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round"/>
+            </svg>
+            API warming up — retrying automatically…
+          </div>
+        ) : (
+          <div className="rounded-xl px-4 py-3 text-sm mb-4 flex items-center gap-2"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+            {error}
+          </div>
+        )
       )}
       {scoutMsg && (
         <div className="rounded-xl px-4 py-3 text-sm mb-4"
