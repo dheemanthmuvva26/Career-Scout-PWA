@@ -20,10 +20,14 @@ Requires:
 
 import argparse
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
+import urllib.request
+import tarfile
 from datetime import datetime
 from pathlib import Path
 
@@ -193,6 +197,48 @@ def _render(master: dict, optimized: dict, profile_config: dict) -> str:
 
 # ── PDF compilation ───────────────────────────────────────────────────────────
 
+_TYPST_VERSION = "v0.13.0"
+_TYPST_BINARY: str | None = None
+
+def _get_typst() -> str:
+    """Return path to typst binary, auto-downloading on Linux if not on PATH."""
+    global _TYPST_BINARY
+    if _TYPST_BINARY:
+        return _TYPST_BINARY
+
+    # Check PATH first (covers local Windows/Mac dev with typst installed)
+    found = shutil.which("typst")
+    if found:
+        _TYPST_BINARY = found
+        return found
+
+    # On Linux (Render), download the static binary on first use
+    if sys.platform.startswith("linux"):
+        local_bin = Path.home() / ".local" / "bin" / "typst"
+        if not local_bin.exists():
+            print(f"[forge] typst not found — downloading {_TYPST_VERSION}…", flush=True)
+            local_bin.parent.mkdir(parents=True, exist_ok=True)
+            url = (
+                f"https://github.com/typst/typst/releases/download/{_TYPST_VERSION}"
+                "/typst-x86_64-unknown-linux-musl.tar.xz"
+            )
+            tmp = Path(tempfile.mktemp(suffix=".tar.xz"))
+            urllib.request.urlretrieve(url, tmp)
+            with tarfile.open(tmp, "r:xz") as tar:
+                for member in tar.getmembers():
+                    if member.name.endswith("/typst"):
+                        member.name = "typst"
+                        tar.extract(member, local_bin.parent)
+                        break
+            tmp.unlink(missing_ok=True)
+            local_bin.chmod(0o755)
+            print(f"[forge] typst installed at {local_bin}", flush=True)
+        _TYPST_BINARY = str(local_bin)
+        return _TYPST_BINARY
+
+    raise RuntimeError("typst not found on PATH. Install via: winget install Typst.Typst")
+
+
 def _compile(typ_content: str, pdf_path: Path) -> tuple[bool, str]:
     """Write .typ to a temp file and compile with typst. Returns (ok, stderr)."""
     _OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -204,8 +250,8 @@ def _compile(typ_content: str, pdf_path: Path) -> tuple[bool, str]:
 
     try:
         result = subprocess.run(
-            ["typst", "compile", str(typ_path), str(pdf_path)],
-            capture_output=True, text=True, timeout=30,
+            [_get_typst(), "compile", str(typ_path), str(pdf_path)],
+            capture_output=True, text=True, timeout=60,
         )
         return result.returncode == 0, result.stderr
     finally:
