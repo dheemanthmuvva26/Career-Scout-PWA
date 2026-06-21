@@ -9,6 +9,7 @@ Start: python api.py  (or: uvicorn api:app --reload --port 8000)
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import os
@@ -39,13 +40,16 @@ app.add_middleware(
 
 _API_KEY = os.getenv("API_KEY", "")
 _OPEN_PATHS = {"/health", "/"}
+_OPEN_PREFIXES = ("/resumes/",)
 
 @app.middleware("http")
 async def require_api_key(request: Request, call_next):
     # Allow CORS preflight through without auth
     if request.method == "OPTIONS":
         return await call_next(request)
-    if _API_KEY and request.url.path not in _OPEN_PATHS:
+    path = request.url.path
+    is_open = path in _OPEN_PATHS or any(path.startswith(p) for p in _OPEN_PREFIXES)
+    if _API_KEY and not is_open:
         key = request.headers.get("X-API-Key") or request.headers.get("x-api-key")
         if key != _API_KEY:
             return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
@@ -54,6 +58,7 @@ async def require_api_key(request: Request, call_next):
 # Initialise DB on startup
 @app.on_event("startup")
 def startup():
+    os.makedirs("shared/resumes", exist_ok=True)
     init_db()
     print("DB initialised")
 
@@ -787,6 +792,11 @@ def run_backup():
         old.unlink()
         deleted.append(old.name)
     return {"ok": True, "backup": str(dst), "deleted": deleted}
+
+
+# ── Static files — resume PDFs served without auth ────────────────────────────
+os.makedirs("shared/resumes", exist_ok=True)
+app.mount("/resumes", StaticFiles(directory="shared/resumes"), name="resumes")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
