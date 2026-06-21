@@ -57,12 +57,12 @@ export default function ForgePage() {
               <button key={job.id} onClick={() => { setSelected(job); setResult(null); }}
                 className="w-full text-left card card-press px-4 py-3 transition"
                 style={{
-                  background: isSelected ? "rgba(99,102,241,0.1)" : "var(--surface)",
-                  borderColor: isSelected ? "rgba(99,102,241,0.4)" : "var(--border)",
+                  background: isSelected ? "var(--accent-10)" : "var(--surface)",
+                  borderColor: isSelected ? "var(--accent-40)" : "var(--border)",
                 }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
-                    style={{ background: isSelected ? "rgba(99,102,241,0.2)" : "var(--surface-2)", color: isSelected ? "var(--accent)" : "var(--text-3)" }}>
+                    style={{ background: isSelected ? "var(--accent-20)" : "var(--surface-2)", color: isSelected ? "var(--accent)" : "var(--text-3)" }}>
                     {job.company?.charAt(0)?.toUpperCase() ?? "?"}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ export default function ForgePage() {
 
       <button onClick={forge} disabled={!selected || forging}
         className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
-        style={{ background: "var(--accent)", color: "#fff" }}>
+        style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
         {forging ? (
           <>
             <svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

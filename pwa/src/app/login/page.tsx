@@ -38,7 +38,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-10">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
-            style={{ background: "var(--accent)", boxShadow: "0 0 40px rgba(99,102,241,0.3)" }}>
+            style={{ background: "var(--accent)", boxShadow: "0 0 40px var(--accent-30)" }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35" strokeLinecap="round"/>
             </svg>
@@ -83,7 +83,7 @@ export default function LoginPage() {
 
           <button type="submit" disabled={loading}
             className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-            style={{ background: "var(--accent)", color: "#fff" }}>
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
             {loading ? "…" : mode === "signin" ? "Sign In" : "Create Account"}
           </button>
         </form>

@@ -131,7 +131,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
               placeholder="Add a note… (Enter to save)" />
             <button onClick={saveNote} disabled={busy === "note"}
               className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50"
-              style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+              style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 64 }}>
               {busy === "note" ? "…" : "Save"}
             </button>
           </div>
@@ -185,7 +185,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
           </button>
           <button onClick={() => setAddingNote(!addingNote)}
             className="w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
-            style={{ background: addingNote ? "rgba(99,102,241,0.15)" : "var(--surface-2)", color: addingNote ? "var(--accent)" : "var(--text-3)", border: `1px solid ${addingNote ? "rgba(99,102,241,0.3)" : "var(--border)"}` }}>
+            style={{ background: addingNote ? "var(--accent-15)" : "var(--surface-2)", color: addingNote ? "var(--accent)" : "var(--text-3)", border: `1px solid ${addingNote ? "var(--accent-30)" : "var(--border)"}` }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round"/>

@@ -49,7 +49,7 @@ function getFirstName(email: string): string {
 function StatCard({ value, label, color, loading }: { value: number; label: string; color: string; loading: boolean }) {
   return (
     <div className="card p-4 flex flex-col gap-1">
-      <span className="text-3xl font-bold tracking-tight" style={{ color: loading ? "transparent" : color }}>
+      <span className="text-3xl font-bold tracking-tight mono" style={{ color: loading ? "transparent" : color }}>
         {loading ? <span className="skeleton inline-block w-10 h-8 rounded" /> : value}
       </span>
       <span className="text-xs font-medium" style={{ color: "var(--text-2)" }}>{label}</span>
@@ -108,7 +108,7 @@ export default function DashboardPage() {
             {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" })}
           </p>
           <h1 className="text-2xl font-bold leading-tight" style={{ color: "var(--text)" }}>
-            {getGreeting(hour)}, {name} 👋
+            {getGreeting(hour)}, <span className="grad-text">{name}</span> 👋
           </h1>
           <p className="text-sm mt-1.5 leading-snug max-w-xs" style={{ color: "var(--text-2)" }}>
             {loading ? <span className="skeleton inline-block h-4 w-48 rounded" /> : motivation}
@@ -117,7 +117,7 @@ export default function DashboardPage() {
 
         <button onClick={runScout} disabled={scouting}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 shrink-0 ml-3"
-          style={{ background: "var(--accent)", color: "#fff" }}>
+          style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
           {scouting ? (
             <svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round"/>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
       )}
       {scoutMsg && (
         <div className="rounded-xl px-4 py-3 text-sm mb-4"
-          style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", color: "#a5b4fc" }}>
+          style={{ background: "var(--accent-10)", border: "1px solid var(--accent-25)", color: "var(--accent-text)" }}>
           {scoutMsg}
         </div>
       )}
@@ -159,7 +159,7 @@ export default function DashboardPage() {
         {PIPELINE.map(({ key, label, color }) => (
           <Link key={key} href="/tracker">
             <div className="card p-3 text-center card-press">
-              <div className="text-xl font-bold" style={{ color: loading ? "transparent" : color }}>
+              <div className="text-xl font-bold mono" style={{ color: loading ? "transparent" : color }}>
                 {loading ? <span className="skeleton inline-block w-6 h-6" /> : stats?.[key as keyof Stats] ?? 0}
               </div>
               <div className="text-[10px] mt-0.5 leading-tight" style={{ color: "var(--text-3)" }}>{label}</div>

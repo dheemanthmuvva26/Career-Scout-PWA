@@ -5,7 +5,7 @@ import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
 
 const TABS = [
-  { label: "New",       status: "new",       color: "#6366f1" },
+  { label: "New",       status: "new",       color: "#f59e0b" },
   { label: "Applied",   status: "applied",   color: "#60a5fa" },
   { label: "Interview", status: "interview", color: "#a855f7" },
   { label: "Offer",     status: "offer",     color: "#22c55e" },
@@ -68,7 +68,7 @@ export default function JobsPage() {
             style={{ fontSize: 14 }} />
           <button onClick={handleImport} disabled={importing || !importUrl.trim()}
             className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
-            style={{ background: "var(--accent)", color: "#fff", minWidth: 72 }}>
+            style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 72 }}>
             {importing ? "…" : "Import"}
           </button>
         </div>

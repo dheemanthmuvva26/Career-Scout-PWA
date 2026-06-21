@@ -56,14 +56,14 @@ export default function SettingsPage() {
             placeholder="e.g. Data Analyst" />
           <button onClick={addRole} disabled={saving === "role"}
             className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
-            style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+            style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 64 }}>
             {saving === "role" ? "…" : "Add"}
           </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {roles.map((r) => (
             <span key={r.title} className="text-sm px-3 py-1.5 rounded-full"
-              style={{ background: "rgba(99,102,241,0.1)", color: "#a5b4fc", border: "1px solid rgba(99,102,241,0.2)" }}>
+              style={{ background: "var(--accent-10)", color: "var(--accent-text)", border: "1px solid var(--accent-20)" }}>
               {r.title}
             </span>
           ))}
@@ -79,7 +79,7 @@ export default function SettingsPage() {
             placeholder="e.g. Google" />
           <button onClick={addCompany} disabled={saving === "company"}
             className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
-            style={{ background: "var(--accent)", color: "#fff", minWidth: 64 }}>
+            style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 64 }}>
             {saving === "company" ? "…" : "Add"}
           </button>
         </div>

@@ -46,7 +46,7 @@ function ShareHandler() {
       {status === "importing" && (
         <div className="text-center fade-up">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)" }}>
+            style={{ background: "var(--accent-10)", border: "1px solid var(--accent-25)" }}>
             <svg className="spin w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               style={{ color: "var(--accent)" }}>
               <path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
