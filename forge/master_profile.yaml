@@ -25,6 +25,21 @@ skills:
   other:         ["TypeScript", "VS Code Extension API", "Dialogflow CX"]
 
 experience:
+  - company: "RTGS, Govt. of Andhra Pradesh"
+    role: "AI/Data Analytics Intern"
+    location: "Hyderabad, India"
+    dates: "Feb 2026 – Present"
+    tags: ["risk_analyst", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance"]
+    bullets:
+      - text: "Built a risk-stratified decision engine for the AP Zero Maternal Death Mission that classifies 225,000+ pregnancies across 29 districts into Low/High/Critical risk tiers and auto-generates 9 clinical alert types (High BP, Low Haemoglobin, Eclampsia Warning) to trigger field worker interventions"
+        tags: ["risk_analyst", "ai_engineer", "decision_engine", "data_analyst", "finance"]
+      - text: "Authored Business Requirements Documents and PoC architecture specifications for multiple government AI use cases — translating domain expert requirements into implementable ML and graph-based system designs"
+        tags: ["risk_analyst", "data_analyst", "ai_engineer", "govt"]
+      - text: "Architected a Neo4j knowledge graph over 2M+ government health records spanning 724 mandals and 2,488 facilities, with a 6-stage NL-to-Cypher validation pipeline ensuring data integrity across all automated queries"
+        tags: ["ai_engineer", "llm", "rag", "data_scientist", "data_analyst"]
+      - text: "Developing an AI-driven farmer welfare analytics PoC to surface crop and disbursement insights from large-scale government agricultural datasets for state-level policy decision support"
+        tags: ["ai_engineer", "data_analyst", "govt", "data_scientist"]
+
   - company: "Arqonz Global Private Limited"
     role: "Artificial Intelligence Intern"
     location: "Remote"
