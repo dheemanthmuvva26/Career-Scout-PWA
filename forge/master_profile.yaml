@@ -92,29 +92,29 @@ projects:
     status: "Ongoing"
     description: "Multi-agent credit risk scoring system combining an ML default-prediction model with an agentic underwriting pipeline"
     tech: ["Python", "scikit-learn", "XGBoost", "SHAP", "LangChain", "FAISS", "Power BI"]
-    tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst"]
+    tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst", "risk_analyst", "finance", "credit_risk"]
     github: "github.com/Dheemanth2610"
     bullets:
       - text: "Building an XGBoost-based credit default prediction model with SHAP-driven explainability for individual risk scores"
-        tags: ["ml", "data_scientist"]
+        tags: ["ml", "data_scientist", "risk_analyst", "credit_risk", "finance"]
       - text: "Designing a multi-agent pipeline (data, scoring, underwriter, and policy-QA agents) using LangChain to generate explainable underwriting memos and approve/reject recommendations"
-        tags: ["ai_engineer", "agentic", "llm"]
+        tags: ["ai_engineer", "agentic", "llm", "risk_analyst"]
       - text: "Developing a Power BI dashboard for portfolio-level risk distribution and case-level drill-through"
-        tags: ["bi", "bi_developer", "data_analyst"]
+        tags: ["bi", "bi_developer", "data_analyst", "risk_analyst", "finance"]
 
   - name: "Agentic Financial Filings Research Assistant"
     status: "Ongoing"
-    description: "Multi-agent Graph RAG assistant that ingests company annual reports and filings and surfaces key learnings and insights, extending the CCKG architecture"
+    description: "Multi-agent Graph RAG assistant that ingests company annual reports, 10-K/10-Q filings, and earnings call transcripts to surface financial metrics and risk insights"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Groq", "Streamlit"]
-    tags: []
+    tags: ["finance", "risk_analyst", "financial_analyst", "llm", "rag", "ai_engineer", "data_analyst", "bi", "financial_reporting"]
     github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Extending the CCKG Graph RAG pipeline (Neo4j, LangChain, FAISS) to ingest annual reports, 10-K/10-Q filings, and earnings call transcripts and extract key learnings"
-        tags: ["llm", "rag", "graph", "ai_engineer"]
-      - text: "Designing a multi-agent pipeline (retriever, analyst, summarizer, and verifier agents) to extract financial metrics, generate insight briefs, and reduce hallucination via source verification"
-        tags: ["ai_engineer", "agentic", "llm", "genai"]
-      - text: "Building a Streamlit dashboard for cross-quarter and cross-company financial comparisons"
-        tags: ["bi", "bi_developer", "data_analyst"]
+      - text: "Building a Graph RAG pipeline (Neo4j, LangChain, FAISS) to ingest 10-K/10-Q filings and earnings call transcripts, extracting financial metrics and risk indicators across reporting periods"
+        tags: ["llm", "rag", "graph", "ai_engineer", "finance", "risk_analyst", "financial_reporting"]
+      - text: "Designing a multi-agent pipeline (retriever, analyst, summarizer, and verifier agents) to extract financial risk signals, generate insight briefs, and reduce hallucination via source verification"
+        tags: ["ai_engineer", "agentic", "llm", "genai", "finance", "risk_analyst", "financial_analyst"]
+      - text: "Building a Streamlit dashboard for cross-quarter and cross-company financial metric comparisons to support risk and investment analysis"
+        tags: ["bi", "bi_developer", "data_analyst", "finance", "risk_analyst"]
 
   - name: "Autonomous Multi-Agent Software Engineering & Self-Healing QA Assistant"
     description: "Stateful multi-agent framework that analyses Python codebases, generates test suites, and self-heals failing tests via an AI-driven diagnostic loop"

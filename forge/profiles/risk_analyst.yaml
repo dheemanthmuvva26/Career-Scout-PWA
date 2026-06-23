@@ -1,0 +1,57 @@
+id: risk_analyst
+display_name: "Risk Analyst / Finance"
+
+match_tags:
+  - risk_analyst
+  - finance
+  - financial_analyst
+  - risk
+  - credit_risk
+  - market_risk
+  - compliance
+  - aml
+  - financial_reporting
+  - banking
+  - financial_services
+
+summary_focus: >
+  Tech-to-finance pivot framing. Candidate has strong data/Python/SQL skills
+  and has deliberately built finance-domain projects (credit risk scoring,
+  financial filings RAG). Lead with analytical and automation capabilities,
+  then connect to the specific risk/finance function. Be honest that this is
+  a learning role — do NOT fake finance domain expertise. Mention the specific
+  track being targeted (Risk Analyst) and frame the candidate as someone who
+  brings data engineering firepower to a finance team.
+
+skills_order:
+  - languages
+  - data_tools
+  - bi_tools
+  - ml_frameworks
+  - databases
+
+experience_tags:
+  - risk_analyst
+  - finance
+  - data_analyst
+  - python
+  - sql
+  - ml
+  - bi
+  - data_scientist
+
+project_tags:
+  - risk_analyst
+  - finance
+  - financial_analyst
+  - ml
+  - data_scientist
+  - bi
+  - data_analyst
+  - llm
+  - rag
+
+max_experience_roles: 3
+max_experience_bullets: 2
+max_projects: 2
+max_project_bullets: 3
