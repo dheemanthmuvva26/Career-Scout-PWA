@@ -48,7 +48,7 @@ def _canonical_url(url: str) -> str:
     return url.split("?")[0].split("#")[0].rstrip("/") + "/"
 
 
-def fetch_linkedin_job(url: str) -> dict:
+def fetch_linkedin_job(url: str, location_override: str = "") -> dict:
     """
     Fetch a LinkedIn job page and return a normalised job dict.
 
@@ -59,8 +59,18 @@ def fetch_linkedin_job(url: str) -> dict:
         raise ValueError("Not a LinkedIn job URL. Share the link from the LinkedIn job page.")
 
     clean_url = _canonical_url(url)
-    logger.info("Fetching LinkedIn job: %s", clean_url)
+    job_id = re.search(r"/jobs/view/(\d+)", clean_url)
 
+    # ── Strategy 1: LinkedIn guest API (no auth required) ────────────────────
+    if job_id:
+        job = _fetch_guest_api(job_id.group(1), clean_url)
+        if job and job.get("title"):
+            if location_override:
+                job["location"] = location_override
+            return job
+
+    # ── Strategy 2: Direct page scrape ───────────────────────────────────────
+    logger.info("Guest API failed, trying direct page: %s", clean_url)
     resp = requests.get(clean_url, headers=_HEADERS, timeout=20, allow_redirects=True)
 
     # Detect login wall redirect
@@ -90,20 +100,85 @@ def fetch_linkedin_job(url: str) -> dict:
             "Copy the full URL directly from the job's page."
         )
 
-    # 1. JSON-LD (preferred)
+    # 3. JSON-LD from scraped page
     job = _parse_json_ld(soup, clean_url)
     if job and job.get("title"):
+        if location_override:
+            job["location"] = location_override
         return job
 
-    # 2. HTML fallback
+    # 4. HTML fallback
     job = _parse_html(soup, clean_url)
     if job and job.get("title"):
+        if location_override:
+            job["location"] = location_override
         return job
 
     raise ValueError(
         "Could not extract job details from this LinkedIn page. "
         "The job may require login or may have been removed."
     )
+
+
+def _fetch_guest_api(job_id: str, canonical_url: str) -> dict | None:
+    """
+    Use LinkedIn's public guest API endpoint — works without authentication.
+    Returns a job dict or None on failure.
+    """
+    guest_url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
+    try:
+        resp = requests.get(guest_url, headers=_HEADERS, timeout=20, allow_redirects=True)
+        if resp.status_code != 200 or len(resp.text) < 100:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # Guest API returns an HTML card — parse it
+        title_el = soup.select_one(
+            "h2.top-card-layout__title, "
+            ".top-card-layout__title, "
+            "h2, h1"
+        )
+        title = title_el.get_text(strip=True) if title_el else ""
+
+        company_el = soup.select_one(
+            "a.topcard__org-name-link, "
+            ".topcard__flavor:first-child, "
+            ".top-card-layout__first-subline a, "
+            ".top-card-layout__first-subline"
+        )
+        company = company_el.get_text(strip=True) if company_el else ""
+
+        loc_el = soup.select_one(
+            ".topcard__flavor--bullet, "
+            ".top-card-layout__first-subline .topcard__flavor--bullet, "
+            ".job-result-card__location"
+        )
+        location = loc_el.get_text(strip=True) if loc_el else ""
+
+        desc_el = soup.select_one(
+            ".show-more-less-html__markup, "
+            ".description__text, "
+            "section.description"
+        )
+        description = desc_el.get_text(separator="\n", strip=True)[:5000] if desc_el else ""
+
+        if not title:
+            return None
+
+        return {
+            "title": title,
+            "company": company or "Unknown",
+            "location": location,
+            "url": canonical_url,
+            "source_urls": [canonical_url],
+            "description": description,
+            "source": "linkedin_import",
+            "posted_date": None,
+        }
+    except Exception as exc:
+        logger.debug("Guest API error for %s: %s", job_id, exc)
+        return None
 
 
 # ── JSON-LD extraction ────────────────────────────────────────────────────────

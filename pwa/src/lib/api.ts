@@ -104,6 +104,6 @@ export const api = {
   gaps: () => apiFetch("/insights/gaps"),
   signals: () => apiFetch("/insights/signals"),
 
-  importJob: (url: string) =>
-    apiFetch("/import", { method: "POST", body: JSON.stringify({ url }) }),
+  importJob: (url: string, location?: string) =>
+    apiFetch("/import", { method: "POST", body: JSON.stringify({ url, location: location ?? "" }) }),
 };

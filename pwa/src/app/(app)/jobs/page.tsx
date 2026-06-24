@@ -17,6 +17,7 @@ export default function JobsPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
   const [importUrl, setImportUrl] = useState("");
+  const [importLocation, setImportLocation] = useState("");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
 
@@ -43,13 +44,17 @@ export default function JobsPage() {
     if (!importUrl.trim()) return;
     setImporting(true); setImportMsg("");
     try {
-      await api.importJob(importUrl.trim());
+      await api.importJob(importUrl.trim(), importLocation.trim() || undefined);
       setImportUrl("");
+      setImportLocation("");
       setImportMsg("Imported! Refreshing…");
       if (tab === "new") load();
-    } catch { setImportMsg("Import failed. Check the URL."); }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Import failed. Check the URL.";
+      setImportMsg(msg.replace(/^API.*→ \d+: /, ""));
+    }
     setImporting(false);
-    setTimeout(() => setImportMsg(""), 3000);
+    setTimeout(() => setImportMsg(""), 5000);
   }
 
   return (
@@ -61,7 +66,7 @@ export default function JobsPage() {
       {/* Import bar */}
       <div className="card p-3 mb-5">
         <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-3)" }}>IMPORT FROM LINKEDIN</p>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleImport()}
             placeholder="Paste LinkedIn job URL…"
@@ -72,8 +77,13 @@ export default function JobsPage() {
             {importing ? "…" : "Import"}
           </button>
         </div>
+        <input value={importLocation} onChange={(e) => setImportLocation(e.target.value)}
+          placeholder="Location override (optional — e.g. Mumbai, Bengaluru)"
+          style={{ fontSize: 13, padding: "8px 12px", borderRadius: 10 }} />
         {importMsg && (
-          <p className="text-xs mt-2" style={{ color: "var(--text-2)" }}>{importMsg}</p>
+          <p className="text-xs mt-2" style={{ color: importMsg.includes("failed") || importMsg.includes("LinkedIn") ? "#fca5a5" : "var(--text-2)" }}>
+            {importMsg}
+          </p>
         )}
       </div>
 

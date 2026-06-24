@@ -740,19 +740,22 @@ def _dispatch(cmd: str, args: list[str], chat_id: Optional[int] = None) -> tuple
 
 class ImportRequest(BaseModel):
     url: str
+    location: str = ""   # optional override — lets same URL be imported for multiple cities
 
 @app.post("/import")
 def import_job(body: ImportRequest):
     """
     Import a single job from a LinkedIn URL.
     Fetches the page, extracts job data, dedupes, scores, saves to DB.
+    Optional location field overrides the scraped location (useful when the
+    same job is posted for multiple cities under the same URL).
     """
     from scrapers.linkedin_url_scraper import fetch_linkedin_job
     from scrapers import dedup
     from core import urgency, scorer
 
     try:
-        job = fetch_linkedin_job(body.url)
+        job = fetch_linkedin_job(body.url, location_override=body.location.strip())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
