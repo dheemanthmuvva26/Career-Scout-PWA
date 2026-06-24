@@ -33,9 +33,10 @@ def normalize(text: str) -> str:
     return " ".join(text.split())
 
 
-def job_id(title: str, company: str, url: str) -> str:
-    """Canonical sha256 ID: first 16 hex chars of sha256(title+company+url)."""
-    raw = f"{normalize(title)}|{normalize(company)}|{(url or '').strip()}"
+def job_id(title: str, company: str, url: str, location: str = "") -> str:
+    """Canonical sha256 ID: first 16 hex chars of sha256(title+company+url+location).
+    Location is included so the same job posted in different cities gets distinct IDs."""
+    raw = f"{normalize(title)}|{normalize(company)}|{(url or '').strip()}|{normalize(location)}"
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
@@ -46,20 +47,28 @@ def _fuzzy_key(title: str, company: str) -> str:
 # ── Cross-portal fuzzy lookup ─────────────────────────────────────────────────
 
 def _find_fuzzy_match(title: str, company: str,
-                      conn: sqlite3.Connection) -> Optional[dict]:
+                      conn: sqlite3.Connection,
+                      location: str = "") -> Optional[dict]:
     """
     Search existing jobs for a close enough match (ratio ≥ 90).
     Only checks jobs created in the last 30 days to keep the scan fast.
+    Skips records whose location differs from the incoming job's location
+    so the same role in different cities is treated as distinct.
     Returns the first matching job row or None.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     rows = conn.execute(
-        "SELECT id, title, company, source_urls FROM jobs WHERE created_at >= ?",
+        "SELECT id, title, company, location, source_urls FROM jobs WHERE created_at >= ?",
         (cutoff,)
     ).fetchall()
 
     needle = _fuzzy_key(title, company)
+    norm_loc = normalize(location)
     for row in rows:
+        # If both have non-empty locations and they differ → not the same job
+        row_loc = normalize(row["location"] or "")
+        if norm_loc and row_loc and norm_loc != row_loc:
+            continue
         candidate = _fuzzy_key(row["title"], row["company"])
         if fuzz.ratio(needle, candidate) >= 90:
             return dict(row)
@@ -124,7 +133,8 @@ def process(job: dict) -> DeduplicationResult:
 
     Returns a DeduplicationResult describing what happened.
     """
-    jid = job_id(job["title"], job["company"], job.get("url", ""))
+    location = job.get("location", "")
+    jid = job_id(job["title"], job["company"], job.get("url", ""), location)
     job["id"] = jid
 
     with db.connect() as conn:
@@ -136,7 +146,7 @@ def process(job: dict) -> DeduplicationResult:
             return DeduplicationResult("skip_exact", jid)
 
         # ── Layer 2: cross-portal fuzzy merge ─────────────────────────────────
-        fuzzy_match = _find_fuzzy_match(job["title"], job["company"], conn)
+        fuzzy_match = _find_fuzzy_match(job["title"], job["company"], conn, location)
         if fuzzy_match:
             merged_urls = _merge_source_urls(
                 fuzzy_match["source_urls"], job.get("url", "")
