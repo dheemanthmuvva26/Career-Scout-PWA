@@ -23,7 +23,11 @@ export default function LoginPage() {
     if (mode === "signin") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError(error.message);
-      else router.push("/");
+      else {
+        // Resume a pending share-target import if one was saved before login
+        const pendingShare = localStorage.getItem("cs_pending_share_url");
+        router.push(pendingShare ? "/share-target" : "/");
+      }
     } else {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) setError(error.message);
