@@ -85,8 +85,8 @@ export const api = {
       body: JSON.stringify({ note }),
     }),
 
-  forge: (id: string) =>
-    apiFetch(`/forge/${id}`, { method: "POST" }),
+  forge: (id: string, profile?: string) =>
+    apiFetch(`/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`, { method: "POST" }),
 
   scout: () => apiFetch("/scout", { method: "POST" }),
 

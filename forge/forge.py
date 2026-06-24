@@ -39,7 +39,7 @@ load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core import db
-from forge.matcher import select_profile
+from forge.matcher import select_profile, get_profile_by_id
 from forge.optimizer import optimize
 
 _MASTER   = Path(__file__).parent / "master_profile.yaml"
@@ -262,10 +262,11 @@ def _compile(typ_content: str, pdf_path: Path) -> tuple[bool, str]:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def generate_resume(job_id: str) -> dict:
+def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
     """
     Full pipeline: job → optimize → render → compile → DB update.
     Always returns a dict — never raises.
+    profile_override: forge profile id (e.g. "risk_analyst") — skips auto-select.
     """
     job = db.get_job(job_id)
     if not job:
@@ -279,7 +280,10 @@ def generate_resume(job_id: str) -> dict:
     except Exception:
         pass
 
-    profile_config = select_profile(tags)
+    if profile_override:
+        profile_config = get_profile_by_id(profile_override) or select_profile(tags)
+    else:
+        profile_config = select_profile(tags)
     optimized      = optimize(job, master, profile_config)
 
     typ_content = _render(master, optimized, profile_config)

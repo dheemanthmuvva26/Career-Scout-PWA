@@ -20,6 +20,15 @@ def _load_all() -> list[dict]:
     return sorted(profiles, key=lambda p: p.get("id") == "default")
 
 
+def get_profile_by_id(profile_id: str) -> dict | None:
+    """Return a specific profile by id, or None if not found."""
+    for f in sorted(_PROFILES_DIR.glob("*.yaml")):
+        p = yaml.safe_load(f.read_text())
+        if p.get("id") == profile_id:
+            return p
+    return None
+
+
 def select_profile(tags_matched: list[str]) -> dict:
     """
     Return the profile dict that best matches the given job tags.
