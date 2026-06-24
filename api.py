@@ -61,6 +61,15 @@ def startup():
     os.makedirs("shared/resumes", exist_ok=True)
     init_db()
     print("DB initialised")
+    # Pre-download typst on Render (Linux) during startup so the first
+    # forge request doesn't pay the 30-60s download cost inside the 90s timeout
+    try:
+        import threading
+        from forge.forge import _get_typst
+        threading.Thread(target=_get_typst, daemon=True).start()
+        print("typst pre-warm started")
+    except Exception as e:
+        print(f"typst pre-warm skipped: {e}")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────

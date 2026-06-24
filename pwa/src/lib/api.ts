@@ -85,8 +85,19 @@ export const api = {
       body: JSON.stringify({ note }),
     }),
 
-  forge: (id: string, profile?: string) =>
-    apiFetch(`/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`, { method: "POST" }),
+  forge: async (id: string, profile?: string) => {
+    // Use a generous 120s timeout — forge runs Groq + typst compile server-side
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 120_000);
+    try {
+      return await apiFetch(
+        `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
+        { method: "POST", signal: controller.signal }
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  },
 
   scout: () => apiFetch("/scout", { method: "POST" }),
 

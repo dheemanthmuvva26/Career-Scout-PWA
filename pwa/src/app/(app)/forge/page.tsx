@@ -28,16 +28,29 @@ export default function ForgePage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const [forgeStatus, setForgeStatus] = useState("");
+
   async function forge() {
     if (!selected) return;
     setForging(true);
     setResult(null);
+    setForgeStatus("Waking up server…");
     try {
+      // Pre-warm: ensure Render is awake before the 90s forge clock starts
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/health`, { signal: AbortSignal.timeout(25_000) });
+      } catch { /* cold start or offline — try forge anyway */ }
+
+      setForgeStatus("Analysing job description…");
       const res = await api.forge(selected.short_id || selected.id, profile || undefined);
       setResult(res);
-    } catch {
-      setResult({ error: "Forge failed. Make sure the API server is running." });
+    } catch (e: unknown) {
+      const msg = e instanceof Error && e.name === "AbortError"
+        ? "Timed out after 2 min — server may be overloaded. Try again."
+        : "Forge failed. Check the API server is running.";
+      setResult({ error: msg });
     }
+    setForgeStatus("");
     setForging(false);
   }
 
@@ -134,7 +147,7 @@ export default function ForgePage() {
 
       {forging && (
         <p className="text-xs text-center mt-3" style={{ color: "var(--text-3)" }}>
-          Analysing JD · Extracting keywords · Optimising match…
+          {forgeStatus || "Extracting keywords · Optimising match…"}
         </p>
       )}
 
