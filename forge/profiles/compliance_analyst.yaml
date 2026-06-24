@@ -1,0 +1,57 @@
+id: compliance_analyst
+display_name: "Compliance Analyst / AML"
+
+match_tags:
+  - compliance
+  - aml
+  - regulatory
+  - audit
+  - compliance_analyst
+  - financial_compliance
+  - kyc
+  - regulatory_reporting
+  - financial_services
+  - banking
+
+summary_focus: >
+  Tech-to-finance pivot framing. Candidate has strong data/Python skills and
+  has built compliance-adjacent systems in a government context — SLA breach
+  monitoring, multi-tier alert classification, audit trail pipelines, and BRD
+  documentation. Lead with the systematic controls and monitoring angle:
+  candidate brings the ability to build and automate compliance monitoring
+  workflows, not just run them manually. Connect BRD authoring to policy
+  documentation skills. Do NOT fake regulatory domain knowledge — be honest
+  that this is a learning role while showing the analytical and systems-thinking
+  foundation is already there.
+
+skills_order:
+  - languages
+  - data_tools
+  - bi_tools
+  - databases
+  - ml_frameworks
+
+experience_tags:
+  - compliance
+  - risk_analyst
+  - decision_engine
+  - govt
+  - data_analyst
+  - python
+  - sql
+  - bi
+
+project_tags:
+  - compliance
+  - risk_analyst
+  - finance
+  - financial_analyst
+  - financial_reporting
+  - data_analyst
+  - bi
+  - ml
+
+max_experience_roles: 3
+max_experience_bullets: 2
+max_projects: 2
+max_project_bullets: 3

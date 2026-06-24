@@ -29,14 +29,14 @@ experience:
     role: "AI/Data Analytics Intern"
     location: "Hyderabad, India"
     dates: "Feb 2026 – Present"
-    tags: ["risk_analyst", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance"]
+    tags: ["risk_analyst", "compliance", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance"]
     bullets:
       - text: "Built a risk-stratified decision engine for the AP Zero Maternal Death Mission that classifies 225,000+ pregnancies across 29 districts into Low/High/Critical risk tiers and auto-generates 9 clinical alert types (High BP, Low Haemoglobin, Eclampsia Warning) to trigger field worker interventions"
-        tags: ["risk_analyst", "ai_engineer", "decision_engine", "data_analyst", "finance"]
+        tags: ["risk_analyst", "compliance", "ai_engineer", "decision_engine", "data_analyst", "finance"]
       - text: "Authored Business Requirements Documents and PoC architecture specifications for multiple government AI use cases — translating domain expert requirements into implementable ML and graph-based system designs"
-        tags: ["risk_analyst", "data_analyst", "ai_engineer", "govt"]
-      - text: "Architected a Neo4j knowledge graph over 2M+ government health records spanning 724 mandals and 2,488 facilities, with a 6-stage NL-to-Cypher validation pipeline ensuring data integrity across all automated queries"
-        tags: ["ai_engineer", "llm", "rag", "data_scientist", "data_analyst"]
+        tags: ["risk_analyst", "compliance", "data_analyst", "ai_engineer", "govt"]
+      - text: "Architected a Neo4j knowledge graph over 2M+ government health records spanning 724 mandals and 2,488 facilities, with a 6-stage NL-to-Cypher validation pipeline ensuring data integrity and blocking invalid queries before execution"
+        tags: ["compliance", "ai_engineer", "llm", "rag", "data_scientist", "data_analyst"]
       - text: "Developing an AI-driven farmer welfare analytics PoC to surface crop and disbursement insights from large-scale government agricultural datasets for state-level policy decision support"
         tags: ["ai_engineer", "data_analyst", "govt", "data_scientist"]
 
@@ -107,7 +107,7 @@ projects:
     status: "Ongoing"
     description: "Multi-agent credit risk scoring system combining an ML default-prediction model with an agentic underwriting pipeline"
     tech: ["Python", "scikit-learn", "XGBoost", "SHAP", "LangChain", "FAISS", "Power BI"]
-    tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst", "risk_analyst", "finance", "credit_risk"]
+    tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst", "risk_analyst", "compliance", "finance", "credit_risk"]
     github: "github.com/Dheemanth2610"
     bullets:
       - text: "Building an XGBoost-based credit default prediction model with SHAP-driven explainability for individual risk scores"
@@ -121,15 +121,15 @@ projects:
     status: "Ongoing"
     description: "Multi-agent Graph RAG assistant that ingests company annual reports, 10-K/10-Q filings, and earnings call transcripts to surface financial metrics and risk insights"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Groq", "Streamlit"]
-    tags: ["finance", "risk_analyst", "financial_analyst", "llm", "rag", "ai_engineer", "data_analyst", "bi", "financial_reporting"]
+    tags: ["finance", "risk_analyst", "compliance", "financial_analyst", "llm", "rag", "ai_engineer", "data_analyst", "bi", "financial_reporting"]
     github: "github.com/Dheemanth2610"
     bullets:
       - text: "Building a Graph RAG pipeline (Neo4j, LangChain, FAISS) to ingest 10-K/10-Q filings and earnings call transcripts, extracting financial metrics and risk indicators across reporting periods"
-        tags: ["llm", "rag", "graph", "ai_engineer", "finance", "risk_analyst", "financial_reporting"]
+        tags: ["llm", "rag", "graph", "ai_engineer", "finance", "risk_analyst", "compliance", "financial_reporting"]
       - text: "Designing a multi-agent pipeline (retriever, analyst, summarizer, and verifier agents) to extract financial risk signals, generate insight briefs, and reduce hallucination via source verification"
-        tags: ["ai_engineer", "agentic", "llm", "genai", "finance", "risk_analyst", "financial_analyst"]
+        tags: ["ai_engineer", "agentic", "llm", "genai", "finance", "risk_analyst", "compliance", "financial_analyst"]
       - text: "Building a Streamlit dashboard for cross-quarter and cross-company financial metric comparisons to support risk and investment analysis"
-        tags: ["bi", "bi_developer", "data_analyst", "finance", "risk_analyst"]
+        tags: ["bi", "bi_developer", "data_analyst", "finance", "risk_analyst", "compliance"]
 
   - name: "Autonomous Multi-Agent Software Engineering & Self-Healing QA Assistant"
     description: "Stateful multi-agent framework that analyses Python codebases, generates test suites, and self-heals failing tests via an AI-driven diagnostic loop"
