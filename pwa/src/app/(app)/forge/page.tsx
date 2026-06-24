@@ -45,9 +45,10 @@ export default function ForgePage() {
       const res = await api.forge(selected.short_id || selected.id, profile || undefined);
       setResult(res);
     } catch (e: unknown) {
-      const msg = e instanceof Error && e.name === "AbortError"
-        ? "Timed out after 2 min — server may be overloaded. Try again."
-        : "Forge failed. Check the API server is running.";
+      const raw = e instanceof Error ? e.message : String(e);
+      const msg = raw === "AbortError" || (e instanceof Error && e.name === "AbortError")
+        ? "Timed out (2 min) — server may be overloaded. Try again."
+        : `Forge failed: ${raw}`;
       setResult({ error: msg });
     }
     setForgeStatus("");

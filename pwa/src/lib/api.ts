@@ -16,7 +16,11 @@ async function apiFetch(path: string, init?: RequestInit) {
   }
 
   const res = await fetch(BASE + path, { ...init, headers });
-  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+  if (!res.ok) {
+    let detail = "";
+    try { const j = await res.json(); detail = j.detail || j.error || ""; } catch {}
+    throw new Error(`${res.status}${detail ? `: ${detail}` : ""}`);
+  }
   return res.json();
 }
 
@@ -86,17 +90,19 @@ export const api = {
     }),
 
   forge: async (id: string, profile?: string) => {
-    // Use a generous 120s timeout — forge runs Groq + typst compile server-side
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 120_000);
-    try {
-      return await apiFetch(
-        `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
-        { method: "POST", signal: controller.signal }
-      );
-    } finally {
-      clearTimeout(timer);
+    // POST returns a token immediately — forge runs in background on server
+    const { token } = await apiFetch(
+      `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
+      { method: "POST" }
+    );
+    // Poll every 3s until done (up to 120s)
+    const deadline = Date.now() + 120_000;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 3000));
+      const result = await apiFetch(`/forge/poll/${token}`);
+      if (result.status === "done") return result;
     }
+    throw new Error("Timed out waiting for resume — try again");
   },
 
   scout: () => apiFetch("/scout", { method: "POST" }),

@@ -13,6 +13,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import os
+import threading
+import uuid as _uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -333,21 +335,48 @@ def insights_signals():
     return {"messages": hiring_signal_messages(threshold)}
 
 
-# ── Forge trigger (Phase 3 — wired up when forge is implemented) ───────────────
+# ── Forge trigger — async via background thread + poll ────────────────────────
+# Forge runs Groq (10-20s) + typst download/compile (5-60s).
+# Running synchronously hits Render's 90s response timeout on cold starts.
+# Instead: POST returns a token immediately; client polls GET /forge/poll/{token}.
+
+_forge_jobs: dict[str, dict] = {}
 
 @app.post("/forge/{job_id}")
 def trigger_forge(job_id: str, profile: str | None = None):
     """
-    Triggered by /resume <id> Telegram command via n8n.
-    Runs the full forge pipeline: DB → optimizer → Typst → PDF.
-    Optional ?profile=<id> overrides auto profile selection.
+    Start forge in a background thread and return a token immediately.
+    Client polls GET /forge/poll/{token} every 3s until status == "done".
     """
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    from forge.forge import generate_resume, _telegram_message
-    result = generate_resume(job_id, profile_override=profile)
-    return {**result, "telegram_message": _telegram_message(result)}
+
+    token = _uuid.uuid4().hex[:12]
+    _forge_jobs[token] = {"status": "pending"}
+
+    def _run():
+        try:
+            from forge.forge import generate_resume, _telegram_message
+            result = generate_resume(job_id, profile_override=profile)
+            _forge_jobs[token] = {"status": "done", **result,
+                                  "telegram_message": _telegram_message(result)}
+        except Exception as e:
+            _forge_jobs[token] = {"status": "done", "error": str(e)}
+
+    threading.Thread(target=_run, daemon=True).start()
+    return {"token": token, "status": "pending"}
+
+
+@app.get("/forge/poll/{token}")
+def forge_poll(token: str):
+    """Poll for forge result. Returns {status: pending} or {status: done, ...result}."""
+    result = _forge_jobs.get(token)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Token not found or expired")
+    if result.get("status") == "done":
+        _forge_jobs.pop(token, None)   # clean up after retrieval
+    return result
 
 
 # ── Telegram bot command handler ─────────────────────────────────────────────
