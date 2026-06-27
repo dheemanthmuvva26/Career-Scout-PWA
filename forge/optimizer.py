@@ -38,7 +38,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
       "ats_score_estimate": <int 0-100>
     }
     """
-    jd = (job.get("description") or "")[:2000]
+    jd = (job.get("description") or "")[:1200]
 
     score_detail: dict = {}
     try:
@@ -67,7 +67,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
                 "tech": p.get("tech", []),
                 "github": p.get("github", ""),
                 "tags": p.get("tags", []),
-                "bullets": [b["text"] for b in p.get("bullets", [])],
+                "bullets": [b["text"] for b in p.get("bullets", [])[:2]],
             }
             for p in master_profile.get("projects", [])
         ],
@@ -156,7 +156,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    raw = llm.write(prompt, max_tokens=3900)
+    raw = llm.write(prompt, max_tokens=2500)
     try:
         return llm.parse_json(raw)
     except Exception:
