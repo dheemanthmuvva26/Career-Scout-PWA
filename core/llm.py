@@ -2,8 +2,8 @@
 Groq LLM interface — two models, one client.
 Both models are configured in config.yaml under llm.scoring_model / llm.writing_model.
 
-scoring_model : llama-3.3-70b-versatile  — high volume job scoring
-writing_model : openai/gpt-oss-120b      — resume rewrites
+scoring_model : llama-3.3-70b-versatile   — high volume job scoring
+writing_model : openai/gpt-oss-120b       — resume rewrites (confirmed in config.yaml)
 
 Usage:
     from core.llm import score, write
@@ -116,21 +116,46 @@ def write(prompt: str, max_tokens: int = 2048, json_mode: bool = False) -> str:
     )
 
 
+def _repair_json(text: str) -> str:
+    """Fix common gpt-oss-120b JSON issues: missing commas between elements."""
+    import re
+    # Missing comma between string/object/array elements across a newline
+    # e.g.  "foo"\n  "bar"  →  "foo",\n  "bar"
+    text = re.sub(r'(["\}\]])([ \t]*\n[ \t]*)(["\{\[])', r'\1,\2\3', text)
+    return text
+
+
 def parse_json(text: str) -> dict:
     """
     Safely parse JSON from LLM response.
-    Handles cases where model wraps output in markdown code fences.
+    Handles markdown fences, missing commas, and truncated output.
     """
+    import re as _re
     text = text.strip()
     if text.startswith("```"):
         lines = text.split("\n")
-        text = "\n".join(lines[1:-1])   # strip ```json ... ```
+        text = "\n".join(lines[1:-1])
+
+    # 1. Standard parse
     try:
         return json.loads(text)
     except json.JSONDecodeError:
-        # Find the first { ... } block and try again
-        start = text.find("{")
-        end   = text.rfind("}") + 1
-        if start != -1 and end > start:
-            return json.loads(text[start:end])
-        raise
+        pass
+
+    # 2. Fix missing commas (most common gpt-oss-120b issue) then parse
+    try:
+        return json.loads(_repair_json(text))
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Extract { ... } block and try both raw and repaired
+    start = text.find("{")
+    end   = text.rfind("}") + 1
+    if start != -1 and end > start:
+        block = text[start:end]
+        try:
+            return json.loads(block)
+        except json.JSONDecodeError:
+            return json.loads(_repair_json(block))
+
+    raise json.JSONDecodeError("Could not parse LLM output as JSON", text, 0)

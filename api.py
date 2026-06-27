@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-poll-retry"
+_BUILD = "20260628-gptoss-final"
 
 @app.get("/health")
 def health():
