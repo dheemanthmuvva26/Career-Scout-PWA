@@ -156,10 +156,11 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    raw = llm.write(prompt, max_tokens=2500)
+    raw = llm.write(prompt, max_tokens=3500)
     try:
         return llm.parse_json(raw)
-    except Exception:
+    except Exception as parse_err:
+        print(f"[optimizer] JSON parse failed: {parse_err}\nRaw tail: {raw[-300:]}", flush=True)
         return {
             "summary": (
                 f"Fresher Data & AI professional applying for {job.get('title')} "
