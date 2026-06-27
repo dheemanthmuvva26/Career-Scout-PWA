@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260622-gpt120b-json-6170tok"
+_BUILD = "20260628-gpt120b-7085tok-quality"
 
 @app.get("/health")
 def health():

@@ -38,7 +38,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
       "ats_score_estimate": <int 0-100>
     }
     """
-    jd = (job.get("description") or "")[:1200]
+    jd = (job.get("description") or "")[:2000]
 
     score_detail: dict = {}
     try:
@@ -47,7 +47,11 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
     except Exception:
         pass
 
-    # Trim master profile to reduce token count — remove unneeded keys
+    # Trim profile to reduce tokens WITHOUT touching quality-relevant content.
+    # Removed: internal `tags` arrays (our classification system — LLM selects
+    # by reading bullet text, not tags) and `github` (injected at render time
+    # by forge.py, not needed for the optimization decision).
+    # This saves ~390 tokens vs original, keeping us under gpt-oss-120b 8k TPM.
     profile_slim = {
         "skills": master_profile.get("skills", {}),
         "experience": [
@@ -56,8 +60,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
                 "role": e["role"],
                 "dates": e.get("dates", ""),
                 "location": e.get("location", ""),
-                "tags": e.get("tags", []),
-                "bullets": [b["text"] for b in e.get("bullets", [])[:2]],
+                "bullets": [b["text"] for b in e.get("bullets", [])],
             }
             for e in master_profile.get("experience", [])
         ],
@@ -65,9 +68,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
             {
                 "name": p["name"],
                 "tech": p.get("tech", []),
-                "github": p.get("github", ""),
-                "tags": p.get("tags", []),
-                "bullets": [b["text"] for b in p.get("bullets", [])[:2]],
+                "bullets": [b["text"] for b in p.get("bullets", [])],
             }
             for p in master_profile.get("projects", [])
         ],
@@ -76,7 +77,6 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
                 "name": c["name"],
                 "issuer": c.get("issuer", ""),
                 "date": c.get("date", ""),
-                "tags": c.get("tags", []),
             }
             for c in master_profile.get("certifications", [])
         ],
@@ -158,7 +158,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
 
     # json_mode forces Groq to emit valid JSON — prevents malformed/truncated output
     try:
-        raw = llm.write(prompt, max_tokens=3000, json_mode=True)
+        raw = llm.write(prompt, max_tokens=3000, json_mode=True)  # 3000 ceiling; actual response ~1700 tokens
     except Exception as llm_err:
         # Surface LLM errors (413 rate limit, network, etc.) instead of silently
         # returning empty fallback — generate_resume() will catch and set result.error
