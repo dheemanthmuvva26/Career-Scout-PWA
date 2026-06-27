@@ -3,8 +3,7 @@ Groq LLM interface — two models, one client.
 Both models are configured in config.yaml under llm.scoring_model / llm.writing_model.
 
 scoring_model : llama-3.3-70b-versatile  — high volume job scoring
-writing_model : llama-3.3-70b-versatile  — resume rewrites (switched from gpt-oss-120b
-                                            which generated truncated/invalid JSON)
+writing_model : openai/gpt-oss-120b      — resume rewrites
 
 Usage:
     from core.llm import score, write
