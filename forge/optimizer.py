@@ -47,11 +47,10 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
     except Exception:
         pass
 
-    # Trim profile to reduce tokens WITHOUT touching quality-relevant content.
-    # Removed: internal `tags` arrays (our classification system — LLM selects
-    # by reading bullet text, not tags) and `github` (injected at render time
-    # by forge.py, not needed for the optimization decision).
-    # This saves ~390 tokens vs original, keeping us under gpt-oss-120b 8k TPM.
+    # profile_slim excludes internal-only fields (tags, github) that the LLM
+    # never uses for selection decisions — saves ~390 tokens vs original,
+    # keeping total under gpt-oss-120b's 8k TPM limit without any quality loss.
+    # (github is re-injected at render time by forge.py from master_profile)
     profile_slim = {
         "skills": master_profile.get("skills", {}),
         "experience": [
@@ -156,16 +155,10 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    # json_mode forces Groq to emit valid JSON — prevents malformed/truncated output
-    try:
-        raw = llm.write(prompt, max_tokens=3000, json_mode=True)  # 3000 ceiling; actual response ~1700 tokens
-    except Exception as llm_err:
-        # Surface LLM errors (413 rate limit, network, etc.) instead of silently
-        # returning empty fallback — generate_resume() will catch and set result.error
-        raise RuntimeError(f"LLM call failed: {llm_err}") from llm_err
-
+    # json_mode forces valid JSON output — prevents silent parse failures
+    # that were producing empty-section resumes with no visible error
+    raw = llm.write(prompt, max_tokens=3900, json_mode=True)
     try:
         return llm.parse_json(raw)
-    except Exception as parse_err:
-        print(f"[optimizer] JSON parse failed: {parse_err}\nRaw tail: {raw[-300:]}", flush=True)
-        raise RuntimeError(f"Optimizer JSON parse failed: {parse_err}\nOutput tail: {raw[-200:]}") from parse_err
+    except Exception as e:
+        return {"error": f"Resume optimizer failed to parse LLM output: {e}"}
