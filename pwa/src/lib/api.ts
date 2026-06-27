@@ -95,12 +95,20 @@ export const api = {
       `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
       { method: "POST" }
     );
-    // Poll every 3s until done (up to 120s)
+    // Poll every 4s until done (up to 120s). Retry on transient errors
+    // so a single dropped response doesn't kill the whole forge.
     const deadline = Date.now() + 120_000;
+    let pollErrors = 0;
     while (Date.now() < deadline) {
-      await new Promise(r => setTimeout(r, 3000));
-      const result = await apiFetch(`/forge/poll/${token}`);
-      if (result.status === "done") return result;
+      await new Promise(r => setTimeout(r, 4000));
+      try {
+        const result = await apiFetch(`/forge/poll/${token}`);
+        if (result.status === "done") return result;
+        pollErrors = 0; // reset on success
+      } catch {
+        pollErrors++;
+        if (pollErrors >= 3) throw new Error("Forge poll failed 3 times — try again");
+      }
     }
     throw new Error("Timed out waiting for resume — try again");
   },

@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-llama-jsonmode"
+_BUILD = "20260628-poll-retry"
 
 @app.get("/health")
 def health():
@@ -365,6 +365,12 @@ def trigger_forge(job_id: str, profile: str | None = None):
                                   "telegram_message": _telegram_message(result)}
         except Exception as e:
             _forge_jobs[token] = {"status": "done", "error": str(e)}
+        # Schedule cleanup after 5 min so retried polls don't 404
+        def _cleanup():
+            import time as _time
+            _time.sleep(300)
+            _forge_jobs.pop(token, None)
+        threading.Thread(target=_cleanup, daemon=True).start()
 
     threading.Thread(target=_run, daemon=True).start()
     return {"token": token, "status": "pending"}
@@ -376,8 +382,7 @@ def forge_poll(token: str):
     result = _forge_jobs.get(token)
     if result is None:
         raise HTTPException(status_code=404, detail="Token not found or expired")
-    if result.get("status") == "done":
-        _forge_jobs.pop(token, None)   # clean up after retrieval
+    # Don't delete immediately — keep for 5 min so network retries don't 404
     return result
 
 
