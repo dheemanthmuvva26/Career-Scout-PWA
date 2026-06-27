@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-clean-restore"
+_BUILD = "20260628-no-jsonmode"
 
 @app.get("/health")
 def health():

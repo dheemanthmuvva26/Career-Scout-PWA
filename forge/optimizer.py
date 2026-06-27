@@ -155,10 +155,8 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    # json_mode forces valid JSON output — prevents silent parse failures
-    # that were producing empty-section resumes with no visible error
-    raw = llm.write(prompt, max_tokens=3900, json_mode=True)
+    raw = llm.write(prompt, max_tokens=3900)
     try:
         return llm.parse_json(raw)
     except Exception as e:
-        return {"error": f"Resume optimizer failed to parse LLM output: {e}"}
+        return {"error": f"Resume optimizer failed — LLM output could not be parsed: {e}"}
