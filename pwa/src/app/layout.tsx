@@ -29,6 +29,10 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        {/* Register service worker — required for Web Share Target to appear in Android share sheet */}
+        <script dangerouslySetInnerHTML={{ __html:
+          `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').then(function(r){console.log('[SW] registered',r.scope)}).catch(function(e){console.warn('[SW] registration failed',e)})})}`
+        }}/>
       </head>
       <body className="antialiased">{children}</body>
     </html>
