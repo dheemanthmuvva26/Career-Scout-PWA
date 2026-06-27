@@ -3,25 +3,26 @@
 @tailwind utilities;
 
 :root {
-  /* ── Backgrounds ── */
   --bg:        #020b0f;
   --surface:   #050f15;
   --surface-2: #091620;
   --border:    #0d2233;
   --border-2:  #1a3d54;
 
-  /* ── Text — cyan-tinted hierarchy ── */
   --text:      #e0f4ff;
   --text-2:    #7ab8cb;
   --text-3:    #3d6b80;
 
-  /* ── Brand accent: neon cyan ── */
   --accent:      #00e5ff;
   --accent-d:    #00b8d9;
   --on-accent:   #001a1f;
   --accent-text: #00e5ff;
 
-  /* ── Accent opacity variants ── */
+  --violet:    #8b5cf6;
+  --violet-20: rgba(139,92,246,0.20);
+  --violet-10: rgba(139,92,246,0.10);
+  --violet-05: rgba(139,92,246,0.05);
+
   --accent-05: rgba(0,229,255,0.05);
   --accent-10: rgba(0,229,255,0.10);
   --accent-15: rgba(0,229,255,0.15);
@@ -30,7 +31,6 @@
   --accent-30: rgba(0,229,255,0.30);
   --accent-40: rgba(0,229,255,0.40);
 
-  /* ── Semantic pipeline colors (unchanged — hardcoded in page arrays) ── */
   --green:  #22c55e;
   --amber:  #f59e0b;
   --red:    #ef4444;
@@ -39,52 +39,68 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; }
-
 html { -webkit-tap-highlight-color: transparent; }
 
 body {
   color: var(--text);
   background-color: var(--bg);
-  /* Hacker dot-grid background */
-  background-image: radial-gradient(rgba(0,229,255,0.10) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(0,229,255,0.07) 1px, transparent 1px);
   background-size: 28px 28px;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-               "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   font-size: 15px;
   line-height: 1.5;
   overscroll-behavior: none;
 }
 
+/* Ambient glow blobs — fixed so they stay behind all scrolling content */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 5% 5%,   rgba(0,229,255,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 55% at 95% 95%,  rgba(139,92,246,0.08) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 30% at 85% 10%,  rgba(0,229,255,0.03) 0%, transparent 55%);
+  pointer-events: none;
+  z-index: 0;
+}
+body > * { position: relative; z-index: 1; }
+
 /* ── Typography ── */
 h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
 h2 { font-size: 1.1rem; font-weight: 600; }
 
-/* ── Gradient text: cyan → violet ── */
 .grad-text {
-  background: linear-gradient(135deg, #00e5ff 0%, #bf5af2 100%);
+  background: linear-gradient(135deg, #00e5ff 0%, #8b5cf6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* ── Monospace numbers ── */
 .mono {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
   font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
-/* ── Neon utilities ── */
-.neon-text {
-  text-shadow: 0 0 10px var(--accent-40);
+/* ── Neon ── */
+.neon-text { text-shadow: 0 0 12px var(--accent-40); }
+.neon-box  { box-shadow: 0 0 0 1px var(--accent-20), 0 0 20px var(--accent-10); }
+
+/* ── Glass — use only on fixed/non-scrolling surfaces ── */
+.glass {
+  background: rgba(5,15,21,0.55);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
 }
-.neon-box {
-  box-shadow: 0 0 0 1px var(--accent-20), 0 0 16px var(--accent-10);
+.glass-dark {
+  background: rgba(2,8,14,0.80);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 
-/* ── Input base ── */
+/* ── Inputs ── */
 input, select, textarea {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -102,24 +118,33 @@ input:focus, select:focus {
   box-shadow: 0 0 0 3px var(--accent-10);
 }
 input::placeholder { color: var(--text-3); }
-
-/* ── Button base ── */
 button { cursor: pointer; border: none; font-family: inherit; }
 
-/* ── Card — dark glass, no backdrop-filter for mobile scroll perf ── */
+/* ── Cards ── */
 .card {
-  background: rgba(5, 15, 21, 0.9);
+  background: rgba(5,15,21,0.85);
   border: 1px solid var(--border);
   border-radius: 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 .card:hover {
-  border-color: rgba(0,229,255,0.2);
-  box-shadow: 0 0 20px rgba(0,229,255,0.04);
+  border-color: rgba(0,229,255,0.14);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,229,255,0.06);
 }
-
+.card-glow {
+  background: rgba(5,15,21,0.85);
+  border: 1px solid var(--accent-20);
+  border-radius: 16px;
+  box-shadow: 0 0 24px var(--accent-05), inset 0 1px 0 var(--accent-10);
+}
+.card-violet {
+  background: rgba(5,15,21,0.85);
+  border: 1px solid var(--violet-20);
+  border-radius: 16px;
+  box-shadow: 0 0 20px var(--violet-05), inset 0 1px 0 var(--violet-10);
+}
 .card-press { transition: transform 0.1s, opacity 0.1s; }
-.card-press:active { transform: scale(0.98); opacity: 0.9; }
+.card-press:active { transform: scale(0.97); opacity: 0.9; }
 
 /* ── Safe area ── */
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 16px); }
@@ -144,15 +169,21 @@ button { cursor: pointer; border: none; font-family: inherit; }
 
 /* ── Animations ── */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.fade-up { animation: fadeUp 0.25s ease both; }
+.fade-up { animation: fadeUp 0.3s ease both; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 0.8s linear infinite; }
 
-/* ── Pipeline status colors ── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+  50%       { opacity: 0.6; box-shadow: 0 0 2px var(--accent); }
+}
+.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Pipeline status ── */
 .status-new       { color: var(--accent); }
 .status-applied   { color: var(--blue); }
 .status-interview { color: var(--purple); }
@@ -160,9 +191,4 @@ button { cursor: pointer; border: none; font-family: inherit; }
 .status-rejected  { color: var(--red); }
 .status-ghosted   { color: var(--text-3); }
 
-/* ── Focus ── */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
