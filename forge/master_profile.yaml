@@ -25,9 +25,9 @@ skills:
   other:         ["TypeScript", "VS Code Extension API", "Dialogflow CX"]
 
 experience:
-  - company: "RTGS, Govt. of Andhra Pradesh"
+  - company: "Real Time Governance Society (RTG), Govt. of Andhra Pradesh"
     role: "AI/Data Analytics Intern"
-    location: "Hyderabad, India"
+    location: "Amaravati, Andhra Pradesh"
     dates: "Feb 2026 – Present"
     tags: ["risk_analyst", "compliance", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance"]
     bullets:

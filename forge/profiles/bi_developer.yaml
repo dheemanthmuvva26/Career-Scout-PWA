@@ -37,6 +37,6 @@ project_tags:
   - sql
 
 max_experience_roles: 2
-max_experience_bullets: 2
+max_experience_bullets: 3
 max_projects: 2
 max_project_bullets: 3
