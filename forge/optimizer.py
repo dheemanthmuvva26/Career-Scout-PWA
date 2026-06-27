@@ -153,7 +153,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    raw = llm.write(prompt, max_tokens=4200)
+    raw = llm.write(prompt, max_tokens=4200, json_mode=True)
     try:
         return llm.parse_json(raw)
     except Exception as e:
