@@ -72,7 +72,7 @@ llm:
   provider: groq
   # GROQ_API_KEY via env var
   scoring_model: llama-3.3-70b-versatile   # high volume, fast, generous rate limits
-  writing_model: llama-3.3-70b-versatile   # resume rewrites — confirmed json_object support
+  writing_model: openai/gpt-oss-120b        # resume rewrites — 8k TPM limit, trimmed prompt is 6170 tokens
 
 scraping:
   request_delay_seconds: 2

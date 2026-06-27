@@ -57,7 +57,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
                 "dates": e.get("dates", ""),
                 "location": e.get("location", ""),
                 "tags": e.get("tags", []),
-                "bullets": [b["text"] for b in e.get("bullets", [])],
+                "bullets": [b["text"] for b in e.get("bullets", [])[:2]],
             }
             for e in master_profile.get("experience", [])
         ],
@@ -158,7 +158,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
 
     # json_mode forces Groq to emit valid JSON — prevents malformed/truncated output
     try:
-        raw = llm.write(prompt, max_tokens=3500, json_mode=True)
+        raw = llm.write(prompt, max_tokens=3000, json_mode=True)
     except Exception as llm_err:
         # Surface LLM errors (413 rate limit, network, etc.) instead of silently
         # returning empty fallback — generate_resume() will catch and set result.error
