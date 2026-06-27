@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-no-jsonmode"
+_BUILD = "20260628-concise-bullets"
 
 @app.get("/health")
 def health():
