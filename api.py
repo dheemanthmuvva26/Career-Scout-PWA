@@ -76,9 +76,11 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
+_BUILD = "20260622-llama-json"
+
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "build": _BUILD}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
