@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-gptoss-final"
+_BUILD = "20260628-gptoss-3k"
 
 @app.get("/health")
 def health():
