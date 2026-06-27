@@ -46,18 +46,22 @@ def _get_client() -> Groq:
 # ── Core call ─────────────────────────────────────────────────────────────────
 
 def _call(model: str, prompt: str, max_tokens: int = 1024,
-          system: str = "You are a helpful assistant.") -> str:
+          system: str = "You are a helpful assistant.",
+          json_mode: bool = False) -> str:
     """Raw LLM call. Returns the response text or raises on failure."""
     client = _get_client()
-    resp = client.chat.completions.create(
+    kwargs: dict = dict(
         model=model,
         messages=[
             {"role": "system", "content": system},
             {"role": "user",   "content": prompt},
         ],
         max_tokens=max_tokens,
-        temperature=0.2,   # low temp for consistent JSON + factual outputs
+        temperature=0.2,
     )
+    if json_mode:
+        kwargs["response_format"] = {"type": "json_object"}
+    resp = client.chat.completions.create(**kwargs)
     return resp.choices[0].message.content.strip()
 
 
@@ -92,11 +96,12 @@ def score(prompt: str) -> str:
         })
 
 
-def write(prompt: str, max_tokens: int = 2048) -> str:
+def write(prompt: str, max_tokens: int = 2048, json_mode: bool = False) -> str:
     """
     Call the writing model (gpt-oss-120b).
     Used for: resume ATS optimization, weekly insights, skill gap roadmap.
     Raises on failure — caller handles (these are user-triggered, not background).
+    json_mode=True enforces valid JSON output via response_format.
     """
     return _call(
         model=_WRITING_MODEL,
@@ -106,6 +111,7 @@ def write(prompt: str, max_tokens: int = 2048) -> str:
             "You are an expert career coach and resume writer. "
             "Be specific, factual, and concise. Never invent skills or experience."
         ),
+        json_mode=json_mode,
     )
 
 

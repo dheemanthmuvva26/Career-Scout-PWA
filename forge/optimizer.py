@@ -156,20 +156,16 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    raw = llm.write(prompt, max_tokens=3500)
+    # json_mode forces Groq to emit valid JSON — prevents malformed/truncated output
+    try:
+        raw = llm.write(prompt, max_tokens=3500, json_mode=True)
+    except Exception as llm_err:
+        # Surface LLM errors (413 rate limit, network, etc.) instead of silently
+        # returning empty fallback — generate_resume() will catch and set result.error
+        raise RuntimeError(f"LLM call failed: {llm_err}") from llm_err
+
     try:
         return llm.parse_json(raw)
     except Exception as parse_err:
         print(f"[optimizer] JSON parse failed: {parse_err}\nRaw tail: {raw[-300:]}", flush=True)
-        return {
-            "summary": (
-                f"Fresher Data & AI professional applying for {job.get('title')} "
-                f"at {job.get('company')}. Strong Python, SQL, and ML skills with "
-                f"hands-on project experience."
-            ),
-            "ats_keywords": score_detail.get("matched_skills", []),
-            "skills_section": master_profile.get("skills", {}),
-            "selected_experience": [],
-            "selected_projects": [],
-            "ats_score_estimate": -1,
-        }
+        raise RuntimeError(f"Optimizer JSON parse failed: {parse_err}\nOutput tail: {raw[-200:]}") from parse_err

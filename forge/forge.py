@@ -284,7 +284,11 @@ def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
         profile_config = get_profile_by_id(profile_override) or select_profile(tags)
     else:
         profile_config = select_profile(tags)
-    optimized      = optimize(job, master, profile_config)
+
+    try:
+        optimized = optimize(job, master, profile_config)
+    except RuntimeError as e:
+        return {"error": str(e)}
 
     typ_content = _render(master, optimized, profile_config)
 
