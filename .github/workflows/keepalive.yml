@@ -11,8 +11,14 @@ jobs:
     steps:
       - name: Ping Render health endpoint
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://career-scout-pwa.onrender.com/health)
+          # --max-time 35: Render cold start takes 20-30s; old 15s was too short
+          # || true: a sleeping/waking Render should never fail the job —
+          #          the whole point is to wake it up, not to verify it's awake
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 35 \
+            https://career-scout-pwa.onrender.com/health || echo "000")
           echo "Health check returned HTTP $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "Warning: unexpected status $STATUS (Render may be waking up)"
+          if [ "$STATUS" = "200" ]; then
+            echo "Render is warm"
+          else
+            echo "Render waking up (status $STATUS — normal on cold start)"
           fi
