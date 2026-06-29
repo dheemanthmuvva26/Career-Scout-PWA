@@ -75,7 +75,7 @@ experience:
 
 projects:
   - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
-    sponsor: "RTGS, Govt. of AP"
+    sponsor: "RTGS, Secretariat, Govt. of AP"
     description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph, with an interactive analytics dashboard"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq", "Streamlit"]
     tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph", "bi", "bi_developer", "data_analyst"]
@@ -89,6 +89,21 @@ projects:
         tags: ["llm", "rag", "nlp", "ai_engineer", "knowledge_graph"]
       - text: "Implemented a 3-layer semantic caching system and multi-provider LLM orchestration (Gemini, Cerebras, Groq) to optimise latency, reliability, and response efficiency"
         tags: ["llm", "genai", "ai_engineer", "graph"]
+
+  - name: "AP Zero Maternal Death Mission — AI Decision Support Platform"
+    sponsor: "RTGS, Secretariat, Govt. of AP"
+    status: "Ongoing"
+    description: "AI-powered risk classification and decision support platform for AP's maternal health mission — Neo4j knowledge graph over 225K pregnancies with risk-stratified alerts, NL query engine, and multi-mode Streamlit dashboard"
+    tech: ["Neo4j", "FastAPI", "Streamlit", "Python", "Groq API", "LangChain"]
+    tags: ["risk_analyst", "compliance", "ai_engineer", "data_scientist", "decision_engine", "govt", "data_analyst", "bi", "financial_analyst"]
+    github: "github.com/Dheemanth2610"
+    bullets:
+      - text: "Engineered a risk-stratified decision engine classifying 225,000+ pregnancies across 29 AP districts into Low/High/Critical tiers, auto-generating 9 clinical alert types to drive targeted field worker interventions"
+        tags: ["risk_analyst", "compliance", "decision_engine", "data_analyst", "govt"]
+      - text: "Built a 6-stage NL-to-Cypher validation pipeline (intent detection, schema validation, aggregation fixing, alignment checks) querying a graph of 2M+ relationships across 724 mandals, hard-blocking invalid queries before execution"
+        tags: ["ai_engineer", "compliance", "data_scientist", "govt", "risk_analyst"]
+      - text: "Developed a 4-mode Streamlit dashboard (Dashboard, Case Tracker, Facility View, AI Query Engine) giving district health officers real-time KPIs, drill-through analysis, and natural-language data access across 2,488 facilities"
+        tags: ["data_analyst", "bi", "bi_developer", "govt", "risk_analyst", "data_scientist"]
 
   - name: "AI Coder — Agentic VS Code Extension"
     description: "Agentic AI-powered VS Code extension for automated code generation and developer workflows"
