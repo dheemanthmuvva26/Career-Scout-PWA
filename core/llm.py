@@ -34,10 +34,9 @@ _cfg = _load_config()
 _SCORING_MODEL = _cfg["llm"]["scoring_model"]
 _WRITING_MODEL = _cfg["llm"]["writing_model"]
 
-# ── Clients — Groq for scoring, auto-detect provider for writing ──────────────
+# ── Clients ───────────────────────────────────────────────────────────────────
 
-_groq_client:        Groq | None = None
-_openrouter_client:  Groq | None = None   # Groq SDK works with OpenRouter (same API format)
+_groq_client: Groq | None = None
 
 def _get_groq_client() -> Groq:
     global _groq_client
@@ -48,28 +47,48 @@ def _get_groq_client() -> Groq:
         _groq_client = Groq(api_key=api_key)
     return _groq_client
 
-def _get_writing_client() -> Groq:
-    """Return OpenRouter client if OPENROUTER_API_KEY is set, else Groq."""
-    global _openrouter_client
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    if openrouter_key:
-        if _openrouter_client is None:
-            _openrouter_client = Groq(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=openrouter_key,
-            )
-        return _openrouter_client
-    return _get_groq_client()
-
 
 # ── Core call ─────────────────────────────────────────────────────────────────
+
+def _call_openrouter(model: str, prompt: str, max_tokens: int,
+                     system: str, temperature: float = 0.2) -> str:
+    """Direct HTTP call to OpenRouter — bypasses Groq SDK for correct headers."""
+    import requests as _req
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENROUTER_API_KEY env var not set")
+    resp = _req.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": "https://career-scout-red.vercel.app",
+            "X-Title": "Career Scout",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user",   "content": prompt},
+            ],
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+        },
+        timeout=90,
+    )
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
+
 
 def _call(model: str, prompt: str, max_tokens: int = 1024,
           system: str = "You are a helpful assistant.",
           json_mode: bool = False,
           use_writing_client: bool = False) -> str:
-    """Raw LLM call. Returns the response text or raises on failure."""
-    client = _get_writing_client() if use_writing_client else _get_groq_client()
+    """Raw LLM call. Uses OpenRouter if OPENROUTER_API_KEY set and use_writing_client."""
+    if use_writing_client and os.getenv("OPENROUTER_API_KEY"):
+        return _call_openrouter(model, prompt, max_tokens, system)
+
+    client = _get_groq_client()
     kwargs: dict = dict(
         model=model,
         messages=[
@@ -82,7 +101,7 @@ def _call(model: str, prompt: str, max_tokens: int = 1024,
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
     resp = client.chat.completions.create(**kwargs)
-    return resp.choices[0].message.content.strip()
+    return (resp.choices[0].message.content or "").strip()
 
 
 # ── Public interface ──────────────────────────────────────────────────────────

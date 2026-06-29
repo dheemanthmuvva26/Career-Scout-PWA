@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-openrouter-gemma4"
+_BUILD = "20260628-openrouter-direct"
 
 @app.get("/health")
 def health():
