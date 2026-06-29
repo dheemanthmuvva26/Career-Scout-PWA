@@ -1,74 +1,134 @@
 # Role-specific certifications injected during forge.
-# These are merged with master_profile certifications BEFORE the optimizer runs.
-# The optimizer then picks the 2 most ATS-relevant for the specific JD.
-# All listed as "In Progress" — free Coursera/edX courses, fresher-appropriate.
+# Merged with master_profile certs BEFORE optimizer runs — it picks 2 most ATS-relevant.
+# All free-to-audit Coursera/edX courses, fresher-appropriate, no prerequisites.
+# Expanded to 5-6 per role for broader ATS keyword coverage across different JDs.
 
 risk_analyst:
   - name: "Financial Markets"
     issuer: "Yale University / Coursera"
     date: "In Progress"
-    tags: ["risk_analyst", "finance", "financial_markets", "investment"]
+    tags: ["risk_analyst", "finance", "financial_markets", "investment", "banking"]
   - name: "Introduction to Finance and Accounting"
     issuer: "University of Pennsylvania / Coursera"
     date: "In Progress"
-    tags: ["risk_analyst", "finance", "accounting", "financial_reporting"]
-  - name: "Everyday Excel"
-    issuer: "University of Colorado / Coursera"
+    tags: ["risk_analyst", "finance", "accounting", "financial_reporting", "budgeting"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
     date: "In Progress"
-    tags: ["risk_analyst", "data_analyst", "excel", "finance"]
+    tags: ["risk_analyst", "quantitative_analysis", "financial_modeling", "statistics", "finance"]
+  - name: "Introduction to Portfolio Construction and Analysis"
+    issuer: "EDHEC Business School / Coursera"
+    date: "In Progress"
+    tags: ["risk_analyst", "portfolio_management", "investment", "risk_management", "finance"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["risk_analyst", "statistical_analysis", "data_analysis", "excel", "finance"]
+  - name: "Finance for Non-Finance Professionals"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["risk_analyst", "finance", "financial_analysis", "decision_making", "banking"]
 
 compliance_analyst:
   - name: "Financial Markets"
     issuer: "Yale University / Coursera"
     date: "In Progress"
-    tags: ["compliance", "finance", "financial_markets", "regulatory"]
-  - name: "Introduction to Finance and Accounting"
-    issuer: "University of Pennsylvania / Coursera"
-    date: "In Progress"
-    tags: ["compliance", "finance", "accounting", "financial_reporting"]
+    tags: ["compliance", "finance", "financial_markets", "regulatory", "banking"]
   - name: "Banking and Financial Institutions"
     issuer: "Yale University / Coursera"
     date: "In Progress"
-    tags: ["compliance", "banking", "finance", "regulatory", "aml"]
+    tags: ["compliance", "banking", "finance", "regulatory", "financial_services", "aml"]
+  - name: "Introduction to Finance and Accounting"
+    issuer: "University of Pennsylvania / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "finance", "accounting", "financial_reporting", "audit"]
+  - name: "Cybersecurity for Business"
+    issuer: "University of Colorado / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "risk_management", "governance", "data_privacy", "regulatory"]
+  - name: "Business Ethics"
+    issuer: "Santa Clara University / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "ethics", "governance", "regulatory", "risk_management"]
+  - name: "Forensic Accounting and Fraud Examination"
+    issuer: "West Virginia University / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "aml", "fraud", "financial_crime", "audit", "kyc"]
 
 data_scientist:
   - name: "Machine Learning Specialization"
     issuer: "DeepLearning.AI / Coursera"
     date: "In Progress"
-    tags: ["data_scientist", "ml", "ai_engineer", "python"]
+    tags: ["data_scientist", "ml", "ai_engineer", "python", "predictive_modeling"]
   - name: "IBM Data Science Professional Certificate"
     issuer: "IBM / Coursera"
     date: "In Progress"
-    tags: ["data_scientist", "python", "ml", "data_analyst"]
-  - name: "Python for Everybody Specialization"
+    tags: ["data_scientist", "python", "ml", "sql", "data_analysis", "data_visualization"]
+  - name: "Deep Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["data_scientist", "deep_learning", "neural_networks", "ai_engineer", "ml"]
+  - name: "Statistics with Python Specialization"
     issuer: "University of Michigan / Coursera"
     date: "In Progress"
-    tags: ["data_scientist", "python", "data_analyst", "ai_engineer"]
+    tags: ["data_scientist", "statistics", "python", "statistical_analysis", "data_analysis"]
+  - name: "Applied Data Science with Python"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["data_scientist", "python", "data_analysis", "machine_learning", "nlp"]
+  - name: "SQL for Data Science"
+    issuer: "UC Davis / Coursera"
+    date: "In Progress"
+    tags: ["data_scientist", "sql", "data_analysis", "databases", "data_analyst"]
 
 bi_developer:
   - name: "Microsoft Power BI Data Analyst"
     issuer: "Microsoft / Coursera"
     date: "In Progress"
-    tags: ["bi_developer", "bi", "data_analyst", "power_bi"]
+    tags: ["bi_developer", "bi", "data_analyst", "power_bi", "data_visualization"]
   - name: "Google Business Intelligence Certificate"
     issuer: "Google / Coursera"
     date: "In Progress"
-    tags: ["bi_developer", "bi", "data_analyst", "business_intelligence"]
+    tags: ["bi_developer", "bi", "data_analyst", "business_intelligence", "sql"]
   - name: "Data Visualization with Tableau"
     issuer: "UC Davis / Coursera"
     date: "In Progress"
-    tags: ["bi_developer", "bi", "tableau", "data_analyst"]
+    tags: ["bi_developer", "bi", "tableau", "data_visualization", "data_analyst"]
+  - name: "Excel Skills for Business Specialization"
+    issuer: "Macquarie University / Coursera"
+    date: "In Progress"
+    tags: ["bi_developer", "excel", "data_analysis", "reporting", "data_analyst"]
+  - name: "Business Analytics Specialization"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["bi_developer", "business_analytics", "data_analysis", "decision_making", "sql"]
+  - name: "Introduction to Data Analytics"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["bi_developer", "data_analyst", "data_analysis", "sql", "excel", "reporting"]
 
 default:
   - name: "IBM AI Engineering Professional Certificate"
     issuer: "IBM / Coursera"
     date: "In Progress"
-    tags: ["ai_engineer", "ml", "data_scientist", "python"]
+    tags: ["ai_engineer", "ml", "data_scientist", "python", "deep_learning"]
   - name: "Deep Learning Specialization"
     issuer: "DeepLearning.AI / Coursera"
     date: "In Progress"
-    tags: ["ai_engineer", "ml", "data_scientist", "deep_learning"]
+    tags: ["ai_engineer", "ml", "deep_learning", "data_scientist", "neural_networks"]
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "ml", "data_scientist", "python", "predictive_modeling"]
   - name: "Python for Data Science, AI & Development"
     issuer: "IBM / Coursera"
     date: "In Progress"
-    tags: ["ai_engineer", "python", "data_scientist", "data_analyst"]
+    tags: ["ai_engineer", "python", "data_scientist", "data_analyst", "ml"]
+  - name: "Applied Data Science with Python"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "python", "data_scientist", "ml", "nlp", "data_analysis"]
+  - name: "Prompt Engineering for ChatGPT"
+    issuer: "Vanderbilt University / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "genai", "llm", "prompt_engineering", "data_scientist"]
