@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-groq-provider"
+_BUILD = "20260629-bullet-cert-fix"
 
 @app.get("/health")
 def health():
