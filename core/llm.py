@@ -1,15 +1,17 @@
 """
-Groq LLM interface — two models, one client.
-Both models are configured in config.yaml under llm.scoring_model / llm.writing_model.
+LLM interface — Groq (scoring) + configurable writing provider.
 
-scoring_model : llama-3.3-70b-versatile   — high volume job scoring
-writing_model : openai/gpt-oss-120b       — resume rewrites (confirmed in config.yaml)
+Provider is auto-detected from env vars:
+  OPENROUTER_API_KEY set → writing model uses OpenRouter (openrouter.ai/api/v1)
+  Otherwise             → writing model uses Groq
+
+scoring_model : llama-3.3-70b-versatile  (always Groq — fast, no rate issues)
+writing_model : configured in config.yaml
+  Groq options     : llama-3.3-70b-versatile, openai/gpt-oss-120b
+  OpenRouter free  : google/gemma-4-31b-it:free, meta-llama/llama-3.3-70b-instruct:free
 
 Usage:
     from core.llm import score, write
-
-    result = score(prompt)   # returns raw text, caller parses JSON
-    result = write(prompt)   # returns raw text
 """
 
 import os
@@ -32,25 +34,42 @@ _cfg = _load_config()
 _SCORING_MODEL = _cfg["llm"]["scoring_model"]
 _WRITING_MODEL = _cfg["llm"]["writing_model"]
 
-_client: Groq | None = None
+# ── Clients — Groq for scoring, auto-detect provider for writing ──────────────
 
-def _get_client() -> Groq:
-    global _client
-    if _client is None:
+_groq_client:        Groq | None = None
+_openrouter_client:  Groq | None = None   # Groq SDK works with OpenRouter (same API format)
+
+def _get_groq_client() -> Groq:
+    global _groq_client
+    if _groq_client is None:
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise RuntimeError("GROQ_API_KEY env var not set")
-        _client = Groq(api_key=api_key)
-    return _client
+        _groq_client = Groq(api_key=api_key)
+    return _groq_client
+
+def _get_writing_client() -> Groq:
+    """Return OpenRouter client if OPENROUTER_API_KEY is set, else Groq."""
+    global _openrouter_client
+    openrouter_key = os.getenv("OPENROUTER_API_KEY")
+    if openrouter_key:
+        if _openrouter_client is None:
+            _openrouter_client = Groq(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=openrouter_key,
+            )
+        return _openrouter_client
+    return _get_groq_client()
 
 
 # ── Core call ─────────────────────────────────────────────────────────────────
 
 def _call(model: str, prompt: str, max_tokens: int = 1024,
           system: str = "You are a helpful assistant.",
-          json_mode: bool = False) -> str:
+          json_mode: bool = False,
+          use_writing_client: bool = False) -> str:
     """Raw LLM call. Returns the response text or raises on failure."""
-    client = _get_client()
+    client = _get_writing_client() if use_writing_client else _get_groq_client()
     kwargs: dict = dict(
         model=model,
         messages=[
@@ -99,10 +118,9 @@ def score(prompt: str) -> str:
 
 def write(prompt: str, max_tokens: int = 2048, json_mode: bool = False) -> str:
     """
-    Call the writing model (gpt-oss-120b).
-    Used for: resume ATS optimization, weekly insights, skill gap roadmap.
-    Raises on failure — caller handles (these are user-triggered, not background).
-    json_mode=True enforces valid JSON output via response_format.
+    Call the writing model (provider determined by env vars).
+    Uses OpenRouter if OPENROUTER_API_KEY is set, else Groq.
+    Raises on failure — caller handles (user-triggered, not background).
     """
     return _call(
         model=_WRITING_MODEL,
@@ -113,6 +131,7 @@ def write(prompt: str, max_tokens: int = 2048, json_mode: bool = False) -> str:
             "Be specific, factual, and concise. Never invent skills or experience."
         ),
         json_mode=json_mode,
+        use_writing_client=True,
     )
 
 
