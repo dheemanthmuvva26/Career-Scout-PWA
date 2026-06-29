@@ -42,9 +42,30 @@ from core import db
 from forge.matcher import select_profile, get_profile_by_id
 from forge.optimizer import optimize
 
-_MASTER   = Path(__file__).parent / "master_profile.yaml"
-_TEMPLATE = Path(__file__).parent / "templates" / "resume.typ"
-_OUT_DIR  = Path("shared/resumes")
+_MASTER        = Path(__file__).parent / "master_profile.yaml"
+_TEMPLATE      = Path(__file__).parent / "templates" / "resume.typ"
+_CERTS_BY_ROLE = Path(__file__).parent / "certs_by_role.yaml"
+_OUT_DIR       = Path("shared/resumes")
+
+
+def _load_role_certs(profile_id: str) -> list[dict]:
+    """Return role-specific certs for the given profile id, or default certs."""
+    try:
+        data = yaml.safe_load(_CERTS_BY_ROLE.read_text(encoding="utf-8"))
+        return data.get(profile_id) or data.get("default") or []
+    except Exception:
+        return []
+
+
+def _merge_certs(master_certs: list[dict], role_certs: list[dict]) -> list[dict]:
+    """Prepend role-specific certs then master certs, deduplicating by name."""
+    seen: set[str] = set()
+    merged = []
+    for c in role_certs + master_certs:
+        if c["name"] not in seen:
+            seen.add(c["name"])
+            merged.append(c)
+    return merged
 
 
 def _slugify(s: str) -> str:
@@ -285,7 +306,14 @@ def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
     else:
         profile_config = select_profile(tags)
 
-    optimized = optimize(job, master, profile_config)
+    # Inject role-specific certs so optimizer can pick ATS-matching ones
+    role_certs = _load_role_certs(profile_config.get("id", "default"))
+    master_for_opt = {
+        **master,
+        "certifications": _merge_certs(master.get("certifications", []), role_certs),
+    }
+
+    optimized = optimize(job, master_for_opt, profile_config)
     if optimized.get("error"):
         return {"error": optimized["error"]}
 
