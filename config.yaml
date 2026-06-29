@@ -72,7 +72,7 @@ llm:
   provider: groq
   # GROQ_API_KEY via env var
   scoring_model: llama-3.3-70b-versatile   # high volume, fast, generous rate limits
-  writing_model: meta-llama/llama-3.3-70b-instruct:free  # OpenRouter — comparison test
+  writing_model: llama-3.3-70b-versatile    # Groq — confirmed working, ATS 70-80
 
 scraping:
   request_delay_seconds: 2
