@@ -34,18 +34,25 @@ _cfg = _load_config()
 _SCORING_MODEL = _cfg["llm"]["scoring_model"]
 _WRITING_MODEL = _cfg["llm"]["writing_model"]
 
-# ── Clients ───────────────────────────────────────────────────────────────────
+# ── Groq key pool — rotates on 429 rate-limit errors ─────────────────────────
+# Add GROQ_API_KEY_2, GROQ_API_KEY_3 in Render env vars for extra capacity.
+# Each key adds 100k tokens/day (normal usage ~35k/day, so 3 keys = plenty).
 
-_groq_client: Groq | None = None
+def _groq_keys() -> list[str]:
+    """Return all configured Groq API keys in priority order."""
+    candidates = [
+        os.getenv("GROQ_API_KEY"),
+        os.getenv("GROQ_API_KEY_2"),
+        os.getenv("GROQ_API_KEY_3"),
+    ]
+    keys = [k for k in candidates if k]
+    if not keys:
+        raise RuntimeError("No GROQ_API_KEY configured")
+    return keys
 
 def _get_groq_client() -> Groq:
-    global _groq_client
-    if _groq_client is None:
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            raise RuntimeError("GROQ_API_KEY env var not set")
-        _groq_client = Groq(api_key=api_key)
-    return _groq_client
+    """Return a Groq client for the primary key (used for scoring)."""
+    return Groq(api_key=_groq_keys()[0])
 
 
 # ── Core call ─────────────────────────────────────────────────────────────────
@@ -80,15 +87,19 @@ def _call_openrouter(model: str, prompt: str, max_tokens: int,
     return resp.json()["choices"][0]["message"]["content"].strip()
 
 
+def _is_rate_limit(e: Exception) -> bool:
+    s = str(e).lower()
+    return "429" in s or "rate_limit" in s or "rate limit" in s or "too many requests" in s
+
+
 def _call(model: str, prompt: str, max_tokens: int = 1024,
           system: str = "You are a helpful assistant.",
           json_mode: bool = False,
           use_writing_client: bool = False) -> str:
-    """Raw LLM call. Uses OpenRouter if OPENROUTER_API_KEY set and use_writing_client."""
+    """Raw LLM call. Rotates Groq API keys on 429. Falls back to OpenRouter if set."""
     if use_writing_client and os.getenv("OPENROUTER_API_KEY"):
         return _call_openrouter(model, prompt, max_tokens, system)
 
-    client = _get_groq_client()
     kwargs: dict = dict(
         model=model,
         messages=[
@@ -100,8 +111,21 @@ def _call(model: str, prompt: str, max_tokens: int = 1024,
     )
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
-    resp = client.chat.completions.create(**kwargs)
-    return (resp.choices[0].message.content or "").strip()
+
+    keys = _groq_keys()
+    last_err: Exception | None = None
+    for i, key in enumerate(keys):
+        try:
+            client = Groq(api_key=key)
+            resp = client.chat.completions.create(**kwargs)
+            return (resp.choices[0].message.content or "").strip()
+        except Exception as e:
+            if _is_rate_limit(e) and i < len(keys) - 1:
+                print(f"[llm] key {i+1} rate-limited, trying key {i+2}…", flush=True)
+                last_err = e
+                continue
+            raise   # non-rate-limit error, or last key — propagate immediately
+    raise last_err  # all keys exhausted
 
 
 # ── Public interface ──────────────────────────────────────────────────────────
