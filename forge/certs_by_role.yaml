@@ -1,74 +1,74 @@
 # Role-specific certifications injected during forge.
 # These are merged with master_profile certifications BEFORE the optimizer runs.
 # The optimizer then picks the 2 most ATS-relevant for the specific JD.
-# All listed as "In Progress" — truthful signal that you are actively upskilling.
+# All listed as "In Progress" — free Coursera/edX courses, fresher-appropriate.
 
 risk_analyst:
   - name: "Financial Markets"
     issuer: "Yale University / Coursera"
     date: "In Progress"
     tags: ["risk_analyst", "finance", "financial_markets", "investment"]
-  - name: "Introduction to Risk Management"
-    issuer: "New York Institute of Finance / edX"
-    date: "In Progress"
-    tags: ["risk_analyst", "risk_management", "finance", "financial_services"]
-  - name: "Financial Engineering and Risk Management"
-    issuer: "Columbia University / Coursera"
-    date: "In Progress"
-    tags: ["risk_analyst", "financial_engineering", "risk_management", "finance"]
-
-compliance_analyst:
-  - name: "Regulatory Compliance and AML Fundamentals"
-    issuer: "New York Institute of Finance / edX"
-    date: "In Progress"
-    tags: ["compliance", "aml", "regulatory", "kyc", "finance"]
-  - name: "Anti-Money Laundering and Financial Crime"
-    issuer: "ACAMS / Coursera"
-    date: "In Progress"
-    tags: ["compliance", "aml", "financial_crime", "kyc", "finance"]
-  - name: "Compliance in Financial Services"
+  - name: "Introduction to Finance and Accounting"
     issuer: "University of Pennsylvania / Coursera"
     date: "In Progress"
-    tags: ["compliance", "regulatory", "financial_reporting", "finance"]
+    tags: ["risk_analyst", "finance", "accounting", "financial_reporting"]
+  - name: "Everyday Excel"
+    issuer: "University of Colorado / Coursera"
+    date: "In Progress"
+    tags: ["risk_analyst", "data_analyst", "excel", "finance"]
+
+compliance_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "finance", "financial_markets", "regulatory"]
+  - name: "Introduction to Finance and Accounting"
+    issuer: "University of Pennsylvania / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "finance", "accounting", "financial_reporting"]
+  - name: "Banking and Financial Institutions"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["compliance", "banking", "finance", "regulatory", "aml"]
 
 data_scientist:
   - name: "Machine Learning Specialization"
     issuer: "DeepLearning.AI / Coursera"
     date: "In Progress"
     tags: ["data_scientist", "ml", "ai_engineer", "python"]
-  - name: "TensorFlow Developer Certificate"
-    issuer: "Google"
-    date: "In Progress"
-    tags: ["data_scientist", "ml", "ai_engineer", "deep_learning"]
   - name: "IBM Data Science Professional Certificate"
     issuer: "IBM / Coursera"
     date: "In Progress"
     tags: ["data_scientist", "python", "ml", "data_analyst"]
+  - name: "Python for Everybody Specialization"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["data_scientist", "python", "data_analyst", "ai_engineer"]
 
 bi_developer:
-  - name: "Microsoft Power BI Data Analyst Associate (PL-300)"
-    issuer: "Microsoft"
+  - name: "Microsoft Power BI Data Analyst"
+    issuer: "Microsoft / Coursera"
     date: "In Progress"
     tags: ["bi_developer", "bi", "data_analyst", "power_bi"]
-  - name: "Tableau Desktop Specialist"
-    issuer: "Salesforce / Tableau"
-    date: "In Progress"
-    tags: ["bi_developer", "bi", "tableau", "data_analyst"]
   - name: "Google Business Intelligence Certificate"
     issuer: "Google / Coursera"
     date: "In Progress"
     tags: ["bi_developer", "bi", "data_analyst", "business_intelligence"]
+  - name: "Data Visualization with Tableau"
+    issuer: "UC Davis / Coursera"
+    date: "In Progress"
+    tags: ["bi_developer", "bi", "tableau", "data_analyst"]
 
 default:
   - name: "IBM AI Engineering Professional Certificate"
     issuer: "IBM / Coursera"
     date: "In Progress"
     tags: ["ai_engineer", "ml", "data_scientist", "python"]
-  - name: "AWS Cloud Practitioner Essentials"
-    issuer: "Amazon Web Services / Coursera"
+  - name: "Deep Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
     date: "In Progress"
-    tags: ["ai_engineer", "cloud", "data_scientist"]
-  - name: "Microsoft Azure AI Fundamentals (AI-900)"
-    issuer: "Microsoft"
+    tags: ["ai_engineer", "ml", "data_scientist", "deep_learning"]
+  - name: "Python for Data Science, AI & Development"
+    issuer: "IBM / Coursera"
     date: "In Progress"
-    tags: ["ai_engineer", "cloud", "data_scientist", "ml"]
+    tags: ["ai_engineer", "python", "data_scientist", "data_analyst"]
