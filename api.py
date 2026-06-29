@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-openrouter-direct"
+_BUILD = "20260628-llama-openrouter"
 
 @app.get("/health")
 def health():
