@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-key-rotation"
+_BUILD = "20260628-groq-provider"
 
 @app.get("/health")
 def health():

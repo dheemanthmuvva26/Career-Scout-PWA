@@ -31,8 +31,9 @@ def _load_config() -> dict:
         return yaml.safe_load(f)
 
 _cfg = _load_config()
-_SCORING_MODEL = _cfg["llm"]["scoring_model"]
-_WRITING_MODEL = _cfg["llm"]["writing_model"]
+_SCORING_MODEL  = _cfg["llm"]["scoring_model"]
+_WRITING_MODEL  = _cfg["llm"]["writing_model"]
+_WRITING_PROVIDER = _cfg["llm"].get("writing_provider", "groq")  # groq | openrouter
 
 # ── Groq key pool — rotates on 429 rate-limit errors ─────────────────────────
 # Add GROQ_API_KEY_2, GROQ_API_KEY_3 in Render env vars for extra capacity.
@@ -96,8 +97,8 @@ def _call(model: str, prompt: str, max_tokens: int = 1024,
           system: str = "You are a helpful assistant.",
           json_mode: bool = False,
           use_writing_client: bool = False) -> str:
-    """Raw LLM call. Rotates Groq API keys on 429. Falls back to OpenRouter if set."""
-    if use_writing_client and os.getenv("OPENROUTER_API_KEY"):
+    """Raw LLM call. Rotates Groq API keys on 429. Uses OpenRouter if writing_provider=openrouter."""
+    if use_writing_client and _WRITING_PROVIDER == "openrouter":
         return _call_openrouter(model, prompt, max_tokens, system)
 
     kwargs: dict = dict(
