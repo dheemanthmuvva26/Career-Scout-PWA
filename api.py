@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260628-yaml-gptoss"
+_BUILD = "20260628-json-repair"
 
 @app.get("/health")
 def health():

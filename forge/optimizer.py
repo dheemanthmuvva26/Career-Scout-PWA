@@ -118,44 +118,42 @@ STRICT RULES:
 8. The final resume should fill close to a full single US-letter page — use the bullet/project/skill counts above as TARGETS, not maximums to undercut. Do not pad with filler, but do not under-fill either.
 9. selected_certifications: from the certifications list in the profile, pick 1-2 whose name, issuer, or tags best match this JD's domain/keywords. If multiple are equally relevant, prefer ones with a named brand institution (Google, Wharton, etc.). If none match well, still include the single most credible one. Return the full cert object (name, issuer, date) — do not alter any fields.
 
-Respond ONLY with valid YAML — no markdown, no code fences, no explanation:
-summary: "..."
-ats_keywords:
-  - "..."
-skills_section:
-  languages:
-    - "..."
-selected_experience:
-  - company: "..."
-    role: "..."
-    dates: "..."
-    location: "..."
-    bullets:
-      - "..."
-selected_projects:
-  - name: "..."
-    tech:
-      - "..."
-    github: "..."
-    bullets:
-      - "..."
-selected_certifications:
-  - name: "..."
-    issuer: "..."
-    date: "..."
-ats_score_estimate: 0"""
+Respond ONLY with valid JSON — no markdown, no explanation:
+{{
+  "summary": "...",
+  "ats_keywords": ["..."],
+  "skills_section": {{
+    "languages": ["..."]
+  }},
+  "selected_experience": [
+    {{
+      "company": "...",
+      "role": "...",
+      "dates": "...",
+      "location": "...",
+      "bullets": ["..."]
+    }}
+  ],
+  "selected_projects": [
+    {{
+      "name": "...",
+      "tech": ["..."],
+      "github": "...",
+      "bullets": ["..."]
+    }}
+  ],
+  "selected_certifications": [
+    {{
+      "name": "...",
+      "issuer": "...",
+      "date": "..."
+    }}
+  ],
+  "ats_score_estimate": 0
+}}"""
 
-    import yaml as _yaml
     raw = llm.write(prompt, max_tokens=3000)
-    # Strip any accidental code fences the model adds
-    text = raw.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        text = "\n".join(lines[1:-1])
     try:
-        result = _yaml.safe_load(text)
-        if isinstance(result, dict):
-            return result
-        raise ValueError(f"Expected dict, got {type(result)}")
+        return llm.parse_json(raw)
     except Exception as e:
         return {"error": f"Resume optimizer failed — could not parse output: {e}"}
