@@ -89,6 +89,12 @@ export const api = {
       body: JSON.stringify({ note }),
     }),
 
+  auditResume: (id: string) =>
+    apiFetch(`/forge/${id}/audit`, { method: "POST" }),
+
+  atsCheck: (id: string) =>
+    apiFetch(`/forge/${id}/ats-check`, { method: "POST" }),
+
   forge: async (id: string, profile?: string) => {
     // POST returns a token immediately — forge runs in background on server
     const { token } = await apiFetch(

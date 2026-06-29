@@ -330,6 +330,21 @@ def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
 
     db.set_resume_path(job_id, str(pdf_path))
 
+    # Save optimized content alongside PDF for ATS check
+    import json as _json
+    json_path = pdf_path.with_suffix(".json")
+    try:
+        json_path.write_text(_json.dumps({
+            "summary":                  optimized.get("summary", ""),
+            "skills_section":           optimized.get("skills_section", {}),
+            "selected_experience":      optimized.get("selected_experience", []),
+            "selected_projects":        optimized.get("selected_projects", []),
+            "selected_certifications":  optimized.get("selected_certifications", []),
+            "ats_keywords":             optimized.get("ats_keywords", []),
+        }, indent=2), encoding="utf-8")
+    except Exception:
+        pass  # non-critical
+
     score_detail: dict = {}
     try:
         sd = job.get("score_detail")
@@ -347,6 +362,139 @@ def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
         "title": job.get("title", ""),
         "company": job.get("company", ""),
     }
+
+
+def audit_resume(job_id: str) -> dict:
+    """
+    Step 1: Score profile vs JD, return top 5 missing keywords + 3 red flags.
+    Fast — single LLM call using the scoring model.
+    """
+    from core import llm
+    job = db.get_job(job_id)
+    if not job:
+        return {"error": f"Job {job_id} not found"}
+
+    master = _load_master()
+    jd = (job.get("description") or "")[:1500]
+    p = master.get("personal", {})
+    skills_flat = ", ".join(
+        v if isinstance(v, str) else ", ".join(v)
+        for v in master.get("skills", {}).values()
+    )
+    exp_lines = "\n".join(
+        f"- {e['role']} at {e['company']} ({e.get('dates','')})"
+        for e in master.get("experience", [])
+    )
+    proj_lines = "\n".join(
+        f"- {p['name']} ({', '.join(p.get('tech',[])[:4])})"
+        for p in master.get("projects", [])
+    )
+
+    prompt = f"""You are a senior recruiter scoring a fresher candidate against a job description.
+
+JOB:
+Title: {job.get("title")}
+Company: {job.get("company")}
+Description: {jd}
+
+CANDIDATE PROFILE:
+Skills: {skills_flat}
+Experience:
+{exp_lines}
+Projects:
+{proj_lines}
+
+Score the candidate out of 100, identify the 5 most critical missing keywords,
+and name 3 red flags a hiring manager would notice immediately.
+
+Respond ONLY with valid JSON:
+{{
+  "score": <int 0-100>,
+  "missing_keywords": ["kw1","kw2","kw3","kw4","kw5"],
+  "red_flags": ["flag1","flag2","flag3"]
+}}"""
+
+    raw = llm.score(prompt)
+    try:
+        return llm.parse_json(raw)
+    except Exception:
+        return {"score": -1, "missing_keywords": [], "red_flags": []}
+
+
+def ats_check(job_id: str) -> dict:
+    """
+    Step 3: Run ATS + hiring manager simulation on the last generated resume.
+    Loads saved optimized JSON from shared/resumes/.
+    """
+    from core import llm
+    import json as _json
+    import glob as _glob
+
+    job = db.get_job(job_id)
+    if not job:
+        return {"error": f"Job {job_id} not found"}
+
+    # Find the most recent optimized JSON for this job
+    company_slug = _slugify(job.get("company", "company"))
+    role_slug    = _slugify(job.get("title", "role"))
+    pattern = str(_OUT_DIR / f"{company_slug}_{role_slug}_*.json")
+    files = sorted(_glob.glob(pattern))
+    if not files:
+        return {"error": "No generated resume found — forge first, then run ATS check"}
+
+    try:
+        optimized = _json.loads(Path(files[-1]).read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"error": f"Could not load resume data: {e}"}
+
+    jd = (job.get("description") or "")[:1000]
+    summary = optimized.get("summary", "")
+    skills  = optimized.get("skills_section", {})
+    skills_text = "\n".join(f"  {k}: {', '.join(v)}" for k, v in skills.items())
+    exp_text = "\n".join(
+        f"  {r['role']} @ {r['company']}:\n" +
+        "\n".join(f"    - {b}" for b in r.get("bullets", []))
+        for r in optimized.get("selected_experience", [])
+    )
+    proj_text = "\n".join(
+        f"  {p['name']}:\n" + "\n".join(f"    - {b}" for b in p.get("bullets", []))
+        for p in optimized.get("selected_projects", [])
+    )
+
+    prompt = f"""You are simultaneously an ATS system and a senior hiring manager reviewing a resume for this role:
+
+JOB: {job.get("title")} at {job.get("company")}
+JD (excerpt): {jd}
+
+RESUME:
+Summary: {summary}
+
+Skills:
+{skills_text}
+
+Experience:
+{exp_text}
+
+Projects:
+{proj_text}
+
+As ATS: which sections contain sufficient keywords and will be parsed correctly?
+As Hiring Manager: which sections would make you slow down or skip? What specific rewrites would increase selection chances?
+
+Respond ONLY with valid JSON:
+{{
+  "ats_pass": ["Section1","Section2"],
+  "flagged": [
+    {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix"}}
+  ],
+  "overall_verdict": "one concise sentence on selection likelihood"
+}}"""
+
+    raw = llm.score(prompt)
+    try:
+        return llm.parse_json(raw)
+    except Exception:
+        return {"error": "ATS check parsing failed — try again"}
 
 
 def _telegram_message(result: dict) -> str:

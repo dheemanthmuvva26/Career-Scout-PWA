@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260629-role-certs"
+_BUILD = "20260629-resume-intelligence"
 
 @app.get("/health")
 def health():
@@ -382,8 +382,33 @@ def forge_poll(token: str):
     result = _forge_jobs.get(token)
     if result is None:
         raise HTTPException(status_code=404, detail="Token not found or expired")
-    # Don't delete immediately — keep for 5 min so network retries don't 404
     return result
+
+
+@app.post("/forge/{job_id}/audit")
+def forge_audit(job_id: str):
+    """
+    Step 1 — Pre-forge audit: score profile vs JD, return 5 missing keywords + 3 red flags.
+    Fast single LLM call, no PDF generated.
+    """
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    from forge.forge import audit_resume
+    return audit_resume(job_id)
+
+
+@app.post("/forge/{job_id}/ats-check")
+def forge_ats_check(job_id: str):
+    """
+    Step 3 — Post-forge ATS simulation: scan last generated resume as ATS + hiring manager.
+    Requires a resume to have been generated first (loads saved JSON from shared/resumes/).
+    """
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    from forge.forge import ats_check
+    return ats_check(job_id)
 
 
 # ── Telegram bot command handler ─────────────────────────────────────────────
