@@ -106,11 +106,11 @@ def _experience_block(selected_experience: list[dict]) -> str:
     blocks = []
     for exp in selected_experience:
         bullets = "\n".join(f"- {b}" for b in exp.get("bullets", []))
-        loc = f", {exp['location']}" if exp.get("location") else ""
-        header = (
-            f"*{exp.get('role', '')} — {exp.get('company', '')}{loc}*"
-            f" #h(1fr) {exp.get('dates', '')}"
-        )
+        loc = f", {_escape_typst(exp['location'])}" if exp.get("location") else ""
+        role_company = f"*{_escape_typst(exp.get('role',''))} — {_escape_typst(exp.get('company',''))}{loc}*"
+        dates = _escape_typst(exp.get("dates", ""))
+        # Use grid so dates are always right-aligned on the SAME line even for long company names
+        header = f"#grid(columns: (1fr, auto), gutter: 4pt)[{role_company}][{dates}]"
         blocks.append(f"{header}\n{bullets}")
     return "\n\n".join(blocks)
 
@@ -283,7 +283,8 @@ def _compile(typ_content: str, pdf_path: Path) -> tuple[bool, str]:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
+def generate_resume(job_id: str, profile_override: str | None = None,
+                    ats_hints: dict | None = None) -> dict:
     """
     Full pipeline: job → optimize → render → compile → DB update.
     Always returns a dict — never raises.
@@ -313,7 +314,7 @@ def generate_resume(job_id: str, profile_override: str | None = None) -> dict:
         "certifications": _merge_certs(master.get("certifications", []), role_certs),
     }
 
-    optimized = optimize(job, master_for_opt, profile_config)
+    optimized = optimize(job, master_for_opt, profile_config, ats_hints=ats_hints)
     if optimized.get("error"):
         return {"error": optimized["error"]}
 

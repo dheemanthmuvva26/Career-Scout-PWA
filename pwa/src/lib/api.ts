@@ -95,11 +95,11 @@ export const api = {
   atsCheck: (id: string) =>
     apiFetch(`/forge/${id}/ats-check`, { method: "POST" }),
 
-  forge: async (id: string, profile?: string) => {
+  forge: async (id: string, profile?: string, atsHints?: object) => {
     // POST returns a token immediately — forge runs in background on server
     const { token } = await apiFetch(
       `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
-      { method: "POST" }
+      { method: "POST", body: JSON.stringify({ ats_hints: atsHints ?? null }) }
     );
     // Poll every 4s until done (up to 120s). Retry on transient errors
     // so a single dropped response doesn't kill the whole forge.

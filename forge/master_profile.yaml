@@ -75,7 +75,7 @@ experience:
 
 projects:
   - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
-    sponsor: "RTGS, Secretariat, Govt. of AP"
+    sponsor: "RTGS, Govt. of AP"
     description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph, with an interactive analytics dashboard"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq", "Streamlit"]
     tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph", "bi", "bi_developer", "data_analyst"]
@@ -91,7 +91,7 @@ projects:
         tags: ["llm", "genai", "ai_engineer", "graph"]
 
   - name: "AP Zero Maternal Death Mission — AI Decision Support Platform"
-    sponsor: "RTGS, Secretariat, Govt. of AP"
+    sponsor: "RTGS, Govt. of AP"
     status: "Ongoing"
     description: "AI-powered risk classification and decision support platform for AP's maternal health mission — Neo4j knowledge graph over 225K pregnancies with risk-stratified alerts, NL query engine, and multi-mode Streamlit dashboard"
     tech: ["Neo4j", "FastAPI", "Streamlit", "Python", "Groq API", "LangChain"]

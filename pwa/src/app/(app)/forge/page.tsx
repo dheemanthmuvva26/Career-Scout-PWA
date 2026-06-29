@@ -72,7 +72,7 @@ export default function ForgePage() {
     try {
       try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
       setForgeStatus("Analysing JD · Optimising with XYZ format…");
-      const res = await api.forge(selected.short_id || selected.id, profile || undefined);
+      const res = await api.forge(selected.short_id || selected.id, profile || undefined, undefined);
       setForgeResult(res);
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : String(e);
@@ -80,6 +80,27 @@ export default function ForgePage() {
         ? "Timed out — try again"
         : `Forge failed: ${raw}`;
       setForgeResult({ error: msg });
+    }
+    setForgeStatus("");
+    setForging(false);
+  }
+
+  async function reforgeWithFixes() {
+    if (!selected || !atsResult) return;
+    setForging(true);
+    setForgeResult(null);
+    setAtsResult(null);
+    setForgeStatus("Re-forging with ATS fixes…");
+    try {
+      try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
+      const hints = {
+        flagged: atsResult.flagged ?? [],
+        missing_keywords: (auditResult?.missing_keywords ?? []),
+      };
+      const res = await api.forge(selected.short_id || selected.id, profile || undefined, hints);
+      setForgeResult(res);
+    } catch (e: unknown) {
+      setForgeResult({ error: e instanceof Error ? e.message : "Re-forge failed" });
     }
     setForgeStatus("");
     setForging(false);
@@ -362,11 +383,24 @@ export default function ForgePage() {
 
               {/* Verdict */}
               {atsResult.overall_verdict && (
-                <div className="rounded-xl p-3"
+                <div className="rounded-xl p-3 mb-3"
                   style={{ background: "var(--accent-05)", border: "1px solid var(--accent-15)" }}>
                   <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--accent)" }}>Verdict</p>
                   <p className="text-xs" style={{ color: "var(--text-2)" }}>{atsResult.overall_verdict}</p>
                 </div>
+              )}
+
+              {/* Re-forge with fixes */}
+              {atsResult.flagged && atsResult.flagged.length > 0 && (
+                <button onClick={reforgeWithFixes} disabled={forging}
+                  className="w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ background: "var(--blue-20)", color: "var(--blue-l)", border: "1px solid var(--blue-20)" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M23 4v6h-6M1 20v-6h6" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Re-forge with ATS Fixes Applied
+                </button>
               )}
             </>
           )}

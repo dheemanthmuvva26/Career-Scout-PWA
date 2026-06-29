@@ -344,11 +344,15 @@ def insights_signals():
 
 _forge_jobs: dict[str, dict] = {}
 
+class ForgeBody(BaseModel):
+    ats_hints: dict | None = None   # flagged + missing_keywords from ATS check
+
 @app.post("/forge/{job_id}")
-def trigger_forge(job_id: str, profile: str | None = None):
+def trigger_forge(job_id: str, profile: str | None = None, body: ForgeBody = ForgeBody()):
     """
     Start forge in a background thread and return a token immediately.
     Client polls GET /forge/poll/{token} every 3s until status == "done".
+    Optional body.ats_hints feeds ATS check results back into the optimizer.
     """
     job = get_job(job_id)
     if not job:
@@ -360,12 +364,12 @@ def trigger_forge(job_id: str, profile: str | None = None):
     def _run():
         try:
             from forge.forge import generate_resume, _telegram_message
-            result = generate_resume(job_id, profile_override=profile)
+            result = generate_resume(job_id, profile_override=profile,
+                                     ats_hints=body.ats_hints)
             _forge_jobs[token] = {"status": "done", **result,
                                   "telegram_message": _telegram_message(result)}
         except Exception as e:
             _forge_jobs[token] = {"status": "done", "error": str(e)}
-        # Schedule cleanup after 5 min so retried polls don't 404
         def _cleanup():
             import time as _time
             _time.sleep(300)

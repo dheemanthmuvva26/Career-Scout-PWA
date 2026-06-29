@@ -21,7 +21,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core import llm
 
 
-def optimize(job: dict, master_profile: dict, profile_config: dict) -> dict:
+def optimize(job: dict, master_profile: dict, profile_config: dict,
+             ats_hints: dict | None = None) -> dict:
     """
     Returns:
     {
@@ -93,6 +94,11 @@ Description (first 2000 chars):
 SCORING CONTEXT:
 Fit summary: {score_detail.get("fit_summary", "N/A")}
 Matched skills: {score_detail.get("matched_skills", [])}
+{f"""
+ATS CHECK RESULTS FROM PREVIOUS VERSION (fix these in this regeneration):
+Flagged sections: {[f["section"]+": "+f["issue"] for f in (ats_hints.get("flagged") or [])]}
+Missing keywords to incorporate: {ats_hints.get("missing_keywords", [])}
+""" if ats_hints else ""}
 Missing skills: {score_detail.get("missing_skills", [])}
 
 PROFILE CONFIG:
@@ -118,6 +124,12 @@ STRICT RULES:
 8. The final resume should fill close to a full single US-letter page — use the bullet/project/skill counts above as TARGETS, not maximums to undercut. Do not pad with filler, but do not under-fill either.
 9. selected_certifications: ALWAYS include this section — pick exactly 2 certifications from the profile list whose name, issuer, or tags best match this JD's domain/keywords. Prioritise certifications from brand-name institutions (Wharton, Google, etc.) and ones tagged with finance, risk, data_analyst, or similar JD-relevant domains. Return the full cert object (name, issuer, date) unchanged — do not omit this field.
 
+HARD CONSTRAINT — BULLET COUNTS (checked before output is accepted):
+- Every object in selected_experience MUST have bullets array with EXACTLY {profile_config.get("max_experience_bullets", 2)} items — no more, no fewer.
+- Every object in selected_projects MUST have bullets array with EXACTLY {profile_config.get("max_project_bullets", 3)} items — no more, no fewer.
+- If the source only has 2 bullets and you need 3, paraphrase a different aspect of the same experience as the third bullet.
+- Returning 2 bullets when the count is 3 is a CRITICAL ERROR.
+
 Respond ONLY with valid JSON — no markdown, no explanation:
 {{
   "summary": "...",
@@ -131,7 +143,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
       "role": "...",
       "dates": "...",
       "location": "...",
-      "bullets": ["..."]
+      "bullets": ["bullet_1", "bullet_2", "bullet_3"]
     }}
   ],
   "selected_projects": [
@@ -139,7 +151,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
       "name": "...",
       "tech": ["..."],
       "github": "...",
-      "bullets": ["..."]
+      "bullets": ["bullet_1", "bullet_2", "bullet_3"]
     }}
   ],
   "selected_certifications": [
