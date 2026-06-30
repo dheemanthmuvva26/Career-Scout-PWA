@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260629-one-page-fit"
+_BUILD = "20260629-generic-import"
 
 @app.get("/health")
 def health():
@@ -433,7 +433,7 @@ HELP_TEXT = """🤖 *Career Scout — Command Reference*
 /note <id> <text> — Add a private note to a job
 
 📎 *Import*
-/import <linkedin\\_url> — Save any LinkedIn job directly to your tracker
+/import <url> — Save a job from LinkedIn or any company career page
 
 📄 *Resumes*
 /resume <id> — Generate ATS-optimised PDF resume for a job
@@ -773,16 +773,20 @@ def _dispatch(cmd: str, args: list[str], chat_id: Optional[int] = None) -> tuple
             return f"❌ Resume generation failed: {_esc(e)}", None
 
     if cmd == "import":
-        if not args or "linkedin.com" not in args[0]:
-            return "📎 *Import a LinkedIn job*\n\nUsage: /import <url>\n\nPaste the full URL from a LinkedIn job posting\\.", None
+        if not args or not args[0].startswith("http"):
+            return "📎 *Import a job*\n\nUsage: /import <url>\n\nPaste a LinkedIn job URL, or any company career page / ATS job link\\.", None
         url = args[0]
         try:
-            from scrapers.linkedin_url_scraper import fetch_linkedin_job
             from scrapers import dedup
             from core import urgency, scorer
             from core.db import upsert_job
 
-            job = fetch_linkedin_job(url)
+            if "linkedin.com" in url:
+                from scrapers.linkedin_url_scraper import fetch_linkedin_job
+                job = fetch_linkedin_job(url)
+            else:
+                from scrapers.generic_url_scraper import fetch_job_from_url
+                job = fetch_job_from_url(url)
             job["urgency"] = urgency.classify(job.get("posted_date"))
             result = dedup.process(job)
 
@@ -819,21 +823,29 @@ class ImportRequest(BaseModel):
 @app.post("/import")
 def import_job(body: ImportRequest):
     """
-    Import a single job from a LinkedIn URL.
+    Import a single job from any URL — LinkedIn or a company career site /
+    ATS platform (Greenhouse, Lever, Workday, etc.).
     Fetches the page, extracts job data, dedupes, scores, saves to DB.
     Optional location field overrides the scraped location (useful when the
     same job is posted for multiple cities under the same URL).
     """
-    from scrapers.linkedin_url_scraper import fetch_linkedin_job
     from scrapers import dedup
     from core import urgency, scorer
 
+    is_linkedin = "linkedin.com" in body.url
+
     try:
-        job = fetch_linkedin_job(body.url, location_override=body.location.strip())
+        if is_linkedin:
+            from scrapers.linkedin_url_scraper import fetch_linkedin_job
+            job = fetch_linkedin_job(body.url, location_override=body.location.strip())
+        else:
+            from scrapers.generic_url_scraper import fetch_job_from_url
+            job = fetch_job_from_url(body.url, location_override=body.location.strip())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Could not fetch LinkedIn page: {e}")
+        source = "LinkedIn" if is_linkedin else "the page"
+        raise HTTPException(status_code=502, detail=f"Could not fetch {source}: {e}")
 
     job["urgency"] = urgency.classify(job.get("posted_date"))
     result = dedup.process(job)

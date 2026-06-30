@@ -65,11 +65,11 @@ export default function JobsPage() {
 
       {/* Import bar */}
       <div className="card p-3 mb-5">
-        <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-3)" }}>IMPORT FROM LINKEDIN</p>
+        <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-3)" }}>IMPORT JOB FROM URL</p>
         <div className="flex gap-2 mb-2">
           <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleImport()}
-            placeholder="Paste LinkedIn job URL…"
+            placeholder="LinkedIn, company site, or ATS job URL…"
             style={{ fontSize: 14 }} />
           <button onClick={handleImport} disabled={importing || !importUrl.trim()}
             className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
