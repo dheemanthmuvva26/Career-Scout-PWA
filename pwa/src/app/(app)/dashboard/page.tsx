@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { api, type Stats } from "@/lib/api";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import PullToRefresh from "@/components/PullToRefresh";
+
+const USER_NAME = "Dheemanth";
 
 const PIPELINE = [
   { key: "applied",   label: "Applied",   color: "#60a5fa", glow: "rgba(96,165,250,0.20)" },
@@ -34,31 +35,18 @@ function getMotivation(stats: Stats | null, hour: number, day: number): string {
   return "Your next job is one application away.";
 }
 
-function getFirstName(email: string): string {
-  const local = email.split("@")[0];
-  const name = local.replace(/[^a-zA-Z]/g, " ").trim().split(" ")[0];
-  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-}
-
 export default function DashboardPage() {
   const [stats, setStats]       = useState<Stats | null>(null);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
   const [scouting, setScouting] = useState(false);
   const [scoutMsg, setScoutMsg] = useState("");
-  const [name, setName]         = useState("D");
 
   const now  = new Date();
   const hour = now.getHours();
   const day  = now.getDay();
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
-      if (data.user?.email) setName(getFirstName(data.user.email));
-      else if (data.user?.user_metadata?.full_name)
-        setName(data.user.user_metadata.full_name.split(" ")[0]);
-    });
-
     let attempts = 0;
     function loadStats() {
       api.stats()
@@ -126,7 +114,7 @@ export default function DashboardPage() {
               {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }).toUpperCase()}
             </p>
             <p className="text-sm mb-0.5" style={{ color: "var(--text-2)" }}>{getGreeting(hour)},</p>
-            <h1 className="text-3xl font-bold leading-tight mb-2 grad-text">{name}</h1>
+            <h1 className="text-3xl font-bold leading-tight mb-2 grad-text">{USER_NAME}</h1>
             <p className="text-sm leading-relaxed max-w-[220px]" style={{ color: "var(--text-2)" }}>
               {loading ? <span className="skeleton inline-block h-4 w-44 rounded" /> : motivation}
             </p>

@@ -1,19 +1,11 @@
-import { createClient } from "./supabase/client";
-
 const BASE = process.env.NEXT_PUBLIC_API_URL!;
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY!;
 
 async function apiFetch(path: string, init?: RequestInit) {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-API-Key": API_KEY,
   };
-  if (session?.access_token) {
-    headers["Authorization"] = `Bearer ${session.access_token}`;
-  }
 
   const res = await fetch(BASE + path, { ...init, headers });
   if (!res.ok) {

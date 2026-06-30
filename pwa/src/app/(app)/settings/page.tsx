@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const [companies, setCompanies] = useState<{ name: string; url?: string; blacklisted: number }[]>([]);
@@ -11,8 +9,6 @@ export default function SettingsPage() {
   const [newCompany, setNewCompany] = useState("");
   const [newRole, setNewRole] = useState("");
   const [saving, setSaving] = useState("");
-  const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
     api.companies().then(setCompanies).catch(() => {});
@@ -35,12 +31,6 @@ export default function SettingsPage() {
     setRoles((prev) => [...prev, { title: newRole.trim() }]);
     setNewRole("");
     setSaving("");
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    // replace — back after signing out shouldn't drop the user into the (now unauthenticated) app shell
-    router.replace("/login");
   }
 
   return (
@@ -97,16 +87,6 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Account */}
-      <section>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Account</p>
-        <button onClick={signOut}
-          className="w-full py-3.5 rounded-xl text-sm font-semibold transition active:scale-95"
-          style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.2)" }}>
-          Sign Out
-        </button>
       </section>
     </div>
   );

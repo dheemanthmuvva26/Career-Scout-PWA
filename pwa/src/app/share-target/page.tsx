@@ -3,14 +3,11 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { createClient } from "@/lib/supabase/client";
-
-const PENDING_KEY = "cs_pending_share_url";
 
 function ShareHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [status, setStatus] = useState<"importing" | "success" | "error" | "auth">("importing");
+  const [status, setStatus] = useState<"importing" | "success" | "error">("importing");
   const [jobUrl, setJobUrl] = useState("");
   const [message, setMessage] = useState("");
 
@@ -23,14 +20,7 @@ function ShareHandler() {
         searchParams.get("title") ||
         "";
       const match = raw.match(/https?:\/\/[^\s]+/);
-      const resolved = match ? match[0].replace(/[.,;!?]$/, "") : raw.trim();
-
-      // Also check if we're coming back from login with a saved URL
-      const saved = typeof window !== "undefined"
-        ? localStorage.getItem(PENDING_KEY) ?? ""
-        : "";
-
-      const url = resolved || saved;
+      const url = match ? match[0].replace(/[.,;!?]$/, "") : raw.trim();
       setJobUrl(url);
 
       if (!url) {
@@ -38,21 +28,6 @@ function ShareHandler() {
         setMessage("No URL found in the shared content.");
         return;
       }
-
-      // Check auth state
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        // Save URL for after login, then redirect
-        localStorage.setItem(PENDING_KEY, url);
-        setStatus("auth");
-        setTimeout(() => router.replace("/login"), 1500);
-        return;
-      }
-
-      // Logged in — clear any saved URL and import
-      localStorage.removeItem(PENDING_KEY);
 
       try {
         await api.importJob(url);
@@ -88,21 +63,6 @@ function ShareHandler() {
           {jobUrl && (
             <p className="text-xs max-w-xs mx-auto break-all" style={{ color: "var(--text-3)" }}>{jobUrl}</p>
           )}
-        </div>
-      )}
-
-      {status === "auth" && (
-        <div className="text-center fade-up">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: "var(--accent-10)", border: "1px solid var(--accent-25)" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"
-              style={{ color: "var(--accent)" }}>
-              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>Sign in first</h2>
-          <p className="text-sm mb-1" style={{ color: "var(--text-3)" }}>Job URL saved — taking you to login…</p>
-          <p className="text-xs" style={{ color: "var(--text-3)" }}>It'll import automatically after you sign in.</p>
         </div>
       )}
 
