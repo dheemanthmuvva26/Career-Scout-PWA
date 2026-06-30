@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { api, type Job } from "@/lib/api";
+import { haptics } from "@/lib/haptics";
 
 const URGENCY: Record<string, { label: string; color: string }> = {
   hot:    { label: "Hot",    color: "#ef4444" },
@@ -28,6 +29,80 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
     ? (detail as Record<string, string[]>).missing_skills.slice(0, 3) : [];
   const urg = URGENCY[job.urgency] || URGENCY.aging;
 
+  // ── Swipe actions ──────────────────────────────────────────────────────────
+  const swipe = job.status === "new"
+    ? { right: { action: "apply",     label: "Apply",     color: "#22c55e" },
+        left:  { action: "skip",      label: "Skip",       color: "#52525b" } }
+    : job.status === "applied" && job.outcome === "pending"
+    ? { right: { action: "interview", label: "Interview", color: "#a855f7" },
+        left:  { action: "rejected",  label: "Rejected",   color: "#ef4444" } }
+    : null;
+
+  const cardRef       = useRef<HTMLDivElement>(null);
+  const [dragX, setDragX]         = useState(0);
+  const [dragSettling, setDragSettling] = useState(false);
+  const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
+  const axisLocked  = useRef<"x" | "y" | null>(null);
+  const draggedPastThreshold = useRef(false);
+  const SWIPE_THRESHOLD = 88;
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    if (!swipe) return;
+    dragStartX.current = e.touches[0].clientX;
+    dragStartY.current = e.touches[0].clientY;
+    axisLocked.current = null;
+    draggedPastThreshold.current = false;
+    setDragSettling(false);
+  }, [swipe]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!swipe) return;
+    const dx = e.touches[0].clientX - dragStartX.current;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    if (axisLocked.current === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      axisLocked.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (axisLocked.current !== "x") return;
+    e.preventDefault();
+    setDragX(dx);
+    const past = Math.abs(dx) >= SWIPE_THRESHOLD;
+    if (past && !draggedPastThreshold.current) haptics.medium();
+    draggedPastThreshold.current = past;
+  }, [swipe]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (!swipe || axisLocked.current !== "x") { setDragX(0); return; }
+    if (draggedPastThreshold.current) {
+      const goingRight = dragX > 0;
+      const chosen = goingRight ? swipe.right : swipe.left;
+      setDragSettling(true);
+      setDragX(goingRight ? 480 : -480);
+      haptics.success();
+      setTimeout(() => { act(chosen.action); setDragX(0); setDragSettling(false); }, 220);
+    } else {
+      setDragSettling(true);
+      setDragX(0);
+    }
+  }, [swipe, dragX]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || !swipe) return;
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchmove",  handleTouchMove,  { passive: false });
+    el.addEventListener("touchend",   handleTouchEnd,   { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchmove",  handleTouchMove);
+      el.removeEventListener("touchend",   handleTouchEnd);
+    };
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd, swipe]);
+
+  const swipeProgress = swipe ? Math.min(Math.abs(dragX) / SWIPE_THRESHOLD, 1) : 0;
+  const activeSwipeSide = swipe && dragX > 0 ? swipe.right : swipe && dragX < 0 ? swipe.left : null;
+
   async function act(action: string) {
     setBusy(action);
     try {
@@ -52,7 +127,38 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
   }
 
   return (
-    <div className="card mb-3 overflow-hidden">
+    <div className="relative mb-3">
+      {/* Swipe background reveal */}
+      {swipe && dragX !== 0 && (
+        <div className="absolute inset-0 rounded-2xl flex items-center px-5"
+          style={{
+            justifyContent: dragX > 0 ? "flex-start" : "flex-end",
+            background: `${activeSwipeSide?.color}22`,
+            border: `1px solid ${activeSwipeSide?.color}40`,
+          }}>
+          <span className="text-sm font-bold flex items-center gap-1.5"
+            style={{ color: activeSwipeSide?.color, opacity: 0.5 + swipeProgress * 0.5 }}>
+            {dragX < 0 && activeSwipeSide?.label}
+            {dragX > 0 && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+            {dragX > 0 && activeSwipeSide?.label}
+            {dragX < 0 && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            )}
+          </span>
+        </div>
+      )}
+
+      <div ref={cardRef} className="card overflow-hidden"
+        style={{
+          transform: dragX !== 0 ? `translateX(${dragX}px)` : undefined,
+          transition: dragSettling ? "transform 0.22s cubic-bezier(0.23,1,0.32,1)" : "none",
+        }}>
       {/* Top accent line for urgency */}
       <div className="h-0.5" style={{ background: urg.color, opacity: 0.6 }} />
 
@@ -209,6 +315,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
             Posted {job.posted_date.slice(0, 10)}
           </p>
         )}
+      </div>
       </div>
     </div>
   );

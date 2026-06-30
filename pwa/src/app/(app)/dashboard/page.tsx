@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api, type Stats } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const PIPELINE = [
   { key: "applied",   label: "Applied",   color: "#60a5fa", glow: "rgba(96,165,250,0.20)" },
@@ -77,6 +78,16 @@ export default function DashboardPage() {
     loadStats();
   }, []);
 
+  const refresh = useCallback(async () => {
+    try {
+      const s = await api.stats();
+      setStats(s);
+      setError("");
+    } catch {
+      setError("API offline — pull down to refresh");
+    }
+  }, []);
+
   async function runScout() {
     setScouting(true); setScoutMsg("");
     try {
@@ -93,6 +104,7 @@ export default function DashboardPage() {
   const motivation    = getMotivation(stats, hour, day);
 
   return (
+    <PullToRefresh onRefresh={refresh}>
     <div className="pt-6 pb-4 fade-up">
 
       {/* ── Hero glass card ── */}
@@ -341,5 +353,6 @@ export default function DashboardPage() {
         ))}
       </div>
     </div>
+    </PullToRefresh>
   );
 }

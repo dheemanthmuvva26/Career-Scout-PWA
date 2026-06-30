@@ -7,33 +7,42 @@ interface PullToRefreshProps {
   onRefresh: () => Promise<void>;
   children: React.ReactNode;
   threshold?: number;
+  /** id of the actual scrolling ancestor (defaults to the app shell's <main>) */
+  scrollContainerId?: string;
 }
 
 export default function PullToRefresh({
   onRefresh,
   children,
   threshold = 72,
+  scrollContainerId = "app-scroll",
 }: PullToRefreshProps) {
   const [pullY, setPullY]           = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [triggered, setTriggered]   = useState(false);
   const startY   = useRef(0);
   const pulling  = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const progress = Math.min(pullY / threshold, 1);
   const visible  = pullY > 8;
 
+  const getScrollEl = useCallback(
+    () => document.getElementById(scrollContainerId),
+    [scrollContainerId]
+  );
+
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    const el = containerRef.current;
-    if (!el || refreshing) return;
-    if (el.scrollTop > 0) return;           // only trigger at top
+    if (refreshing) return;
+    const el = getScrollEl();
+    if (!el || el.scrollTop > 0) return;     // only trigger at top
     startY.current = e.touches[0].clientY;
     pulling.current = true;
-  }, [refreshing]);
+  }, [refreshing, getScrollEl]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!pulling.current || refreshing) return;
+    const el = getScrollEl();
+    if (el && el.scrollTop > 0) { pulling.current = false; setPullY(0); return; }
     const dy = e.touches[0].clientY - startY.current;
     if (dy <= 0) { setPullY(0); return; }
     e.preventDefault();
@@ -48,7 +57,7 @@ export default function PullToRefresh({
     } else if (damped < threshold && triggered) {
       setTriggered(false);
     }
-  }, [refreshing, threshold, triggered]);
+  }, [refreshing, threshold, triggered, getScrollEl]);
 
   const handleTouchEnd = useCallback(async () => {
     if (!pulling.current) return;
@@ -65,21 +74,18 @@ export default function PullToRefresh({
   }, [pullY, threshold, onRefresh]);
 
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    el.addEventListener("touchstart",  handleTouchStart, { passive: true });
-    el.addEventListener("touchmove",   handleTouchMove,  { passive: false });
-    el.addEventListener("touchend",    handleTouchEnd,   { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove",  handleTouchMove,  { passive: false });
+    window.addEventListener("touchend",   handleTouchEnd,   { passive: true });
     return () => {
-      el.removeEventListener("touchstart",  handleTouchStart);
-      el.removeEventListener("touchmove",   handleTouchMove);
-      el.removeEventListener("touchend",    handleTouchEnd);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove",  handleTouchMove);
+      window.removeEventListener("touchend",   handleTouchEnd);
     };
   }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return (
-    <div ref={containerRef} style={{ height: "100%", overflowY: "auto" }}
-      className="no-scrollbar">
+    <div>
       {/* Pull indicator */}
       <div style={{
         position: "sticky",
@@ -127,7 +133,12 @@ export default function PullToRefresh({
         )}
       </div>
 
-      {children}
+      <div style={{
+        transform: pullY > 0 ? `translateY(${pullY}px)` : undefined,
+        transition: pullY === 0 ? "transform 0.3s cubic-bezier(0.23,1,0.32,1)" : "none",
+      }}>
+        {children}
+      </div>
     </div>
   );
 }

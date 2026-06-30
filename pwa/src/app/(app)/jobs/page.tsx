@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const TABS = [
   { label: "New",       status: "new",       color: "#f59e0b" },
@@ -58,6 +59,7 @@ export default function JobsPage() {
   }
 
   return (
+    <PullToRefresh onRefresh={load}>
     <div className="pt-8 pb-4 fade-up">
       {/* Header */}
       <h1 className="mb-1" style={{ color: "var(--text)" }}>Job Feed</h1>
@@ -139,5 +141,6 @@ export default function JobsPage() {
         jobs.map((job) => <JobCard key={job.id} job={job} onUpdate={handleUpdate} />)
       )}
     </div>
+    </PullToRefresh>
   );
 }

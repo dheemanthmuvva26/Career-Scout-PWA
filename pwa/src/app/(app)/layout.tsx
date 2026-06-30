@@ -7,6 +7,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen flex flex-col" style={{ background: "var(--bg)" }}>
       <WarmUp />
       <main
+        id="app-scroll"
         className="flex-1 overflow-y-auto no-scrollbar"
         style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom, 0px))" }}
       >
