@@ -112,7 +112,7 @@ def _experience_block(selected_experience: list[dict]) -> str:
         # Use grid so dates are always right-aligned on the SAME line even for long company names
         header = f"#grid(columns: (1fr, auto), gutter: 4pt)[{role_company}][{dates}]"
         blocks.append(f"{header}\n{bullets}")
-    return "\n\n".join(blocks)
+    return "\n\n#v(8pt)\n\n".join(blocks)
 
 
 def _projects_block(selected_projects: list[dict], master_projects: list[dict]) -> str:
@@ -129,7 +129,7 @@ def _projects_block(selected_projects: list[dict], master_projects: list[dict]) 
         if tech_str:
             header += f"\n_{tech_str}_"
         blocks.append(f"{header}\n{bullets}")
-    return "\n\n".join(blocks)
+    return "\n\n#v(8pt)\n\n".join(blocks)
 
 
 def _education_block(education: list[dict]) -> str:

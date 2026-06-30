@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260629-generic-import"
+_BUILD = "20260630-resume-spacing"
 
 @app.get("/health")
 def health():

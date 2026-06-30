@@ -15,14 +15,14 @@
   fallback: true,
 )
 
-#set par(leading: 0.4em, justify: false, spacing: 0.55em)
+#set par(leading: 0.45em, justify: false, spacing: 0.7em)
 
 #show heading.where(level: 1): it => {
-  v(3pt)
+  v(10pt, weak: true)
   text(weight: "bold", style: "italic", size: 11.5pt)[#it.body]
-  v(-7pt)
+  v(-6pt)
   line(length: 100%, stroke: 0.5pt)
-  v(1pt)
+  v(5pt)
 }
 
 // ── HEADER ────────────────────────────────────────────────────────────────────
