@@ -76,7 +76,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260630-resume-spacing"
+_BUILD = "20260701-strict-one-page"
 
 @app.get("/health")
 def health():

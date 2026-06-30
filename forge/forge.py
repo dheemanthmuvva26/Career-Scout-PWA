@@ -102,7 +102,7 @@ def _skills_block(skills_section: dict, skills_order: list[str]) -> str:
     return " \\ \n".join(lines)   # Typst line break between rows
 
 
-def _experience_block(selected_experience: list[dict]) -> str:
+def _experience_block(selected_experience: list[dict], block_gap: str = "8pt") -> str:
     blocks = []
     for exp in selected_experience:
         bullets = "\n".join(f"- {b}" for b in exp.get("bullets", []))
@@ -112,10 +112,10 @@ def _experience_block(selected_experience: list[dict]) -> str:
         # Use grid so dates are always right-aligned on the SAME line even for long company names
         header = f"#grid(columns: (1fr, auto), gutter: 4pt)[{role_company}][{dates}]"
         blocks.append(f"{header}\n{bullets}")
-    return "\n\n#v(8pt)\n\n".join(blocks)
+    return f"\n\n#v({block_gap})\n\n".join(blocks)
 
 
-def _projects_block(selected_projects: list[dict], master_projects: list[dict]) -> str:
+def _projects_block(selected_projects: list[dict], master_projects: list[dict], block_gap: str = "8pt") -> str:
     sponsors = {p["name"]: p["sponsor"] for p in master_projects if p.get("sponsor")}
     blocks = []
     for proj in selected_projects:
@@ -129,7 +129,7 @@ def _projects_block(selected_projects: list[dict], master_projects: list[dict]) 
         if tech_str:
             header += f"\n_{tech_str}_"
         blocks.append(f"{header}\n{bullets}")
-    return "\n\n#v(8pt)\n\n".join(blocks)
+    return f"\n\n#v({block_gap})\n\n".join(blocks)
 
 
 def _education_block(education: list[dict]) -> str:
@@ -192,10 +192,30 @@ def _contact_line(p: dict) -> str:
     return " #h(6pt) | #h(6pt) ".join(parts)
 
 
-def _render(master: dict, optimized: dict, profile_config: dict) -> str:
+# Progressively tighter spacing presets, tried in order until the resume fits
+# one page without trimming any content. Index 0 is the "normal, comfortable"
+# spacing — only later levels get visibly denser.
+_SPACING_LEVELS = [
+    {"font_size": "10pt",   "margin_x": "0.45in", "margin_y": "0.25in",
+     "par_leading": "0.45em", "par_spacing": "0.7em",
+     "heading_gap_before": "10pt", "heading_gap_after": "5pt", "block_gap": "8pt"},
+    {"font_size": "9.7pt",  "margin_x": "0.42in", "margin_y": "0.22in",
+     "par_leading": "0.42em", "par_spacing": "0.6em",
+     "heading_gap_before": "8pt",  "heading_gap_after": "4pt", "block_gap": "6pt"},
+    {"font_size": "9.4pt",  "margin_x": "0.4in",  "margin_y": "0.2in",
+     "par_leading": "0.4em",  "par_spacing": "0.5em",
+     "heading_gap_before": "6pt",  "heading_gap_after": "3pt", "block_gap": "4pt"},
+    {"font_size": "9.2pt",  "margin_x": "0.38in", "margin_y": "0.18in",
+     "par_leading": "0.38em", "par_spacing": "0.45em",
+     "heading_gap_before": "5pt",  "heading_gap_after": "2pt", "block_gap": "3pt"},
+]
+
+
+def _render(master: dict, optimized: dict, profile_config: dict, spacing: dict | None = None) -> str:
     """Fill the template placeholders and return a complete .typ string."""
     template = _TEMPLATE.read_text(encoding="utf-8")
     p  = master.get("personal", {})
+    sp = spacing or _SPACING_LEVELS[0]
 
     replacements = {
         "<<NAME>>":             _escape_typst(p.get("name", "Your Name")),
@@ -206,11 +226,18 @@ def _render(master: dict, optimized: dict, profile_config: dict) -> str:
                                     optimized.get("skills_section", master.get("skills", {})),
                                     profile_config.get("skills_order", []),
                                 ),
-        "<<EXPERIENCE_BLOCK>>": _experience_block(optimized.get("selected_experience", [])),
-        "<<PROJECTS_BLOCK>>":   _projects_block(optimized.get("selected_projects", []), master.get("projects", [])),
+        "<<EXPERIENCE_BLOCK>>": _experience_block(optimized.get("selected_experience", []), sp["block_gap"]),
+        "<<PROJECTS_BLOCK>>":   _projects_block(optimized.get("selected_projects", []), master.get("projects", []), sp["block_gap"]),
         "<<CERTIFICATIONS_BLOCK>>": _certs_block(
                                     optimized.get("selected_certifications", master.get("certifications", []))
                                 ),
+        "<<FONT_SIZE>>":            sp["font_size"],
+        "<<MARGIN_X>>":             sp["margin_x"],
+        "<<MARGIN_Y>>":             sp["margin_y"],
+        "<<PAR_LEADING>>":          sp["par_leading"],
+        "<<PAR_SPACING>>":          sp["par_spacing"],
+        "<<HEADING_GAP_BEFORE>>":   sp["heading_gap_before"],
+        "<<HEADING_GAP_AFTER>>":    sp["heading_gap_after"],
     }
 
     for placeholder, value in replacements.items():
@@ -281,6 +308,60 @@ def _compile(typ_content: str, pdf_path: Path) -> tuple[bool, str]:
         typ_path.unlink(missing_ok=True)
 
 
+def _page_count(pdf_path: Path) -> int:
+    from pypdf import PdfReader
+    try:
+        return len(PdfReader(str(pdf_path)).pages)
+    except Exception:
+        return 1  # fail open — never block a resume on a PDF-introspection bug
+
+
+def _trim_one_bullet(optimized: dict) -> bool:
+    """
+    Drop the single least-important bullet to help the resume fit one page.
+    Priority: last bullet of the 2nd (lower-priority) project, then the 2nd
+    experience role, then the 1st project, then the 1st experience role —
+    never trims an entry below 2 bullets. Mutates `optimized` in place so the
+    JSON sidecar saved afterward matches what's actually on the PDF.
+    Returns False once there's nothing left to safely cut.
+    """
+    projects   = optimized.get("selected_projects", [])
+    experience = optimized.get("selected_experience", [])
+
+    for entries, idx in ((projects, 1), (experience, 1), (projects, 0), (experience, 0)):
+        if len(entries) > idx and len(entries[idx].get("bullets", [])) > 2:
+            entries[idx]["bullets"].pop()
+            return True
+    return False
+
+
+def _fit_to_one_page(master: dict, optimized: dict, profile_config: dict, pdf_path: Path) -> tuple[bool, str]:
+    """
+    Compile the resume with a STRICT one-page limit — never returns success
+    for a 2+ page PDF. Tries progressively tighter spacing first (no content
+    loss); if it still overflows at the tightest spacing, trims the least
+    important bullet and retries from the top. Gives up only once there's
+    nothing left to safely trim, returning a clear error instead of a
+    silently-overflowing resume.
+    """
+    last_stderr = ""
+    for _ in range(8):  # safety cap on trim passes
+        for level in _SPACING_LEVELS:
+            typ_content = _render(master, optimized, profile_config, spacing=level)
+            ok, stderr = _compile(typ_content, pdf_path)
+            if not ok:
+                last_stderr = stderr
+                continue
+            if _page_count(pdf_path) <= 1:
+                return True, ""
+        if not _trim_one_bullet(optimized):
+            break
+
+    if last_stderr:
+        return False, f"Typst compile failed: {last_stderr.strip()}"
+    return False, "Resume content doesn't fit one page even after trimming — JD/profile may need fewer roles or projects."
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def generate_resume(job_id: str, profile_override: str | None = None,
@@ -318,16 +399,16 @@ def generate_resume(job_id: str, profile_override: str | None = None,
     if optimized.get("error"):
         return {"error": optimized["error"]}
 
-    typ_content = _render(master, optimized, profile_config)
-
     company_slug = _slugify(job.get("company", "company"))
     role_slug    = _slugify(job.get("title", "role"))
     date_str     = datetime.now().strftime("%Y-%m-%d")
     pdf_path     = _OUT_DIR / f"{company_slug}_{role_slug}_{date_str}.pdf"
 
-    ok, stderr = _compile(typ_content, pdf_path)
+    # Strict one-page enforcement: tightens spacing, then trims bullets if needed.
+    # May mutate optimized["selected_experience"/"selected_projects"] in place.
+    ok, err = _fit_to_one_page(master, optimized, profile_config, pdf_path)
     if not ok:
-        return {"error": f"Typst compile failed: {stderr.strip()}"}
+        return {"error": err}
 
     db.set_resume_path(job_id, str(pdf_path))
 

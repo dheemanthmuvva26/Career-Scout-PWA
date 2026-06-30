@@ -8,3 +8,4 @@ groq
 supabase
 rapidfuzz
 beautifulsoup4
+pypdf

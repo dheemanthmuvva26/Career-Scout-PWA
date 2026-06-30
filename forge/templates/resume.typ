@@ -6,23 +6,23 @@
 
 #set page(
   paper: "us-letter",
-  margin: (x: 0.45in, y: 0.25in),
+  margin: (x: <<MARGIN_X>>, y: <<MARGIN_Y>>),
 )
 
 #set text(
   font: ("Linux Libertine", "Liberation Serif", "Times New Roman"),
-  size: 10pt,
+  size: <<FONT_SIZE>>,
   fallback: true,
 )
 
-#set par(leading: 0.45em, justify: false, spacing: 0.7em)
+#set par(leading: <<PAR_LEADING>>, justify: false, spacing: <<PAR_SPACING>>)
 
 #show heading.where(level: 1): it => {
-  v(10pt, weak: true)
+  v(<<HEADING_GAP_BEFORE>>, weak: true)
   text(weight: "bold", style: "italic", size: 11.5pt)[#it.body]
   v(-6pt)
   line(length: 100%, stroke: 0.5pt)
-  v(5pt)
+  v(<<HEADING_GAP_AFTER>>)
 }
 
 // ── HEADER ────────────────────────────────────────────────────────────────────
