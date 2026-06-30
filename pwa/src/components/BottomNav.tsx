@@ -70,14 +70,17 @@ export default function BottomNav() {
 
   function handleNav(e: React.MouseEvent, href: string) {
     if (isActive(pathname, href)) return;
+    e.preventDefault();
     haptics.light();
-    // Use View Transitions API if supported
+    // Tabs are siblings, not a stack — replace so the back button returns
+    // to wherever the user was *before* switching tabs, not the previous tab.
+    const go = () => router.replace(href);
     if ("startViewTransition" in document) {
-      e.preventDefault();
       (document as Document & { startViewTransition: (cb: () => void) => void })
-        .startViewTransition(() => router.push(href));
+        .startViewTransition(go);
+    } else {
+      go();
     }
-    // else: let the Link handle it normally
   }
 
   return (

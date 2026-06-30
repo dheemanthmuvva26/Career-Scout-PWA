@@ -47,7 +47,7 @@ function ShareHandler() {
         // Save URL for after login, then redirect
         localStorage.setItem(PENDING_KEY, url);
         setStatus("auth");
-        setTimeout(() => router.push("/login"), 1500);
+        setTimeout(() => router.replace("/login"), 1500);
         return;
       }
 
@@ -58,7 +58,7 @@ function ShareHandler() {
         await api.importJob(url);
         setStatus("success");
         setMessage("Job saved to your feed.");
-        setTimeout(() => router.push("/jobs"), 2200);
+        setTimeout(() => router.replace("/jobs"), 2200);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "";
         setStatus("error");
@@ -130,7 +130,7 @@ function ShareHandler() {
           </div>
           <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--text)" }}>Import failed</h2>
           <p className="text-sm mb-5" style={{ color: "var(--text-3)" }}>{message}</p>
-          <button onClick={() => router.push("/jobs")}
+          <button onClick={() => router.replace("/jobs")}
             className="px-6 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95"
             style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
             Go to Jobs

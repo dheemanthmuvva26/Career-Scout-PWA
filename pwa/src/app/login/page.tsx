@@ -26,7 +26,8 @@ export default function LoginPage() {
       else {
         // Resume a pending share-target import if one was saved before login
         const pendingShare = localStorage.getItem("cs_pending_share_url");
-        router.push(pendingShare ? "/share-target" : "/");
+        // replace, not push — back from the app should never return to the login screen
+        router.replace(pendingShare ? "/share-target" : "/");
       }
     } else {
       const { error } = await supabase.auth.signUp({ email, password });

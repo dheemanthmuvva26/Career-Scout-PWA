@@ -39,7 +39,8 @@ export default function SettingsPage() {
 
   async function signOut() {
     await supabase.auth.signOut();
-    router.push("/login");
+    // replace — back after signing out shouldn't drop the user into the (now unauthenticated) app shell
+    router.replace("/login");
   }
 
   return (
