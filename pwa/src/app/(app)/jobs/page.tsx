@@ -17,7 +17,9 @@ export default function JobsPage() {
   const [jobs, setJobs]         = useState<Job[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
+  const [importMode, setImportMode] = useState<"url" | "paste">("url");
   const [importUrl, setImportUrl] = useState("");
+  const [importText, setImportText] = useState("");
   const [importLocation, setImportLocation] = useState("");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
@@ -42,16 +44,20 @@ export default function JobsPage() {
   }
 
   async function handleImport() {
-    if (!importUrl.trim()) return;
+    const isPaste = importMode === "paste";
+    if (isPaste ? !importText.trim() : !importUrl.trim()) return;
     setImporting(true); setImportMsg("");
     try {
-      await api.importJob(importUrl.trim(), importLocation.trim() || undefined);
+      const res = isPaste
+        ? await api.importJobText(importText.trim(), importLocation.trim() || undefined)
+        : await api.importJob(importUrl.trim(), importLocation.trim() || undefined);
       setImportUrl("");
+      setImportText("");
       setImportLocation("");
-      setImportMsg("Imported! Refreshing…");
+      setImportMsg(res?.action === "already_saved" ? "Already in your jobs — refreshing…" : "Imported! Refreshing…");
       if (tab === "new") load();
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Import failed. Check the URL.";
+      const msg = e instanceof Error ? e.message : "Import failed.";
       setImportMsg(msg.replace(/^API.*→ \d+: /, ""));
     }
     setImporting(false);
@@ -67,23 +73,54 @@ export default function JobsPage() {
 
       {/* Import bar */}
       <div className="card p-3 mb-5">
-        <p className="text-xs font-semibold mb-2" style={{ color: "var(--text-3)" }}>IMPORT JOB FROM URL</p>
-        <div className="flex gap-2 mb-2">
-          <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleImport()}
-            placeholder="LinkedIn, company site, or ATS job URL…"
-            style={{ fontSize: 14 }} />
-          <button onClick={handleImport} disabled={importing || !importUrl.trim()}
-            className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
-            style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 72 }}>
-            {importing ? "…" : "Import"}
-          </button>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>IMPORT JOB</p>
+          <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "var(--surface-2)" }}>
+            {(["url", "paste"] as const).map((m) => (
+              <button key={m} onClick={() => setImportMode(m)}
+                className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition active:scale-95"
+                style={{
+                  background: importMode === m ? "var(--accent)" : "transparent",
+                  color: importMode === m ? "var(--on-accent)" : "var(--text-3)",
+                }}>
+                {m === "url" ? "URL" : "Paste text"}
+              </button>
+            ))}
+          </div>
         </div>
+
+        {importMode === "url" ? (
+          <div className="flex gap-2 mb-2">
+            <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleImport()}
+              placeholder="LinkedIn, company site, or ATS job URL…"
+              style={{ fontSize: 14 }} />
+            <button onClick={handleImport} disabled={importing || !importUrl.trim()}
+              className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
+              style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 72 }}>
+              {importing ? "…" : "Import"}
+            </button>
+          </div>
+        ) : (
+          <div className="mb-2">
+            <textarea value={importText} onChange={(e) => setImportText(e.target.value)}
+              placeholder="Paste a job post from WhatsApp, LinkedIn, email — anything. We'll extract the details automatically."
+              rows={4}
+              className="w-full resize-none no-scrollbar"
+              style={{ fontSize: 14, padding: "10px 12px", borderRadius: 12, lineHeight: 1.5 }} />
+            <button onClick={handleImport} disabled={importing || !importText.trim()}
+              className="w-full mt-2 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition active:scale-95"
+              style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+              {importing ? "Extracting…" : "Import from pasted text"}
+            </button>
+          </div>
+        )}
+
         <input value={importLocation} onChange={(e) => setImportLocation(e.target.value)}
           placeholder="Location override (optional — e.g. Mumbai, Bengaluru)"
           style={{ fontSize: 13, padding: "8px 12px", borderRadius: 10 }} />
         {importMsg && (
-          <p className="text-xs mt-2" style={{ color: importMsg.includes("failed") || importMsg.includes("LinkedIn") ? "#fca5a5" : "var(--text-2)" }}>
+          <p className="text-xs mt-2" style={{ color: importMsg.includes("failed") || importMsg.includes("Could not") ? "#fca5a5" : "var(--text-2)" }}>
             {importMsg}
           </p>
         )}

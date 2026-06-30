@@ -137,4 +137,6 @@ export const api = {
 
   importJob: (url: string, location?: string) =>
     apiFetch("/import", { method: "POST", body: JSON.stringify({ url, location: location ?? "" }) }),
+  importJobText: (text: string, location?: string) =>
+    apiFetch("/import/text", { method: "POST", body: JSON.stringify({ text, location: location ?? "" }) }),
 };

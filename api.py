@@ -820,6 +820,24 @@ class ImportRequest(BaseModel):
     url: str
     location: str = ""   # optional override — lets same URL be imported for multiple cities
 
+def _ingest_job(job: dict) -> dict:
+    """Shared dedupe → score → save pipeline for any newly-fetched/extracted job."""
+    from scrapers import dedup
+    from core import urgency, scorer
+
+    job["urgency"] = urgency.classify(job.get("posted_date"))
+    result = dedup.process(job)
+
+    if result.action in ("insert", "repost"):
+        from core.db import upsert_job
+        upsert_job(job)
+        scorer.score_pending(batch_size=1)
+        return {"action": "added", "job": get_job(result.job_id)}
+
+    # merge or skip_exact — already in DB
+    return {"action": "already_saved", "job": get_job(result.job_id)}
+
+
 @app.post("/import")
 def import_job(body: ImportRequest):
     """
@@ -829,9 +847,6 @@ def import_job(body: ImportRequest):
     Optional location field overrides the scraped location (useful when the
     same job is posted for multiple cities under the same URL).
     """
-    from scrapers import dedup
-    from core import urgency, scorer
-
     is_linkedin = "linkedin.com" in body.url
 
     try:
@@ -847,17 +862,30 @@ def import_job(body: ImportRequest):
         source = "LinkedIn" if is_linkedin else "the page"
         raise HTTPException(status_code=502, detail=f"Could not fetch {source}: {e}")
 
-    job["urgency"] = urgency.classify(job.get("posted_date"))
-    result = dedup.process(job)
+    return _ingest_job(job)
 
-    if result.action in ("insert", "repost"):
-        from core.db import upsert_job
-        upsert_job(job)
-        scorer.score_pending(batch_size=1)
-        return {"action": "added", "job": get_job(result.job_id)}
 
-    # merge or skip_exact — already in DB
-    return {"action": "already_saved", "job": get_job(result.job_id)}
+class ImportTextRequest(BaseModel):
+    text: str
+    location: str = ""
+
+@app.post("/import/text")
+def import_job_text(body: ImportTextRequest):
+    """
+    Import a job from raw pasted text — WhatsApp forward, LinkedIn feed post,
+    email, anything that isn't a scrapeable URL. LLM extracts the structured
+    fields, then runs through the same dedupe/score/save pipeline as /import.
+    """
+    from scrapers.text_import import extract_job_from_text
+
+    try:
+        job = extract_job_from_text(body.text, location_override=body.location.strip())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not extract job from text: {e}")
+
+    return _ingest_job(job)
 
 
 # ── DB Backup ─────────────────────────────────────────────────────────────────
