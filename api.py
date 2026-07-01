@@ -888,6 +888,94 @@ def import_job_text(body: ImportTextRequest):
     return _ingest_job(job)
 
 
+# ── Batch import + forge ───────────────────────────────────────────────────────
+
+class BatchImportRequest(BaseModel):
+    urls: list[str]
+    profile: str = "auto"   # profile name or "auto" to pick from job tags
+    location: str = ""
+
+_PROFILE_TAG_MAP = {
+    "data_scientist":    ["data_scientist", "ml", "ai_engineer", "machine_learning", "nlp", "llm", "genai"],
+    "bi_developer":      ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization"],
+    "risk_analyst":      ["risk_analyst", "risk", "finance", "quantitative", "banking"],
+    "compliance_analyst":["compliance", "regulatory", "aml", "audit", "kyc"],
+}
+
+def _pick_profile(tags: list[str]) -> str:
+    """Pick the best forge profile from a job's matched tags."""
+    for profile, profile_tags in _PROFILE_TAG_MAP.items():
+        if any(t in profile_tags for t in tags):
+            return profile
+    return "default"
+
+@app.post("/batch")
+def batch_import(body: BatchImportRequest):
+    """
+    Import multiple jobs from URLs and kick off async forge for each.
+    Returns per-URL results immediately — forge tokens can be polled via
+    GET /forge/poll/{token}. Processes URLs sequentially to avoid rate limits.
+    """
+    results = []
+    for url in body.urls:
+        url = url.strip()
+        if not url:
+            continue
+        entry: dict = {"url": url}
+        try:
+            # — import —
+            is_linkedin = "linkedin.com" in url
+            if is_linkedin:
+                from scrapers.linkedin_url_scraper import fetch_linkedin_job
+                job_data = fetch_linkedin_job(url, location_override=body.location.strip())
+            else:
+                from scrapers.generic_url_scraper import fetch_job_from_url
+                job_data = fetch_job_from_url(url, location_override=body.location.strip())
+
+            ingest = _ingest_job(job_data)
+            saved = ingest["job"]
+            entry.update({
+                "import_status": ingest["action"],   # "added" or "already_saved"
+                "job_id": saved["id"],
+                "title": saved["title"],
+                "company": saved["company"],
+            })
+
+            # — forge —
+            profile = body.profile
+            if profile == "auto":
+                profile = _pick_profile(saved.get("tags_matched") or [])
+
+            token = _uuid.uuid4().hex[:12]
+            _forge_jobs[token] = {"status": "pending"}
+
+            job_id_cap = saved["id"]
+            profile_cap = profile
+            token_cap = token
+
+            def _run(jid=job_id_cap, prof=profile_cap, tok=token_cap):
+                try:
+                    from forge.forge import generate_resume, _telegram_message
+                    result = generate_resume(jid, profile_override=prof)
+                    _forge_jobs[tok] = {"status": "done", **result,
+                                        "telegram_message": _telegram_message(result)}
+                except Exception as exc:
+                    _forge_jobs[tok] = {"status": "done", "error": str(exc)}
+                def _cleanup():
+                    import time as _t; _t.sleep(300); _forge_jobs.pop(tok, None)
+                threading.Thread(target=_cleanup, daemon=True).start()
+
+            threading.Thread(target=_run, daemon=True).start()
+            entry.update({"forge_token": token, "profile_used": profile, "forge_status": "pending"})
+
+        except Exception as exc:
+            entry["error"] = str(exc)
+
+        results.append(entry)
+
+    return {"results": results}
+
+
 # ── DB Backup ─────────────────────────────────────────────────────────────────
 
 @app.post("/backup")

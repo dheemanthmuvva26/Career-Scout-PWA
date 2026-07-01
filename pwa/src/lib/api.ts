@@ -131,4 +131,12 @@ export const api = {
     apiFetch("/import", { method: "POST", body: JSON.stringify({ url, location: location ?? "" }) }),
   importJobText: (text: string, location?: string) =>
     apiFetch("/import/text", { method: "POST", body: JSON.stringify({ text, location: location ?? "" }) }),
+
+  batchImport: (urls: string[], profile: string, location?: string) =>
+    apiFetch("/batch", {
+      method: "POST",
+      body: JSON.stringify({ urls, profile, location: location ?? "" }),
+    }),
+
+  forgePoll: (token: string) => apiFetch(`/forge/poll/${token}`),
 };

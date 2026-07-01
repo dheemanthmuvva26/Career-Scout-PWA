@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -17,12 +17,30 @@ export default function JobsPage() {
   const [jobs, setJobs]         = useState<Job[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
-  const [importMode, setImportMode] = useState<"url" | "paste">("url");
+  const [importMode, setImportMode] = useState<"url" | "paste" | "batch">("url");
   const [importUrl, setImportUrl] = useState("");
   const [importText, setImportText] = useState("");
   const [importLocation, setImportLocation] = useState("");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+
+  // Batch mode
+  const [batchUrls, setBatchUrls] = useState("");
+  const [batchProfile, setBatchProfile] = useState("auto");
+  const [batchRunning, setBatchRunning] = useState(false);
+  type BatchEntry = {
+    url: string;
+    import_status?: string;
+    job_id?: string;
+    title?: string;
+    company?: string;
+    forge_token?: string;
+    forge_status?: string;
+    ats_score?: number;
+    error?: string;
+  };
+  const [batchResults, setBatchResults] = useState<BatchEntry[]>([]);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true); setError("");
@@ -64,6 +82,51 @@ export default function JobsPage() {
     setTimeout(() => setImportMsg(""), 5000);
   }
 
+  async function handleBatch() {
+    const urls = batchUrls.split("\n").map(u => u.trim()).filter(Boolean);
+    if (!urls.length) return;
+    setBatchRunning(true);
+    setBatchResults(urls.map(url => ({ url, import_status: "importing…" })));
+
+    let entries: BatchEntry[] = [];
+    try {
+      const res = await api.batchImport(urls, batchProfile, importLocation || undefined);
+      entries = res.results as BatchEntry[];
+      setBatchResults(entries);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Batch failed";
+      setBatchResults(urls.map(url => ({ url, error: msg })));
+      setBatchRunning(false);
+      return;
+    }
+
+    // Poll forge tokens until all done
+    const pending = () => entries.filter(e => e.forge_token && e.forge_status === "pending");
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      const stillPending = pending();
+      if (!stillPending.length) {
+        clearInterval(pollRef.current!);
+        setBatchRunning(false);
+        load();
+        return;
+      }
+      await Promise.all(stillPending.map(async (entry) => {
+        try {
+          const poll = await api.forgePoll(entry.forge_token!);
+          if (poll.status === "done") {
+            entries = entries.map(e =>
+              e.forge_token === entry.forge_token
+                ? { ...e, forge_status: "done", ats_score: poll.ats_score, error: poll.error }
+                : e
+            );
+            setBatchResults([...entries]);
+          }
+        } catch {}
+      }));
+    }, 4000);
+  }
+
   return (
     <PullToRefresh onRefresh={load}>
     <div className="pt-8 pb-4 fade-up">
@@ -76,20 +139,20 @@ export default function JobsPage() {
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>IMPORT JOB</p>
           <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "var(--surface-2)" }}>
-            {(["url", "paste"] as const).map((m) => (
+            {(["url", "paste", "batch"] as const).map((m) => (
               <button key={m} onClick={() => setImportMode(m)}
                 className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition active:scale-95"
                 style={{
                   background: importMode === m ? "var(--accent)" : "transparent",
                   color: importMode === m ? "var(--on-accent)" : "var(--text-3)",
                 }}>
-                {m === "url" ? "URL" : "Paste text"}
+                {m === "url" ? "URL" : m === "paste" ? "Paste" : "Batch"}
               </button>
             ))}
           </div>
         </div>
 
-        {importMode === "url" ? (
+        {importMode === "url" && (
           <div className="flex gap-2 mb-2">
             <input value={importUrl} onChange={(e) => setImportUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleImport()}
@@ -101,7 +164,9 @@ export default function JobsPage() {
               {importing ? "…" : "Import"}
             </button>
           </div>
-        ) : (
+        )}
+
+        {importMode === "paste" && (
           <div className="mb-2">
             <textarea value={importText} onChange={(e) => setImportText(e.target.value)}
               placeholder="Paste a job post from WhatsApp, LinkedIn, email — anything. We'll extract the details automatically."
@@ -116,9 +181,78 @@ export default function JobsPage() {
           </div>
         )}
 
-        <input value={importLocation} onChange={(e) => setImportLocation(e.target.value)}
-          placeholder="Location override (optional — e.g. Mumbai, Bengaluru)"
-          style={{ fontSize: 13, padding: "8px 12px", borderRadius: 10 }} />
+        {importMode === "batch" && (
+          <div>
+            <textarea
+              value={batchUrls}
+              onChange={(e) => setBatchUrls(e.target.value)}
+              placeholder={"Paste one job URL per line:\nhttps://unstop.com/...\nhttps://linkedin.com/jobs/...\nhttps://greenhouse.io/..."}
+              rows={5}
+              className="w-full resize-none no-scrollbar mb-2"
+              style={{ fontSize: 13, padding: "10px 12px", borderRadius: 12, lineHeight: 1.6 }}
+            />
+            <div className="flex gap-2 mb-2">
+              <select
+                value={batchProfile}
+                onChange={(e) => setBatchProfile(e.target.value)}
+                className="flex-1 rounded-xl text-sm"
+                style={{ padding: "8px 12px", background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}
+              >
+                <option value="auto">Auto-detect profile</option>
+                <option value="data_scientist">Data Scientist / ML Engineer</option>
+                <option value="bi_developer">BI Developer / Data Analyst</option>
+                <option value="risk_analyst">Risk Analyst</option>
+                <option value="compliance_analyst">Compliance Analyst</option>
+                <option value="default">Default</option>
+              </select>
+              <button
+                onClick={handleBatch}
+                disabled={batchRunning || !batchUrls.trim()}
+                className="px-4 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
+                style={{ background: "var(--accent)", color: "var(--on-accent)", minWidth: 100 }}
+              >
+                {batchRunning ? "Running…" : "Import & Forge"}
+              </button>
+            </div>
+            {batchResults.length > 0 && (
+              <div className="mt-1 space-y-1.5">
+                {batchResults.map((entry, i) => {
+                  const isDone = entry.forge_status === "done";
+                  const isErr = !!entry.error;
+                  const isImporting = !entry.job_id && !isErr;
+                  const isForging = entry.job_id && entry.forge_status === "pending";
+                  const icon = isErr ? "✗" : isDone ? "✓" : isImporting ? "⋯" : "↻";
+                  const iconColor = isErr ? "#fca5a5" : isDone ? "#4ade80" : "var(--accent)";
+                  return (
+                    <div key={i} className="flex items-start gap-2 rounded-xl px-3 py-2"
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                      <span className="text-sm font-bold mt-0.5 w-4 shrink-0" style={{ color: iconColor }}>{icon}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate" style={{ color: "var(--text)" }}>
+                          {entry.title ? `${entry.company} — ${entry.title}` : entry.url.replace(/https?:\/\//, "").slice(0, 50)}
+                        </p>
+                        <p className="text-[11px] mt-0.5" style={{ color: isErr ? "#fca5a5" : "var(--text-3)" }}>
+                          {isErr ? entry.error
+                            : isImporting ? "Importing…"
+                            : isForging ? `Forging resume…`
+                            : isDone && entry.ats_score ? `Done — ATS ${entry.ats_score}%`
+                            : isDone ? "Done"
+                            : entry.import_status}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {importMode !== "batch" && (
+          <input value={importLocation} onChange={(e) => setImportLocation(e.target.value)}
+            placeholder="Location override (optional — e.g. Mumbai, Bengaluru)"
+            style={{ fontSize: 13, padding: "8px 12px", borderRadius: 10 }} />
+        )}
         {importMsg && (
           <p className="text-xs mt-2" style={{ color: importMsg.includes("failed") || importMsg.includes("Could not") ? "#fca5a5" : "var(--text-2)" }}>
             {importMsg}
