@@ -7,13 +7,13 @@ import { api } from "@/lib/api";
 function ShareHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [status, setStatus] = useState<"importing" | "success" | "error">("importing");
+  const [phase, setPhase] = useState<"importing" | "paste-fallback" | "pasting" | "success" | "error">("importing");
   const [jobUrl, setJobUrl] = useState("");
+  const [pasteText, setPasteText] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function run() {
-      // Extract URL from share params — LinkedIn puts it in `url`, some apps use `text`
       const raw =
         searchParams.get("url") ||
         searchParams.get("text") ||
@@ -24,32 +24,46 @@ function ShareHandler() {
       setJobUrl(url);
 
       if (!url) {
-        setStatus("error");
         setMessage("No URL found in the shared content.");
+        setPhase("error");
         return;
       }
 
       try {
         await api.importJob(url);
-        setStatus("success");
+        setPhase("success");
         setMessage("Job saved to your feed.");
         setTimeout(() => router.replace("/jobs"), 2200);
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : "";
-        setStatus("error");
-        setMessage(msg || "Import failed — check it's a supported job URL.");
+      } catch {
+        // Scraping failed (JS-rendered sites like Unstop) — show paste fallback
+        setPhase("paste-fallback");
       }
     }
-
     run();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function importFromPaste() {
+    if (!pasteText.trim()) return;
+    setPhase("pasting");
+    try {
+      await api.importJobText(pasteText.trim());
+      setPhase("success");
+      setMessage("Job saved from pasted text.");
+      setTimeout(() => router.replace("/jobs"), 2200);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "";
+      setMessage(msg || "Import failed — try again.");
+      setPhase("error");
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 safe-top"
       style={{ background: "var(--bg)" }}>
 
-      {status === "importing" && (
+      {/* ── Importing spinner ── */}
+      {phase === "importing" && (
         <div className="text-center fade-up">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
             style={{ background: "var(--accent-10)", border: "1px solid var(--accent-25)" }}>
@@ -66,7 +80,56 @@ function ShareHandler() {
         </div>
       )}
 
-      {status === "success" && (
+      {/* ── Paste fallback (JS-rendered sites: Unstop, etc.) ── */}
+      {(phase === "paste-fallback" || phase === "pasting") && (
+        <div className="w-full max-w-sm fade-up">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"
+              style={{ color: "#f59e0b" }}>
+              <path d="M9 12h6M9 16h6M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" strokeLinecap="round"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold mb-1 text-center" style={{ color: "var(--text)" }}>
+            Paste the job description
+          </h2>
+          <p className="text-xs text-center mb-4" style={{ color: "var(--text-3)" }}>
+            This site needs JavaScript to load — copy the job post and paste it below.
+          </p>
+          {jobUrl && (
+            <p className="text-[11px] text-center mb-3 break-all" style={{ color: "var(--text-3)" }}>
+              From: {jobUrl.replace(/https?:\/\//, "").slice(0, 60)}
+            </p>
+          )}
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            placeholder="Paste the full job title, company, responsibilities, requirements…"
+            rows={8}
+            autoFocus
+            className="w-full resize-none no-scrollbar mb-3"
+            style={{ fontSize: 13, padding: "12px 14px", borderRadius: 14, lineHeight: 1.6 }}
+          />
+          <button
+            onClick={importFromPaste}
+            disabled={phase === "pasting" || !pasteText.trim()}
+            className="w-full py-3 rounded-xl text-sm font-semibold transition active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+            {phase === "pasting"
+              ? <><svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round"/></svg>Importing…</>
+              : "Import Job"}
+          </button>
+          <button onClick={() => router.replace("/jobs")}
+            className="w-full mt-2 py-2.5 rounded-xl text-sm transition active:scale-95"
+            style={{ color: "var(--text-3)" }}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* ── Success ── */}
+      {phase === "success" && (
         <div className="text-center fade-up">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
             style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}>
@@ -80,7 +143,8 @@ function ShareHandler() {
         </div>
       )}
 
-      {status === "error" && (
+      {/* ── Error ── */}
+      {phase === "error" && (
         <div className="text-center fade-up">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
             style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>

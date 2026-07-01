@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { api, type Job } from "@/lib/api";
 
 const PROFILES = [
@@ -15,7 +16,10 @@ type AuditResult   = { score: number; missing_keywords: string[]; red_flags: str
 type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
 type AtsResult     = { ats_pass?: string[]; flagged?: {section:string;issue:string;fix:string}[]; overall_verdict?: string; error?: string };
 
-export default function ForgePage() {
+function ForgePageInner() {
+  const searchParams = useSearchParams();
+  const preselectedId = searchParams.get("job");
+
   const [jobs, setJobs]           = useState<Job[]>([]);
   const [selected, setSelected]   = useState<Job | null>(null);
   const [profile, setProfile]     = useState("");
@@ -41,8 +45,16 @@ export default function ForgePage() {
       api.jobs({ status: "new",     limit: "50" }),
       api.jobs({ status: "applied", limit: "50" }),
     ])
-      .then(([n, a]) => setJobs([...n, ...a]))
+      .then(([n, a]) => {
+        const all = [...n, ...a];
+        setJobs(all);
+        if (preselectedId) {
+          const match = all.find(j => j.id === preselectedId);
+          if (match) selectJob(match);
+        }
+      })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function selectJob(job: Job) {
@@ -407,5 +419,13 @@ export default function ForgePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ForgePage() {
+  return (
+    <Suspense>
+      <ForgePageInner />
+    </Suspense>
   );
 }
