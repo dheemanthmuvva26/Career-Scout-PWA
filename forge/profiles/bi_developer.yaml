@@ -11,8 +11,11 @@ match_tags:
   - business_intelligence
 
 summary_focus: >
-  Lead with SQL, Power BI / Tableau, and data pipeline skills.
-  Emphasise stakeholder-facing dashboards and business impact.
+  Frame the candidate as a Data Analyst. Lead with Python, SQL, and EDA skills.
+  Emphasise data cleaning, exploratory data analysis, statistical analysis, and
+  data visualisation dashboards. Highlight business insights derived from data
+  and collaboration with cross-functional teams. Use the term "Data Analyst"
+  (not "BI Developer") throughout the summary and bullets.
 
 skills_order:
   - languages

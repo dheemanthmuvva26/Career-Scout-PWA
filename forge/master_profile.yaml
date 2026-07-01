@@ -164,7 +164,7 @@ certifications:
   - name: "GenAI Powered Data Analytics"
     issuer: "Forage"
     date: "2025"
-    tags: ["data_analyst", "genai", "ai_engineer"]
+    tags: ["data_analyst", "bi_developer", "genai", "ai_engineer", "data_analysis"]
   - name: "Google Data Analytics Professional Certificate"
     issuer: "Google / Coursera"
     date: "In Progress"

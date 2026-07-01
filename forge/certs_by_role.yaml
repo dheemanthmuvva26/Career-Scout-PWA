@@ -90,10 +90,6 @@ bi_developer:
     issuer: "Google / Coursera"
     date: "In Progress"
     tags: ["bi_developer", "bi", "data_analyst", "business_intelligence", "sql"]
-  - name: "Data Visualization with Tableau"
-    issuer: "UC Davis / Coursera"
-    date: "In Progress"
-    tags: ["bi_developer", "bi", "tableau", "data_visualization", "data_analyst"]
   - name: "Excel Skills for Business Specialization"
     issuer: "Macquarie University / Coursera"
     date: "In Progress"
