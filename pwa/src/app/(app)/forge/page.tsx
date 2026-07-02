@@ -20,9 +20,79 @@ const PROFILES = [
   { id: "compliance_analyst", label: "Compliance Analyst" },
 ];
 
+const PROFILE_DISPLAY: Record<string, string> = Object.fromEntries(
+  PROFILES.filter(p => p.id).map(p => [p.id, p.label])
+);
+
+// Most-specific first — mirrors backend _PROFILE_TAG_MAP
+const PROFILE_TAG_MAP: Record<string, string[]> = {
+  genai_engineer:    ["genai", "rag", "knowledge_graph", "langchain", "vector_db", "agentic", "graph_rag"],
+  ai_developer:      ["ai_engineer", "applied_ai", "nlp", "chatbot", "automation", "dialogflow"],
+  ml_engineer:       ["ml", "machine_learning", "machine_learning_engineer", "deep_learning", "pytorch", "tensorflow", "model_training"],
+  credit_analyst:    ["credit_risk", "credit_analyst", "underwriting", "lending", "loan_analysis", "credit_scoring"],
+  financial_analyst: ["financial_analyst", "financial_reporting", "financial_modeling", "investment", "equity_research", "valuation", "accounting"],
+  quant_analyst:     ["quant_analyst", "quantitative", "quantitative_analysis", "statistical_modeling", "econometrics", "actuarial"],
+  risk_analyst:      ["risk_analyst", "risk", "risk_management", "market_risk", "operational_risk", "banking"],
+  compliance_analyst:["compliance", "regulatory", "aml", "audit", "kyc", "financial_crime"],
+  data_scientist:    ["data_scientist", "predictive_modeling", "statistical_analysis"],
+  bi_developer:      ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization", "business_intelligence"],
+};
+
+// Keyword sets for description matching
+const DESC_KEYWORDS: Record<string, string[]> = {
+  genai_engineer:    ["rag", "llm", "langchain", "vector", "embedding", "generative", "knowledge graph", "agentic", "large language"],
+  ai_developer:      ["artificial intelligence", "chatbot", "conversational", "nlp", "natural language", "automation", "dialogflow"],
+  ml_engineer:       ["machine learning", "deep learning", "pytorch", "tensorflow", "model training", "mlops", "neural network"],
+  data_scientist:    ["data scientist", "predictive", "statistical analysis", "eda", "experiment", "hypothesis"],
+  bi_developer:      ["data analyst", "dashboard", "power bi", "tableau", "reporting", "business intelligence", "kpi", "sql analyst"],
+  credit_analyst:    ["credit", "underwriting", "lending", "loan", "credit risk", "credit scoring", "nbfc"],
+  financial_analyst: ["financial analyst", "financial model", "valuation", "equity research", "investment banking", "accounting", "p&l", "10-k"],
+  quant_analyst:     ["quantitative", "quant", "statistical model", "algorithmic", "econometrics", "derivatives", "actuar"],
+  risk_analyst:      ["risk management", "market risk", "operational risk", "risk framework", "risk officer", "risk assessment"],
+  compliance_analyst:["compliance", "regulatory", "aml", "kyc", "audit", "financial crime", "anti-money"],
+};
+
+function detectProfile(tags: string[]): { profile: string; display: string; matchedTags: string[] } {
+  for (const [prof, ptags] of Object.entries(PROFILE_TAG_MAP)) {
+    const hits = tags.filter(t => ptags.includes(t));
+    if (hits.length > 0) return { profile: prof, display: PROFILE_DISPLAY[prof] ?? prof, matchedTags: hits };
+  }
+  return { profile: "default", display: "Default", matchedTags: [] };
+}
+
+function matchByDescription(desc: string): { profile: string; display: string } | null {
+  const lower = desc.toLowerCase();
+  let best = "";
+  let bestScore = 0;
+  for (const [prof, kws] of Object.entries(DESC_KEYWORDS)) {
+    const score = kws.filter(kw => lower.includes(kw)).length;
+    if (score > bestScore) { bestScore = score; best = prof; }
+  }
+  if (bestScore > 0 && best) return { profile: best, display: PROFILE_DISPLAY[best] ?? best };
+  return null;
+}
+
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };
 type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
 type AtsResult     = { ats_pass?: string[]; flagged?: {section:string;issue:string;fix:string}[]; overall_verdict?: string; error?: string };
+
+type ModalState = {
+  open: boolean;
+  profile: string;        // resolved profile ID
+  display: string;        // human label
+  matchedTags: string[];  // tags that triggered auto-detect
+  source: "auto" | "manual";
+  // "change" sub-screen
+  changing: boolean;
+  descText: string;
+  descMatch: { profile: string; display: string } | null; // client-side match result
+  descSearched: boolean;  // true after Match button clicked
+};
+
+const CLOSED_MODAL: ModalState = {
+  open: false, profile: "", display: "", matchedTags: [], source: "auto",
+  changing: false, descText: "", descMatch: null, descSearched: false,
+};
 
 function ForgePageInner() {
   const searchParams = useSearchParams();
@@ -32,6 +102,7 @@ function ForgePageInner() {
   const [selected, setSelected]   = useState<Job | null>(null);
   const [profile, setProfile]     = useState("");
   const [loading, setLoading]     = useState(true);
+  const [modal, setModal]         = useState<ModalState>(CLOSED_MODAL);
 
   // Step 1 — Audit
   const [auditing, setAuditing]         = useState(false);
@@ -70,6 +141,7 @@ function ForgePageInner() {
     setAuditResult(null);
     setForgeResult(null);
     setAtsResult(null);
+    setModal(CLOSED_MODAL);
   }
 
   async function runAudit() {
@@ -83,16 +155,31 @@ function ForgePageInner() {
     setAuditing(false);
   }
 
-  async function forge() {
+  // Opens the confirmation modal before forging
+  function openConfirmModal() {
     if (!selected) return;
+    if (!profile) {
+      // Auto-detect from job tags
+      const { profile: det, display: disp, matchedTags } = detectProfile(selected.tags_matched ?? []);
+      setModal({ ...CLOSED_MODAL, open: true, profile: det, display: disp, matchedTags, source: "auto" });
+    } else {
+      // Manual selection — confirm anyway so user can catch a wrong pick
+      setModal({ ...CLOSED_MODAL, open: true, profile, display: PROFILE_DISPLAY[profile] ?? profile, matchedTags: [], source: "manual" });
+    }
+  }
+
+  async function forge(profileOverride: string) {
+    if (!selected) return;
+    setModal(CLOSED_MODAL);
     setForging(true);
     setForgeResult(null);
     setAtsResult(null);
     setForgeStatus("Waking up server…");
+    const useProfile = profileOverride === "default" ? undefined : profileOverride || undefined;
     try {
       try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
       setForgeStatus("Analysing JD · Optimising with XYZ format…");
-      const res = await api.forge(selected.short_id || selected.id, profile || undefined, undefined);
+      const res = await api.forge(selected.short_id || selected.id, useProfile, undefined);
       setForgeResult(res);
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : String(e);
@@ -111,13 +198,14 @@ function ForgePageInner() {
     setForgeResult(null);
     setAtsResult(null);
     setForgeStatus("Re-forging with ATS fixes…");
+    const useProfile = profile === "default" ? undefined : profile || undefined;
     try {
       try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
       const hints = {
         flagged: atsResult.flagged ?? [],
         missing_keywords: (auditResult?.missing_keywords ?? []),
       };
-      const res = await api.forge(selected.short_id || selected.id, profile || undefined, hints);
+      const res = await api.forge(selected.short_id || selected.id, useProfile, hints);
       setForgeResult(res);
     } catch (e: unknown) {
       setForgeResult({ error: e instanceof Error ? e.message : "Re-forge failed" });
@@ -139,8 +227,155 @@ function ForgePageInner() {
     setCheckingAts(false);
   }
 
+  function handleDescMatch() {
+    const result = matchByDescription(modal.descText);
+    setModal(m => ({ ...m, descMatch: result, descSearched: true }));
+  }
+
   const scoreColor = (s: number) =>
     s >= 75 ? "var(--green)" : s >= 55 ? "var(--amber)" : "var(--red)";
+
+  // ── Confirmation bottom sheet ───────────────────────────────────────────────
+  const confirmModal = modal.open && (
+    <div
+      className="fixed inset-0 z-50 flex items-end"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) setModal(CLOSED_MODAL); }}
+    >
+      <div className="w-full rounded-t-3xl p-5 pb-10 slide-up"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+
+        {/* drag handle */}
+        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: "var(--border)" }} />
+
+        {!modal.changing ? (
+          /* ── Confirm screen ── */
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>
+              {modal.source === "auto" ? "Auto-detected profile" : "Selected profile"}
+            </p>
+
+            <div className="flex items-center gap-3 mb-1">
+              <span className="px-3 py-1.5 rounded-lg text-sm font-bold"
+                style={{ background: "var(--accent-20)", color: "var(--accent)", border: "1px solid var(--accent-40)" }}>
+                {modal.display}
+              </span>
+              {modal.source === "auto" && modal.matchedTags.length > 0 && (
+                <span className="text-xs" style={{ color: "var(--text-3)" }}>
+                  via: {modal.matchedTags.slice(0, 3).join(", ")}
+                </span>
+              )}
+            </div>
+
+            <p className="text-sm mt-3 mb-5" style={{ color: "var(--text-2)" }}>
+              Does <strong style={{ color: "var(--text)" }}>{modal.display}</strong> fit this job?
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => forge(modal.profile)}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+                Yes, forge it
+              </button>
+              <button
+                onClick={() => setModal(m => ({ ...m, changing: true }))}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                No, change it
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ── Change-profile screen ── */
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>
+              Choose a profile
+            </p>
+
+            {/* Profile pills (excluding Auto) */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {PROFILES.filter(p => p.id).map(p => {
+                const active = modal.profile === p.id;
+                return (
+                  <button key={p.id}
+                    onClick={() => setModal(m => ({ ...m, profile: p.id, display: p.label, descMatch: null }))}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95"
+                    style={{
+                      background: active ? "var(--accent-20)" : "var(--surface-2)",
+                      color: active ? "var(--accent)" : "var(--text-3)",
+                      border: `1px solid ${active ? "var(--accent-40)" : "var(--border)"}`,
+                    }}>
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Describe the role */}
+            <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--text-3)" }}>
+              Or describe the role — we'll find the closest match:
+            </p>
+            <div className="flex gap-2 mb-3">
+              <input
+                value={modal.descText}
+                onChange={e => setModal(m => ({ ...m, descText: e.target.value, descMatch: null, descSearched: false }))}
+                onKeyDown={e => e.key === "Enter" && handleDescMatch()}
+                placeholder="e.g. Backend engineer building REST APIs…"
+                style={{ fontSize: 13 }}
+              />
+              <button
+                onClick={handleDescMatch}
+                disabled={!modal.descText.trim()}
+                className="px-3 py-2 rounded-xl text-xs font-semibold shrink-0 disabled:opacity-40 transition active:scale-95"
+                style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                Match
+              </button>
+            </div>
+
+            {/* Description match result */}
+            {modal.descSearched && modal.descMatch === null && (
+              <div className="rounded-xl p-3 mb-3"
+                style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                <p className="text-xs" style={{ color: "#fca5a5" }}>
+                  No matching profile found. Pick one above, or continue with Default (general resume).
+                </p>
+              </div>
+            )}
+            {modal.descMatch && (
+              <div className="rounded-xl p-3 mb-3"
+                style={{ background: "var(--accent-05)", border: "1px solid var(--accent-15)" }}>
+                <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--accent)" }}>
+                  Closest match: {modal.descMatch.display}
+                </p>
+                <button
+                  onClick={() => setModal(m => ({ ...m, profile: m.descMatch!.profile, display: m.descMatch!.display }))}
+                  className="text-xs font-semibold mt-1"
+                  style={{ color: "var(--accent)" }}>
+                  Apply this profile →
+                </button>
+              </div>
+            )}
+
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={() => forge(modal.profile || "default")}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+                Forge with {modal.display || "Default"}
+              </button>
+              <button
+                onClick={() => setModal(m => ({ ...m, changing: false, descText: "", descMatch: null, descSearched: false }))}
+                className="py-3 px-4 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                Back
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="pt-6 pb-4 fade-up">
@@ -184,7 +419,7 @@ function ForgePageInner() {
         </div>
       )}
 
-      {/* ── Step 1: Audit ── */}
+      {/* ── Step 2: Audit ── */}
       {selected && (
         <>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-3)" }}>
@@ -202,7 +437,6 @@ function ForgePageInner() {
           {auditResult && auditResult.score >= 0 && (
             <div className="rounded-2xl p-4 mb-4"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-              {/* Score */}
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
                   style={{ background: `${scoreColor(auditResult.score)}18`, border: `2px solid ${scoreColor(auditResult.score)}` }}>
@@ -220,7 +454,6 @@ function ForgePageInner() {
                 </div>
               </div>
 
-              {/* Missing keywords */}
               {auditResult.missing_keywords?.length > 0 && (
                 <div className="mb-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-3)" }}>
@@ -237,7 +470,6 @@ function ForgePageInner() {
                 </div>
               )}
 
-              {/* Red flags */}
               {auditResult.red_flags?.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-3)" }}>
@@ -257,7 +489,7 @@ function ForgePageInner() {
         </>
       )}
 
-      {/* ── Profile selector ── */}
+      {/* ── Step 3: Profile selector ── */}
       {selected && (
         <>
           <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-3)" }}>
@@ -268,7 +500,7 @@ function ForgePageInner() {
               const active = profile === p.id;
               return (
                 <button key={p.id} onClick={() => setProfile(p.id)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95"
                   style={{
                     background: active ? "var(--accent-20)" : "var(--surface-2)",
                     color: active ? "var(--accent)" : "var(--text-3)",
@@ -282,8 +514,8 @@ function ForgePageInner() {
         </>
       )}
 
-      {/* ── Generate button ── */}
-      <button onClick={forge} disabled={!selected || forging}
+      {/* ── Generate button (opens confirmation modal) ── */}
+      <button onClick={openConfirmModal} disabled={!selected || forging}
         className="w-full py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
         style={{ background: "var(--accent)", color: "var(--on-accent)", boxShadow: selected ? "0 0 18px var(--accent-25)" : "none" }}>
         {forging
@@ -371,7 +603,6 @@ function ForgePageInner() {
             <p className="text-sm" style={{ color: "#fca5a5" }}>{atsResult.error}</p>
           ) : (
             <>
-              {/* Passes */}
               {atsResult.ats_pass && atsResult.ats_pass.length > 0 && (
                 <div className="mb-3">
                   <p className="text-xs font-semibold mb-1.5" style={{ color: "var(--green)" }}>✅ ATS passes</p>
@@ -386,7 +617,6 @@ function ForgePageInner() {
                 </div>
               )}
 
-              {/* Flagged sections */}
               {atsResult.flagged && atsResult.flagged.length > 0 && (
                 <div className="mb-3 space-y-2">
                   <p className="text-xs font-semibold" style={{ color: "var(--amber)" }}>⚠ Flagged sections</p>
@@ -401,7 +631,6 @@ function ForgePageInner() {
                 </div>
               )}
 
-              {/* Verdict */}
               {atsResult.overall_verdict && (
                 <div className="rounded-xl p-3 mb-3"
                   style={{ background: "var(--accent-05)", border: "1px solid var(--accent-15)" }}>
@@ -410,7 +639,6 @@ function ForgePageInner() {
                 </div>
               )}
 
-              {/* Re-forge with fixes */}
               {atsResult.flagged && atsResult.flagged.length > 0 && (
                 <button onClick={reforgeWithFixes} disabled={forging}
                   className="w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
@@ -426,6 +654,9 @@ function ForgePageInner() {
           )}
         </div>
       )}
+
+      {/* ── Profile confirmation modal ── */}
+      {confirmModal}
     </div>
   );
 }
