@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api, type Job } from "@/lib/api";
 import { haptics } from "@/lib/haptics";
+import { detectProfile, PROFILES, PROFILE_DISPLAY } from "@/lib/profiles";
 
 const URGENCY: Record<string, { label: string; color: string }> = {
   hot:    { label: "Hot",    color: "#ef4444" },
@@ -16,6 +17,15 @@ const scoreColor = (s: number) => s >= 4 ? "#22c55e" : s >= 3 ? "#f59e0b" : "#ef
 
 type Props = { job: Job; onUpdate?: (id: string, changes: Partial<Job>) => void; compact?: boolean };
 
+type ForgeSheet = {
+  open: boolean;
+  profile: string;
+  display: string;
+  matchedTags: string[];
+  changing: boolean;
+};
+const CLOSED_FORGE: ForgeSheet = { open: false, profile: "", display: "", matchedTags: [], changing: false };
+
 export default function JobCard({ job, onUpdate, compact = false }: Props) {
   const router = useRouter();
   const [expanded, setExpanded]   = useState(false);
@@ -23,6 +33,10 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
   const [note, setNote]           = useState("");
   const [busy, setBusy]           = useState<string | null>(null);
   const [flash, setFlash]         = useState<string | null>(null);
+  // Action confirm: "apply" | "rejected" | "ghosted" | null
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  // Forge profile sheet
+  const [forgeSheet, setForgeSheet] = useState<ForgeSheet>(CLOSED_FORGE);
 
   const sid  = job.short_id || job.id;
   const tags: string[]    = Array.isArray(job.tags_matched) ? job.tags_matched : [];
@@ -82,6 +96,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
       setDragSettling(true);
       setDragX(goingRight ? 480 : -480);
       haptics.success();
+      // Swipe is intentional — no confirmation needed
       setTimeout(() => { act(chosen.action); setDragX(0); setDragSettling(false); }, 220);
     } else {
       setDragSettling(true);
@@ -106,6 +121,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
   const activeSwipeSide = swipe && dragX > 0 ? swipe.right : swipe && dragX < 0 ? swipe.left : null;
 
   async function act(action: string) {
+    setConfirmAction(null);
     setBusy(action);
     try {
       if (action === "apply")     { await api.apply(sid);                  onUpdate?.(job.id, { status: "applied" }); }
@@ -128,7 +144,139 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
     setAddingNote(false);
   }
 
+  function openForgeSheet() {
+    haptics.light();
+    const { profile, display, matchedTags } = detectProfile(tags);
+    setForgeSheet({ open: true, profile, display, matchedTags, changing: false });
+  }
+
+  function goToForge() {
+    haptics.light();
+    setForgeSheet(CLOSED_FORGE);
+    router.push(`/forge?job=${job.id}`);
+  }
+
+  // ── Inline confirm banner (for Apply / Rejected / Ghosted) ─────────────────
+  const confirmBanner = confirmAction && (
+    <div className="mt-2 rounded-xl px-3 py-2.5 flex items-center gap-2"
+      style={{
+        background: confirmAction === "apply" ? "rgba(34,197,94,0.08)"
+          : confirmAction === "rejected" ? "rgba(239,68,68,0.08)"
+          : "rgba(82,82,91,0.12)",
+        border: `1px solid ${confirmAction === "apply" ? "rgba(34,197,94,0.25)"
+          : confirmAction === "rejected" ? "rgba(239,68,68,0.25)"
+          : "rgba(82,82,91,0.3)"}`,
+      }}>
+      <p className="flex-1 text-xs font-semibold"
+        style={{ color: confirmAction === "apply" ? "#86efac" : confirmAction === "rejected" ? "#fca5a5" : "var(--text-3)" }}>
+        {confirmAction === "apply" ? "Mark as Applied?" : confirmAction === "rejected" ? "Mark as Rejected?" : "Mark as Ghosted?"}
+      </p>
+      <button onClick={() => { haptics.medium(); act(confirmAction); }}
+        disabled={!!busy}
+        className="px-3 py-1 rounded-lg text-xs font-bold transition active:scale-95 disabled:opacity-50"
+        style={{
+          background: confirmAction === "apply" ? "rgba(34,197,94,0.2)"
+            : confirmAction === "rejected" ? "rgba(239,68,68,0.2)"
+            : "rgba(82,82,91,0.3)",
+          color: confirmAction === "apply" ? "#86efac" : confirmAction === "rejected" ? "#fca5a5" : "var(--text-2)",
+        }}>
+        {busy === confirmAction ? "…" : "Yes"}
+      </button>
+      <button onClick={() => setConfirmAction(null)}
+        className="px-3 py-1 rounded-lg text-xs font-semibold transition active:scale-95"
+        style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+        No
+      </button>
+    </div>
+  );
+
+  // ── Forge profile bottom sheet ──────────────────────────────────────────────
+  const forgeSheetEl = forgeSheet.open && (
+    <div className="fixed inset-0 z-50 flex items-end"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) setForgeSheet(CLOSED_FORGE); }}>
+      <div className="w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10 slide-up"
+        style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+
+        <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: "var(--border)" }} />
+
+        {!forgeSheet.changing ? (
+          /* ── Profile preview ── */
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: "var(--text-3)" }}>Forge resume for</p>
+            <p className="font-semibold text-sm mb-0.5" style={{ color: "var(--text)" }}>{job.title}</p>
+            <p className="text-xs mb-4" style={{ color: "var(--text-3)" }}>{job.company}{job.location ? ` · ${job.location}` : ""}</p>
+
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-3)" }}>Detected profile</p>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="px-3 py-1.5 rounded-lg text-sm font-bold"
+                style={{ background: "var(--accent-20)", color: "var(--accent)", border: "1px solid var(--accent-40)" }}>
+                {forgeSheet.display}
+              </span>
+              {forgeSheet.matchedTags.length > 0 && (
+                <span className="text-xs" style={{ color: "var(--text-3)" }}>
+                  via: {forgeSheet.matchedTags.slice(0, 3).join(", ")}
+                </span>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={goToForge}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition active:scale-95 flex items-center justify-center gap-2"
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Forge with {forgeSheet.display}
+              </button>
+              <button onClick={() => setForgeSheet(s => ({ ...s, changing: true }))}
+                className="py-3 px-4 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                Change
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ── Profile picker ── */
+          <>
+            <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Choose a profile</p>
+            <div className="flex flex-wrap gap-2 mb-5">
+              {PROFILES.filter(p => p.id).map(p => {
+                const active = forgeSheet.profile === p.id;
+                return (
+                  <button key={p.id}
+                    onClick={() => setForgeSheet(s => ({ ...s, profile: p.id, display: PROFILE_DISPLAY[p.id] ?? p.label }))}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition active:scale-95"
+                    style={{
+                      background: active ? "var(--accent-20)" : "var(--surface-2)",
+                      color: active ? "var(--accent)" : "var(--text-3)",
+                      border: `1px solid ${active ? "var(--accent-40)" : "var(--border)"}`,
+                    }}>
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={goToForge}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+                Forge with {forgeSheet.display || "Default"}
+              </button>
+              <button onClick={() => setForgeSheet(s => ({ ...s, changing: false }))}
+                className="py-3 px-4 rounded-xl text-sm font-semibold transition active:scale-95"
+                style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                Back
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
   return (
+    <>
     <div className="relative mb-3">
       {/* Swipe background reveal */}
       {swipe && dragX !== 0 && (
@@ -167,7 +315,6 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
       <div className="p-4">
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          {/* Company initial */}
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-bold"
             style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
             {job.company?.charAt(0)?.toUpperCase() ?? "?"}
@@ -249,9 +396,18 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
         <div className="flex gap-2">
           {job.status === "new" && (
             <>
-              <button onClick={() => act("apply")} disabled={!!busy}
+              {/* Apply — tapping shows confirm banner; swipe bypasses it */}
+              <button
+                onClick={() => { haptics.light(); setConfirmAction(confirmAction === "apply" ? null : "apply"); }}
+                disabled={!!busy}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50"
-                style={{ background: flash === "apply" ? "#15803d" : "rgba(34,197,94,0.15)", color: flash === "apply" ? "#fff" : "#86efac", border: "1px solid rgba(34,197,94,0.2)" }}>
+                style={{
+                  background: flash === "apply" ? "#15803d"
+                    : confirmAction === "apply" ? "rgba(34,197,94,0.25)"
+                    : "rgba(34,197,94,0.15)",
+                  color: flash === "apply" ? "#fff" : "#86efac",
+                  border: `1px solid ${confirmAction === "apply" ? "rgba(34,197,94,0.5)" : "rgba(34,197,94,0.2)"}`,
+                }}>
                 {flash === "apply" ? "Applied ✓" : busy === "apply" ? "…" : "Apply"}
               </button>
               <button onClick={() => act("skip")} disabled={!!busy}
@@ -268,14 +424,27 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
                 style={{ background: "rgba(168,85,247,0.12)", color: "#d8b4fe", border: "1px solid rgba(168,85,247,0.2)" }}>
                 {flash === "interview" ? "Saved ✓" : busy === "interview" ? "…" : "Interview"}
               </button>
-              <button onClick={() => act("rejected")} disabled={!!busy}
+              {/* Rejected + Ghosted show confirm banner */}
+              <button
+                onClick={() => { haptics.light(); setConfirmAction(confirmAction === "rejected" ? null : "rejected"); }}
+                disabled={!!busy}
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 disabled:opacity-50"
-                style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.15)" }}>
+                style={{
+                  background: confirmAction === "rejected" ? "rgba(239,68,68,0.18)" : "rgba(239,68,68,0.08)",
+                  color: "#fca5a5",
+                  border: `1px solid ${confirmAction === "rejected" ? "rgba(239,68,68,0.4)" : "rgba(239,68,68,0.15)"}`,
+                }}>
                 {busy === "rejected" ? "…" : "Rejected"}
               </button>
-              <button onClick={() => act("ghosted")} disabled={!!busy}
+              <button
+                onClick={() => { haptics.light(); setConfirmAction(confirmAction === "ghosted" ? null : "ghosted"); }}
+                disabled={!!busy}
                 className="flex-1 py-2.5 rounded-xl text-xs font-semibold active:scale-95 disabled:opacity-50"
-                style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+                style={{
+                  background: confirmAction === "ghosted" ? "rgba(82,82,91,0.25)" : "var(--surface-2)",
+                  color: "var(--text-3)",
+                  border: `1px solid ${confirmAction === "ghosted" ? "rgba(82,82,91,0.5)" : "var(--border)"}`,
+                }}>
                 {busy === "ghosted" ? "…" : "Ghosted"}
               </button>
             </>
@@ -299,12 +468,12 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round"/>
             </svg>
           </button>
-          {/* Forge shortcut */}
+          {/* Forge shortcut — opens profile sheet */}
           <button
-            onClick={() => { haptics.light(); router.push(`/forge?job=${job.id}`); }}
+            onClick={openForgeSheet}
             className="w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 shrink-0"
             style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}
-            title="Forge resume for this job">
+            title="Forge resume">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -321,6 +490,9 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
           )}
         </div>
 
+        {/* Inline confirm banner */}
+        {confirmBanner}
+
         {/* Date footer */}
         {job.posted_date && (
           <p className="text-[10px] mt-2 text-right" style={{ color: "var(--text-3)" }}>
@@ -330,5 +502,9 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
       </div>
       </div>
     </div>
+
+    {/* Forge profile bottom sheet — rendered outside card to escape stacking context */}
+    {forgeSheetEl}
+    </>
   );
 }
