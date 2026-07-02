@@ -12,8 +12,13 @@ match_tags:
   - genai
 
 summary_focus: >
-  Emphasise ML pipeline experience, model evaluation, Python proficiency,
-  and any LLM/RAG projects. Highlight quantified impact metrics.
+  Frame as a Data Scientist combining statistical ML with AI-powered analytics.
+  Lead with Python, predictive modelling, EDA, and data-driven insights.
+  Emphasise model evaluation, SHAP explainability, and business impact of
+  analytical outputs. Highlight both classical ML (XGBoost, Random Forest)
+  and AI tooling (LLMs as a means to an end). Use "Data Scientist" and
+  "ML-powered analytics" language. Suitable for hybrid roles where both
+  modelling depth and data fluency are valued.
 
 # Skill categories shown on resume, in this order
 skills_order:

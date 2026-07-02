@@ -128,3 +128,81 @@ default:
     issuer: "Vanderbilt University / Coursera"
     date: "In Progress"
     tags: ["ai_engineer", "genai", "llm", "prompt_engineering", "data_scientist"]
+
+genai_engineer:
+  - name: "Generative AI with Large Language Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["genai_engineer", "genai", "llm", "rag", "ai_engineer", "transformer", "fine_tuning"]
+  - name: "LangChain: Chat with Your Data"
+    issuer: "DeepLearning.AI"
+    date: "In Progress"
+    tags: ["genai_engineer", "rag", "llm", "langchain", "ai_engineer", "vector_db"]
+  - name: "Building and Evaluating Advanced RAG"
+    issuer: "DeepLearning.AI / LlamaIndex"
+    date: "In Progress"
+    tags: ["genai_engineer", "rag", "llm", "ai_engineer", "knowledge_graph", "retrieval"]
+  - name: "Knowledge Graphs for RAG"
+    issuer: "DeepLearning.AI / Neo4j"
+    date: "In Progress"
+    tags: ["genai_engineer", "knowledge_graph", "rag", "llm", "ai_engineer", "graph"]
+  - name: "Multi AI Agent Systems with crewAI"
+    issuer: "DeepLearning.AI"
+    date: "In Progress"
+    tags: ["genai_engineer", "agentic", "llm", "ai_engineer", "genai", "multi_agent"]
+  - name: "Prompt Engineering for Developers"
+    issuer: "DeepLearning.AI / OpenAI"
+    date: "In Progress"
+    tags: ["genai_engineer", "llm", "genai", "prompt_engineering", "ai_engineer"]
+
+ai_developer:
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_developer", "ml", "ai_engineer", "python", "predictive_modeling"]
+  - name: "Generative AI Fundamentals"
+    issuer: "Google / Coursera"
+    date: "In Progress"
+    tags: ["ai_developer", "genai", "llm", "ai_engineer", "applied_ai"]
+  - name: "Natural Language Processing Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_developer", "nlp", "llm", "ai_engineer", "text_classification"]
+  - name: "Python for AI & Development"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["ai_developer", "python", "ai_engineer", "applied_ai", "automation"]
+  - name: "AI Product Development"
+    issuer: "Vanderbilt University / Coursera"
+    date: "In Progress"
+    tags: ["ai_developer", "ai_engineer", "genai", "applied_ai", "product"]
+  - name: "Building AI Applications with Hugging Face"
+    issuer: "Hugging Face / edX"
+    date: "In Progress"
+    tags: ["ai_developer", "llm", "nlp", "ai_engineer", "fine_tuning", "transformers"]
+
+ml_engineer:
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ml_engineer", "ml", "data_scientist", "python", "supervised_learning"]
+  - name: "Deep Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ml_engineer", "deep_learning", "neural_networks", "ml", "pytorch"]
+  - name: "Natural Language Processing Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ml_engineer", "nlp", "ml", "text_classification", "sequence_models"]
+  - name: "Applied Machine Learning in Python"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["ml_engineer", "ml", "python", "scikit_learn", "model_evaluation"]
+  - name: "MLOps Fundamentals"
+    issuer: "Google Cloud / Coursera"
+    date: "In Progress"
+    tags: ["ml_engineer", "mlops", "ml", "model_deployment", "pipeline"]
+  - name: "Feature Engineering"
+    issuer: "Kaggle"
+    date: "In Progress"
+    tags: ["ml_engineer", "ml", "feature_engineering", "data_scientist", "python"]

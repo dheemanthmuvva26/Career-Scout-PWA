@@ -1,0 +1,51 @@
+id: genai_engineer
+display_name: "Generative AI Engineer"
+
+match_tags:
+  - genai
+  - rag
+  - llm
+  - knowledge_graph
+  - graph
+  - agentic
+  - langchain
+
+summary_focus: >
+  Frame as a Generative AI Engineer building production AI systems.
+  Lead with RAG pipeline design, LangChain/LlamaIndex, knowledge graph
+  architecture, and multi-LLM orchestration (OpenAI, Gemini, Groq).
+  Emphasise agentic frameworks, semantic search, and graph-based retrieval.
+  Use "Generative AI", "RAG pipeline", and "LLM application" language throughout.
+  Do NOT frame as a data analyst or BI developer.
+
+skills_order:
+  - llm_rag
+  - ml_frameworks
+  - languages
+  - databases
+  - data_tools
+  - other
+
+experience_tags:
+  - llm
+  - rag
+  - genai
+  - ai_engineer
+  - agentic
+  - knowledge_graph
+  - graph
+  - nlp
+
+project_tags:
+  - llm
+  - rag
+  - genai
+  - ai_engineer
+  - knowledge_graph
+  - graph
+  - agentic
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

@@ -1,0 +1,48 @@
+id: ai_developer
+display_name: "AI Developer"
+
+match_tags:
+  - ai_engineer
+  - nlp
+  - python
+  - applied_ai
+  - automation
+  - chatbot
+  - dialogflow
+
+summary_focus: >
+  Frame as an Applied AI Developer who builds practical AI tools, prototypes,
+  and automation pipelines. Lead with Python, LLM integration (OpenAI/Gemini/Groq
+  APIs), NLP pipelines, and rapid prototyping skills. Emphasise hands-on
+  experience building AI-powered applications, chatbots, and automation scripts.
+  Highlight dataset preparation, model evaluation, and collaborative delivery.
+  Use "AI Developer", "Applied AI", and "AI tool development" language throughout.
+
+skills_order:
+  - ml_frameworks
+  - llm_rag
+  - languages
+  - data_tools
+  - databases
+  - other
+
+experience_tags:
+  - ai_engineer
+  - llm
+  - genai
+  - nlp
+  - agentic
+  - python
+
+project_tags:
+  - ai_engineer
+  - genai
+  - llm
+  - agentic
+  - nlp
+  - ml
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

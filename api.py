@@ -896,10 +896,14 @@ class BatchImportRequest(BaseModel):
     location: str = ""
 
 _PROFILE_TAG_MAP = {
-    "data_scientist":    ["data_scientist", "ml", "ai_engineer", "machine_learning", "nlp", "llm", "genai"],
-    "bi_developer":      ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization"],
-    "risk_analyst":      ["risk_analyst", "risk", "finance", "quantitative", "banking"],
-    "compliance_analyst":["compliance", "regulatory", "aml", "audit", "kyc"],
+    # Ordered most-specific first — first match wins
+    "genai_engineer":    ["genai", "rag", "knowledge_graph", "langchain", "vector_db", "agentic", "graph_rag"],
+    "ai_developer":      ["ai_engineer", "applied_ai", "nlp", "chatbot", "automation", "dialogflow"],
+    "ml_engineer":       ["ml", "machine_learning", "machine_learning_engineer", "deep_learning", "pytorch", "tensorflow", "model_training"],
+    "data_scientist":    ["data_scientist", "predictive_modeling", "statistical_analysis"],
+    "bi_developer":      ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization", "business_intelligence"],
+    "risk_analyst":      ["risk_analyst", "risk", "credit_risk", "quantitative", "banking", "financial_modeling"],
+    "compliance_analyst":["compliance", "regulatory", "aml", "audit", "kyc", "financial_crime"],
 }
 
 def _pick_profile(tags: list[str]) -> str:

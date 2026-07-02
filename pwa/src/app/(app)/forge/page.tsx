@@ -6,10 +6,13 @@ import { api, type Job } from "@/lib/api";
 
 const PROFILES = [
   { id: "",                   label: "Auto" },
+  { id: "genai_engineer",     label: "GenAI Engineer" },
+  { id: "ai_developer",       label: "AI Developer" },
+  { id: "ml_engineer",        label: "ML Engineer" },
+  { id: "data_scientist",     label: "Data Scientist" },
+  { id: "bi_developer",       label: "Data Analyst" },
   { id: "risk_analyst",       label: "Risk Analyst" },
   { id: "compliance_analyst", label: "Compliance Analyst" },
-  { id: "data_scientist",     label: "Data Scientist" },
-  { id: "bi_developer",       label: "BI Developer" },
 ];
 
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };

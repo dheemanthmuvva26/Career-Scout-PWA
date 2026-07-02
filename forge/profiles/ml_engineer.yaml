@@ -1,0 +1,47 @@
+id: ml_engineer
+display_name: "ML Engineer / Data Scientist"
+
+match_tags:
+  - ml
+  - machine_learning
+  - machine_learning_engineer
+  - deep_learning
+  - pytorch
+  - tensorflow
+  - model_training
+  - scikit
+
+summary_focus: >
+  Frame as an ML Engineer focused on the model development lifecycle.
+  Lead with Python, scikit-learn, XGBoost, and model evaluation metrics
+  (RMSE, AUC-ROC, SHAP explainability). Emphasise training, feature engineering,
+  dataset preparation, and performance optimisation. Highlight experience with
+  classification and prediction tasks and quantified model accuracy results.
+  Use "Machine Learning Engineer", "ML model development", and "model evaluation"
+  language. Do NOT lead with LLMs or GenAI — focus on classical ML and deep learning.
+
+skills_order:
+  - ml_frameworks
+  - languages
+  - data_tools
+  - llm_rag
+  - databases
+  - other
+
+experience_tags:
+  - ml
+  - data_scientist
+  - python
+  - ai_engineer
+  - nlp
+
+project_tags:
+  - ml
+  - data_scientist
+  - ai_engineer
+  - credit_risk
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3
