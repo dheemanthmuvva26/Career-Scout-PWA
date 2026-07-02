@@ -17,7 +17,13 @@ export default function JobsPage() {
   const [jobs, setJobs]         = useState<Job[]>([]);
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
-  const [importMode, setImportMode] = useState<"url" | "paste" | "batch">("url");
+  // Default: paste (best for mobile copy-paste); persisted across sessions
+  const [importMode, setImportMode] = useState<"url" | "paste" | "batch">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("cs_importMode") as "url" | "paste" | "batch") || "paste";
+    }
+    return "paste";
+  });
   const [importUrl, setImportUrl] = useState("");
   const [importText, setImportText] = useState("");
   const [importLocation, setImportLocation] = useState("");
@@ -139,8 +145,8 @@ export default function JobsPage() {
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs font-semibold" style={{ color: "var(--text-3)" }}>IMPORT JOB</p>
           <div className="flex gap-1 rounded-lg p-0.5" style={{ background: "var(--surface-2)" }}>
-            {(["url", "paste", "batch"] as const).map((m) => (
-              <button key={m} onClick={() => setImportMode(m)}
+            {(["paste", "url", "batch"] as const).map((m) => (
+              <button key={m} onClick={() => { setImportMode(m); localStorage.setItem("cs_importMode", m); }}
                 className="px-2.5 py-1 rounded-md text-[11px] font-semibold transition active:scale-95"
                 style={{
                   background: importMode === m ? "var(--accent)" : "transparent",
@@ -168,15 +174,20 @@ export default function JobsPage() {
 
         {importMode === "paste" && (
           <div className="mb-2">
+            <p className="text-[10px] font-semibold mb-1.5" style={{ color: "var(--text-3)" }}>
+              Copy the job post → long-press here → Paste
+            </p>
             <textarea value={importText} onChange={(e) => setImportText(e.target.value)}
-              placeholder="Paste a job post from WhatsApp, LinkedIn, email — anything. We'll extract the details automatically."
-              rows={4}
+              placeholder="Paste a job post from WhatsApp, LinkedIn, Telegram, email — anything. We'll extract the details automatically."
+              rows={6}
               className="w-full resize-none no-scrollbar"
-              style={{ fontSize: 14, padding: "10px 12px", borderRadius: 12, lineHeight: 1.5 }} />
+              style={{ fontSize: 14, padding: "12px 14px", borderRadius: 12, lineHeight: 1.6 }} />
             <button onClick={handleImport} disabled={importing || !importText.trim()}
-              className="w-full mt-2 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 transition active:scale-95"
+              className="w-full mt-2 py-3 rounded-xl text-sm font-semibold disabled:opacity-50 transition active:scale-95 flex items-center justify-center gap-2"
               style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
-              {importing ? "Extracting…" : "Import from pasted text"}
+              {importing
+                ? <><svg className="spin w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" strokeLinecap="round"/></svg>Extracting…</>
+                : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" strokeLinecap="round"/></svg>Import Job</>}
             </button>
           </div>
         )}
