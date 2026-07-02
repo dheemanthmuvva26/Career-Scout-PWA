@@ -6,11 +6,16 @@ import { api, type Job } from "@/lib/api";
 
 const PROFILES = [
   { id: "",                   label: "Auto" },
+  // — AI / Tech —
   { id: "genai_engineer",     label: "GenAI Engineer" },
   { id: "ai_developer",       label: "AI Developer" },
   { id: "ml_engineer",        label: "ML Engineer" },
   { id: "data_scientist",     label: "Data Scientist" },
   { id: "bi_developer",       label: "Data Analyst" },
+  // — Finance —
+  { id: "credit_analyst",     label: "Credit Analyst" },
+  { id: "financial_analyst",  label: "Financial Analyst" },
+  { id: "quant_analyst",      label: "Quant Analyst" },
   { id: "risk_analyst",       label: "Risk Analyst" },
   { id: "compliance_analyst", label: "Compliance Analyst" },
 ];

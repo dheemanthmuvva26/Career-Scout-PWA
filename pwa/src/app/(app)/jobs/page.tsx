@@ -199,13 +199,20 @@ export default function JobsPage() {
                 style={{ padding: "8px 12px", background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}
               >
                 <option value="auto">Auto-detect profile</option>
-                <option value="genai_engineer">Generative AI Engineer</option>
-                <option value="ai_developer">AI Developer</option>
-                <option value="ml_engineer">ML Engineer</option>
-                <option value="data_scientist">Data Scientist</option>
-                <option value="bi_developer">Data Analyst</option>
-                <option value="risk_analyst">Risk Analyst</option>
-                <option value="compliance_analyst">Compliance Analyst</option>
+                <optgroup label="AI / Tech">
+                  <option value="genai_engineer">GenAI Engineer</option>
+                  <option value="ai_developer">AI Developer</option>
+                  <option value="ml_engineer">ML Engineer</option>
+                  <option value="data_scientist">Data Scientist</option>
+                  <option value="bi_developer">Data Analyst</option>
+                </optgroup>
+                <optgroup label="Finance">
+                  <option value="credit_analyst">Credit Analyst</option>
+                  <option value="financial_analyst">Financial Analyst</option>
+                  <option value="quant_analyst">Quant Analyst</option>
+                  <option value="risk_analyst">Risk Analyst</option>
+                  <option value="compliance_analyst">Compliance Analyst</option>
+                </optgroup>
                 <option value="default">Default</option>
               </select>
               <button

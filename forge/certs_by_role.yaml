@@ -206,3 +206,81 @@ ml_engineer:
     issuer: "Kaggle"
     date: "In Progress"
     tags: ["ml_engineer", "ml", "feature_engineering", "data_scientist", "python"]
+
+credit_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "risk_analyst", "finance", "financial_markets", "banking", "investment"]
+  - name: "Credit Risk Management: Frameworks and Strategies"
+    issuer: "New York Institute of Finance / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "credit_risk", "risk_analyst", "underwriting", "finance", "banking"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "quantitative_analysis", "financial_modeling", "risk_analyst", "statistics"]
+  - name: "Banking and Financial Institutions"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "banking", "finance", "risk_analyst", "lending", "financial_markets"]
+  - name: "Introduction to Financial Accounting"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "accounting", "financial_reporting", "finance", "risk_analyst"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["credit_analyst", "statistical_analysis", "data_analysis", "finance", "credit_risk"]
+
+financial_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "finance", "investment", "financial_markets", "equity_research"]
+  - name: "Investment Management Specialization"
+    issuer: "University of Geneva / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "investment", "portfolio_management", "valuation", "finance"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "financial_modeling", "quantitative_analysis", "statistics", "finance"]
+  - name: "Python and Statistics for Financial Analysis"
+    issuer: "HKUST / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "python", "finance", "statistical_analysis", "financial_modeling"]
+  - name: "Introduction to Corporate Finance"
+    issuer: "Columbia University / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "corporate_finance", "valuation", "finance", "investment"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["financial_analyst", "statistical_analysis", "data_analysis", "finance", "reporting"]
+
+quant_analyst:
+  - name: "Python and Statistics for Financial Analysis"
+    issuer: "HKUST / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "python", "statistics", "financial_modeling", "quantitative_analysis"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "quantitative_analysis", "financial_modeling", "statistics", "risk_analyst"]
+  - name: "Statistics with Python Specialization"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "statistics", "python", "statistical_modeling", "data_science"]
+  - name: "Machine Learning for Trading"
+    issuer: "Google / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "ml", "finance", "algorithmic", "python", "quantitative_analysis"]
+  - name: "Financial Engineering and Risk Management"
+    issuer: "Columbia University / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "financial_modeling", "risk_management", "quantitative_analysis", "finance"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["quant_analyst", "statistical_analysis", "finance", "quantitative_analysis", "data_analysis"]

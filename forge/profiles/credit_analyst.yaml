@@ -1,0 +1,47 @@
+id: credit_analyst
+display_name: "Credit Analyst"
+
+match_tags:
+  - credit_risk
+  - credit_analyst
+  - underwriting
+  - lending
+  - loan_analysis
+  - credit_scoring
+
+summary_focus: >
+  Frame as a Credit Analyst with hands-on credit risk modelling experience.
+  Lead with credit default prediction (XGBoost, SHAP explainability), risk
+  stratification, and underwriting analysis. Emphasise ability to translate
+  ML model outputs into actionable credit decisions and explainable risk scores.
+  Highlight decision engine experience and financial data analysis.
+  Use "Credit Analyst", "credit risk", "underwriting", and "default prediction"
+  language throughout. Do NOT lead with LLMs — focus on risk quantification.
+
+skills_order:
+  - ml_frameworks
+  - languages
+  - data_tools
+  - bi_tools
+  - databases
+  - other
+
+experience_tags:
+  - credit_risk
+  - risk_analyst
+  - finance
+  - decision_engine
+  - ml
+  - data_analyst
+
+project_tags:
+  - credit_risk
+  - risk_analyst
+  - finance
+  - ml
+  - decision_engine
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

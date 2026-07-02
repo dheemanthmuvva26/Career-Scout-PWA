@@ -1,0 +1,51 @@
+id: financial_analyst
+display_name: "Financial Analyst"
+
+match_tags:
+  - financial_analyst
+  - financial_reporting
+  - financial_modeling
+  - investment
+  - equity_research
+  - valuation
+  - accounting
+
+summary_focus: >
+  Frame as a Financial Analyst with AI-augmented research capabilities.
+  Lead with experience analysing financial filings (10-K/10-Q), extracting
+  financial metrics, and generating investment-grade insight briefs.
+  Emphasise data-driven financial research, dashboard reporting for
+  decision-makers, and the ability to synthesise large financial datasets
+  into clear analytical outputs. Use "Financial Analyst", "financial research",
+  "10-K/10-Q analysis", and "investment insights" language throughout.
+  Highlight stakeholder-facing deliverables (dashboards, reports, briefs).
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - llm_rag
+  - databases
+  - other
+
+experience_tags:
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - risk_analyst
+  - compliance
+  - data_analyst
+  - bi
+
+project_tags:
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - risk_analyst
+  - bi
+  - data_analyst
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

@@ -900,10 +900,13 @@ _PROFILE_TAG_MAP = {
     "genai_engineer":    ["genai", "rag", "knowledge_graph", "langchain", "vector_db", "agentic", "graph_rag"],
     "ai_developer":      ["ai_engineer", "applied_ai", "nlp", "chatbot", "automation", "dialogflow"],
     "ml_engineer":       ["ml", "machine_learning", "machine_learning_engineer", "deep_learning", "pytorch", "tensorflow", "model_training"],
+    "credit_analyst":    ["credit_risk", "credit_analyst", "underwriting", "lending", "loan_analysis", "credit_scoring"],
+    "financial_analyst": ["financial_analyst", "financial_reporting", "financial_modeling", "investment", "equity_research", "valuation", "accounting"],
+    "quant_analyst":     ["quant_analyst", "quantitative", "quantitative_analysis", "statistical_modeling", "econometrics", "actuarial"],
+    "risk_analyst":      ["risk_analyst", "risk", "risk_management", "market_risk", "operational_risk", "banking"],
+    "compliance_analyst":["compliance", "regulatory", "aml", "audit", "kyc", "financial_crime"],
     "data_scientist":    ["data_scientist", "predictive_modeling", "statistical_analysis"],
     "bi_developer":      ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization", "business_intelligence"],
-    "risk_analyst":      ["risk_analyst", "risk", "credit_risk", "quantitative", "banking", "financial_modeling"],
-    "compliance_analyst":["compliance", "regulatory", "aml", "audit", "kyc", "financial_crime"],
 }
 
 def _pick_profile(tags: list[str]) -> str:

@@ -1,0 +1,51 @@
+id: quant_analyst
+display_name: "Quantitative Analyst"
+
+match_tags:
+  - quant_analyst
+  - quantitative
+  - quantitative_analysis
+  - statistical_modeling
+  - financial_modeling
+  - actuarial
+  - econometrics
+
+summary_focus: >
+  Frame as a Quantitative Analyst with statistical modelling and financial
+  data analysis skills. Lead with Python-based predictive modelling, statistical
+  evaluation metrics (RMSE, AUC-ROC, SHAP), and risk quantification experience.
+  Emphasise model accuracy, feature engineering, and the ability to build
+  data-driven financial models from large structured datasets.
+  Use "Quantitative Analyst", "statistical modelling", "risk quantification",
+  and "predictive analytics" language. Highlight numerical rigour and
+  model interpretability alongside financial domain knowledge.
+
+skills_order:
+  - ml_frameworks
+  - languages
+  - data_tools
+  - bi_tools
+  - llm_rag
+  - databases
+
+experience_tags:
+  - ml
+  - data_scientist
+  - risk_analyst
+  - finance
+  - credit_risk
+  - decision_engine
+  - python
+
+project_tags:
+  - ml
+  - data_scientist
+  - credit_risk
+  - risk_analyst
+  - finance
+  - decision_engine
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3
