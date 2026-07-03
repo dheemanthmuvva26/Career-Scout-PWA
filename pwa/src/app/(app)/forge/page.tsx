@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { api, type Job } from "@/lib/api";
 import { PROFILES, PROFILE_DISPLAY, detectProfile, matchByDescription } from "@/lib/profiles";
+import { useViewMode } from "@/lib/viewMode";
 
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };
 type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
@@ -47,6 +48,8 @@ function ForgePageInner() {
   const [atsResult, setAtsResult]       = useState<AtsResult | null>(null);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  const { mode } = useViewMode();
+  const isDesktop = mode === "desktop";
 
   useEffect(() => {
     Promise.all([
@@ -279,7 +282,7 @@ function ForgePageInner() {
   return (
     <div className="pt-6 pb-4 fade-up">
       {/* ── Desktop 2-column / Mobile single-column ── */}
-      <div className="md:grid md:grid-cols-[340px_1fr] md:gap-8 md:items-start">
+      <div className={isDesktop ? "grid grid-cols-[340px_1fr] gap-8 items-start" : ""}>
 
         {/* ════════════════ LEFT PANEL — job browser ════════════════ */}
         <div>
@@ -297,7 +300,7 @@ function ForgePageInner() {
             </div>
           ) : (
             // Mobile: capped height; Desktop: tall scrollable list
-            <div className="space-y-2 max-h-52 md:max-h-[55vh] overflow-y-auto no-scrollbar mb-4">
+            <div className={`space-y-2 overflow-y-auto no-scrollbar mb-4 ${isDesktop ? "max-h-[55vh]" : "max-h-52"}`}>
               {jobs.map(job => {
                 const active = selected?.id === job.id;
                 return (
@@ -322,8 +325,8 @@ function ForgePageInner() {
           )}
 
           {/* ── Desktop-only selected job details + link ── */}
-          {selected && (
-            <div className="hidden md:block rounded-2xl p-4 mb-2"
+          {selected && isDesktop && (
+            <div className="rounded-2xl p-4 mb-2"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
               <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: "var(--text-3)" }}>Selected</p>
               <p className="font-semibold text-sm mb-0.5" style={{ color: "var(--text)" }}>{selected.title}</p>
@@ -444,9 +447,9 @@ function ForgePageInner() {
           )}
 
           {/* ── Mobile-only: job link under controls ── */}
-          {selected?.url && (
+          {selected?.url && !isDesktop && (
             <a href={selected.url} target="_blank" rel="noopener noreferrer"
-              className="md:hidden mb-4 flex items-center gap-2 text-xs font-semibold"
+              className="mb-4 flex items-center gap-2 text-xs font-semibold"
               style={{ color: "var(--text-3)" }}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 shrink-0">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" strokeLinecap="round"/>

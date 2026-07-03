@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { haptics } from "@/lib/haptics";
+import { useViewMode } from "@/lib/viewMode";
 
 const tabs = [
   {
@@ -66,6 +67,7 @@ function isActive(pathname: string, href: string) {
 export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
+  const { toggle } = useViewMode();
 
   function handleNav(e: React.MouseEvent, href: string) {
     if (isActive(pathname, href)) return;
@@ -82,7 +84,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col fixed left-0 top-0 h-full z-50"
+      className="flex flex-col fixed left-0 top-0 h-full z-50"
       style={{
         width: 216,
         background: "rgba(4,11,18,0.96)",
@@ -146,7 +148,27 @@ export default function Sidebar() {
       <div className="mx-4 mb-3" style={{ height: 1, background: "rgba(255,255,255,0.05)" }} />
       <div className="px-5 pb-6">
         <p className="text-xs font-semibold" style={{ color: "var(--text-2)" }}>Dheemanth M.</p>
-        <p className="text-[10px] mt-0.5" style={{ color: "var(--text-3)" }}>B.Tech CSE · AI & Data Analytics</p>
+        <p className="text-[10px] mt-0.5 mb-3" style={{ color: "var(--text-3)" }}>B.Tech CSE · AI & Data Analytics</p>
+        <button
+          onClick={toggle}
+          className="flex items-center gap-1.5 transition-all active:scale-95"
+          style={{
+            padding: "5px 10px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "var(--text-3)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+          }}
+        >
+          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12" y2="18.01" strokeLinecap="round" strokeWidth="2.5"/>
+          </svg>
+          Mobile View
+        </button>
       </div>
     </aside>
   );
