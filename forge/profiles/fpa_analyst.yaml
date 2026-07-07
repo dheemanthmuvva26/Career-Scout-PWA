@@ -1,0 +1,50 @@
+id: fpa_analyst
+display_name: "FP&A Analyst"
+
+match_tags:
+  - fpa
+  - fpa_analyst
+  - financial_planning
+  - budgeting
+  - forecasting
+  - variance_analysis
+  - management_reporting
+  - planning_analysis
+
+summary_focus: >
+  Frame as an FP&A Analyst with AI-augmented financial planning capabilities.
+  Lead with experience building financial models for budgeting and forecasting,
+  variance analysis against actuals, and management reporting for leadership.
+  Emphasise data-driven planning workflows, dashboard automation, and the ability
+  to synthesise large datasets into actionable P&L and budget insights.
+  Use "FP&A", "financial planning", "budgeting", "forecasting", "variance analysis",
+  and "management reporting" language throughout. Highlight stakeholder-facing
+  deliverables: executive dashboards, monthly MIS reports, budget decks.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - databases
+  - other
+
+experience_tags:
+  - fpa
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - data_analyst
+  - bi
+
+project_tags:
+  - fpa
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - data_analyst
+  - bi
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

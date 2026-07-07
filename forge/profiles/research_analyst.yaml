@@ -1,0 +1,49 @@
+id: research_analyst
+display_name: "Research Analyst"
+
+match_tags:
+  - research_analyst
+  - equity_research
+  - investment_research
+  - industry_research
+  - sector_analysis
+  - company_analysis
+  - fundamental_analysis
+  - market_research
+
+summary_focus: >
+  Frame as a Research Analyst with AI-powered research capabilities.
+  Lead with experience conducting fundamental equity research — financial statement
+  analysis, industry deep-dives, and company valuation — using AI tools to
+  accelerate insight generation from 10-K/10-Q filings and earnings calls.
+  Emphasise ability to produce investment-grade research reports, sector briefs,
+  and data-backed buy/sell recommendations. Use "Research Analyst",
+  "equity research", "fundamental analysis", "industry research", and
+  "investment thesis" language throughout.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - llm_rag
+  - databases
+  - other
+
+experience_tags:
+  - research_analyst
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - data_analyst
+  - bi
+
+project_tags:
+  - research_analyst
+  - financial_analyst
+  - finance
+  - data_analyst
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

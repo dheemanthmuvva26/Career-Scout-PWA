@@ -1,0 +1,49 @@
+id: investment_banking
+display_name: "Investment Banking Analyst"
+
+match_tags:
+  - investment_banking
+  - ib_analyst
+  - mergers_acquisitions
+  - ma
+  - deal_structuring
+  - pitchbook
+  - dcf
+  - lbo
+  - capital_markets
+
+summary_focus: >
+  Frame as an Investment Banking Analyst with strong financial modelling and
+  deal-support capabilities. Lead with experience building DCF and comparable
+  company analysis models, synthesising company and sector research into
+  pitchbook-ready decks, and supporting M&A due diligence workflows using
+  AI tools to accelerate document review and data extraction. Emphasise
+  precision, accuracy, and the ability to translate complex financial data into
+  clear investment narratives. Use "Investment Banking", "M&A", "DCF",
+  "financial modelling", and "deal execution" language throughout.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - databases
+  - other
+
+experience_tags:
+  - investment_banking
+  - financial_analyst
+  - financial_reporting
+  - finance
+  - valuation
+  - data_analyst
+
+project_tags:
+  - investment_banking
+  - financial_analyst
+  - finance
+  - valuation
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

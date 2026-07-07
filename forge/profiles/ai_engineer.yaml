@@ -1,0 +1,48 @@
+id: ai_engineer
+display_name: "AI Engineer"
+
+match_tags:
+  - ai_engineer
+  - artificial_intelligence
+  - ai_system
+  - ai_integration
+  - intelligent_systems
+  - ai_solution
+  - ai_platform
+
+summary_focus: >
+  Frame as an AI Engineer who designs and builds end-to-end intelligent systems.
+  Lead with experience integrating LLMs, ML models, and AI APIs into production
+  applications — covering model selection, prompt engineering, API design,
+  and deployment on cloud infrastructure. Emphasise the full stack: data
+  ingestion, model serving, monitoring, and iteration. Use "AI Engineer",
+  "intelligent systems", "AI integration", "production AI", "LLM APIs",
+  and "end-to-end AI solutions" language throughout. Highlight measurable
+  outcomes: accuracy improvements, latency targets hit, and user-facing
+  AI features shipped.
+
+skills_order:
+  - llm_rag
+  - languages
+  - ml_frameworks
+  - databases
+  - data_tools
+  - other
+
+experience_tags:
+  - ai_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+  - data_scientist
+
+project_tags:
+  - ai_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

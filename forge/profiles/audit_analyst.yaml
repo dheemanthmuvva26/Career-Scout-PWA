@@ -1,0 +1,47 @@
+id: audit_analyst
+display_name: "Audit Analyst"
+
+match_tags:
+  - audit_analyst
+  - internal_audit
+  - internal_auditor
+  - sox
+  - controls_testing
+  - audit_report
+  - process_audit
+  - risk_controls
+
+summary_focus: >
+  Frame as an Audit Analyst with data analytics-enhanced audit capabilities.
+  Lead with experience executing internal audit procedures, controls testing,
+  and risk assessments using SQL and Python to automate sampling and exception
+  identification. Emphasise ability to document audit findings in clear,
+  actionable reports and recommend process improvements. Use "Internal Audit",
+  "controls testing", "risk assessment", "audit report", and "process improvement"
+  language throughout. Highlight analytical rigour, attention to detail,
+  and experience synthesising large transaction datasets for audit evidence.
+
+skills_order:
+  - data_tools
+  - languages
+  - bi_tools
+  - databases
+  - other
+
+experience_tags:
+  - audit_analyst
+  - compliance_analyst
+  - risk_analyst
+  - finance
+  - data_analyst
+
+project_tags:
+  - audit_analyst
+  - compliance_analyst
+  - risk_analyst
+  - finance
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

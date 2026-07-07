@@ -1,0 +1,47 @@
+id: treasury_analyst
+display_name: "Treasury Analyst"
+
+match_tags:
+  - treasury_analyst
+  - treasury
+  - cash_management
+  - liquidity
+  - forex
+  - fx_management
+  - working_capital
+  - cash_flow
+
+summary_focus: >
+  Frame as a Treasury Analyst with data-driven cash management capabilities.
+  Lead with experience monitoring and forecasting cash flows, managing working
+  capital positions, and building liquidity dashboards that support daily
+  treasury operations. Emphasise Excel/Python-based cash modelling, FX exposure
+  tracking, and bank reconciliation automation. Use "Treasury Analyst",
+  "cash management", "liquidity", "working capital", "cash flow forecasting",
+  and "forex" language throughout. Highlight accuracy, automation of
+  reconciliation workflows, and operational efficiency improvements.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - databases
+  - other
+
+experience_tags:
+  - treasury_analyst
+  - financial_analyst
+  - risk_analyst
+  - finance
+  - data_analyst
+
+project_tags:
+  - treasury_analyst
+  - financial_analyst
+  - finance
+  - risk_analyst
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

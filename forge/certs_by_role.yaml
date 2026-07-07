@@ -284,3 +284,265 @@ quant_analyst:
     issuer: "Rice University / Coursera"
     date: "In Progress"
     tags: ["quant_analyst", "statistical_analysis", "finance", "quantitative_analysis", "data_analysis"]
+
+# ── New AI / Tech profiles ────────────────────────────────────────────────────
+
+ai_engineer:
+  - name: "IBM AI Engineering Professional Certificate"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "ml", "deep_learning", "python", "ai_integration"]
+  - name: "Generative AI for Everyone"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "genai", "llm", "ai_solution", "applied_ai"]
+  - name: "AI For Everyone"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "artificial_intelligence", "ai_strategy", "ai_platform"]
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "ml", "python", "model_training", "intelligent_systems"]
+  - name: "Generative AI with Large Language Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_engineer", "genai", "llm", "ai_integration", "fine_tuning"]
+
+applied_ai_engineer:
+  - name: "Generative AI with Large Language Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["applied_ai_engineer", "genai", "llm", "applied_ml", "fine_tuning"]
+  - name: "Building AI Applications with Hugging Face"
+    issuer: "Hugging Face / edX"
+    date: "In Progress"
+    tags: ["applied_ai_engineer", "llm", "applied_ml", "fine_tuning", "transformers"]
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["applied_ai_engineer", "ml", "applied_machine_learning", "python", "model_training"]
+  - name: "AI Product Development"
+    issuer: "Vanderbilt University / Coursera"
+    date: "In Progress"
+    tags: ["applied_ai_engineer", "ai_product", "genai", "applied_ai", "product"]
+  - name: "LangChain: Chat with Your Data"
+    issuer: "DeepLearning.AI"
+    date: "In Progress"
+    tags: ["applied_ai_engineer", "rag", "llm", "langchain", "ai_solutions"]
+
+ai_researcher:
+  - name: "Deep Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_researcher", "deep_learning", "neural_networks", "ml_research", "model_research"]
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_researcher", "ml", "ml_research", "applied_research", "model_evaluation"]
+  - name: "Generative AI with Large Language Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_researcher", "genai", "llm", "research_engineer", "fine_tuning"]
+  - name: "Probabilistic Deep Learning with TensorFlow"
+    issuer: "Imperial College London / Coursera"
+    date: "In Progress"
+    tags: ["ai_researcher", "deep_learning", "probabilistic_ml", "ml_research", "tensorflow"]
+  - name: "Natural Language Processing Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_researcher", "nlp", "ml_research", "model_research", "transformers"]
+
+mlops_engineer:
+  - name: "Machine Learning Engineering for Production (MLOps)"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["mlops_engineer", "mlops", "ml_pipeline", "model_deployment", "production_ml"]
+  - name: "MLOps Fundamentals"
+    issuer: "Google Cloud / Coursera"
+    date: "In Progress"
+    tags: ["mlops_engineer", "mlops", "ml_platform", "model_monitoring", "cicd_ml"]
+  - name: "Machine Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["mlops_engineer", "ml", "model_training", "ml_pipeline", "python"]
+  - name: "IBM DevOps and Software Engineering"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["mlops_engineer", "cicd_ml", "model_registry", "devops", "pipeline"]
+  - name: "Feature Engineering"
+    issuer: "Kaggle"
+    date: "In Progress"
+    tags: ["mlops_engineer", "feature_store", "ml", "feature_engineering", "data_pipeline"]
+
+data_engineer:
+  - name: "IBM Data Engineering Professional Certificate"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["data_engineer", "etl", "data_pipeline", "sql", "spark", "data_warehouse"]
+  - name: "Data Engineering Foundations Specialization"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["data_engineer", "data_engineering", "etl", "bigquery", "data_warehouse"]
+  - name: "dbt Fundamentals"
+    issuer: "dbt Labs"
+    date: "In Progress"
+    tags: ["data_engineer", "dbt", "data_pipeline", "data_warehouse", "sql"]
+  - name: "Spark, Hadoop, and Snowflake for Data Engineering"
+    issuer: "Duke University / Coursera"
+    date: "In Progress"
+    tags: ["data_engineer", "spark", "data_pipeline", "data_warehouse", "etl"]
+  - name: "Python for Data Science, AI & Development"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["data_engineer", "python", "etl", "data_pipeline", "automation"]
+
+# ── New Finance profiles ──────────────────────────────────────────────────────
+
+fpa_analyst:
+  - name: "Financial Planning & Analysis (FP&A)"
+    issuer: "Corporate Finance Institute / CFI"
+    date: "In Progress"
+    tags: ["fpa_analyst", "fpa", "financial_planning", "budgeting", "forecasting"]
+  - name: "Excel Skills for Business Specialization"
+    issuer: "Macquarie University / Coursera"
+    date: "In Progress"
+    tags: ["fpa_analyst", "excel", "financial_modeling", "budgeting", "reporting"]
+  - name: "Financial Analysis and Decision Making"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["fpa_analyst", "financial_analysis", "variance_analysis", "budgeting", "finance"]
+  - name: "Business Analytics Specialization"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["fpa_analyst", "business_analytics", "data_analysis", "reporting", "decision_making"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["fpa_analyst", "financial_modeling", "quantitative_analysis", "forecasting", "statistics"]
+  - name: "Introduction to Financial Accounting"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["fpa_analyst", "accounting", "financial_reporting", "management_reporting", "finance"]
+
+research_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "finance", "investment", "financial_markets", "equity_research"]
+  - name: "Investment Management Specialization"
+    issuer: "University of Geneva / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "investment", "portfolio_management", "equity_research", "valuation"]
+  - name: "Introduction to Corporate Finance"
+    issuer: "Columbia University / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "corporate_finance", "valuation", "investment_research", "finance"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "financial_modeling", "quantitative_analysis", "sector_analysis", "statistics"]
+  - name: "Python and Statistics for Financial Analysis"
+    issuer: "HKUST / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "python", "statistical_analysis", "financial_modeling", "fundamental_analysis"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["research_analyst", "statistical_analysis", "data_analysis", "industry_research", "reporting"]
+
+investment_banking:
+  - name: "Introduction to Corporate Finance"
+    issuer: "Columbia University / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "corporate_finance", "valuation", "dcf", "capital_markets"]
+  - name: "Fundamentals of Quantitative Modeling"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "financial_modeling", "quantitative_analysis", "dcf", "valuation"]
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "finance", "capital_markets", "investment", "deal_structuring"]
+  - name: "Mergers and Acquisitions"
+    issuer: "University of Florida / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "mergers_acquisitions", "ma", "deal_structuring", "lbo"]
+  - name: "Investment Management Specialization"
+    issuer: "University of Geneva / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "investment", "portfolio_management", "capital_markets", "valuation"]
+  - name: "Python and Statistics for Financial Analysis"
+    issuer: "HKUST / Coursera"
+    date: "In Progress"
+    tags: ["investment_banking", "python", "financial_modeling", "statistical_analysis", "dcf"]
+
+treasury_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["treasury_analyst", "finance", "financial_markets", "cash_management", "banking"]
+  - name: "Introduction to Finance and Accounting"
+    issuer: "University of Pennsylvania / Coursera"
+    date: "In Progress"
+    tags: ["treasury_analyst", "finance", "accounting", "cash_flow", "working_capital"]
+  - name: "Excel Skills for Business Specialization"
+    issuer: "Macquarie University / Coursera"
+    date: "In Progress"
+    tags: ["treasury_analyst", "excel", "cash_management", "reporting", "financial_modeling"]
+  - name: "Python and Statistics for Financial Analysis"
+    issuer: "HKUST / Coursera"
+    date: "In Progress"
+    tags: ["treasury_analyst", "python", "financial_modeling", "liquidity", "cash_flow"]
+  - name: "Business Statistics and Analysis Specialization"
+    issuer: "Rice University / Coursera"
+    date: "In Progress"
+    tags: ["treasury_analyst", "statistical_analysis", "data_analysis", "forecasting", "finance"]
+
+audit_analyst:
+  - name: "Financial Markets"
+    issuer: "Yale University / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "finance", "financial_markets", "banking", "risk_controls"]
+  - name: "Introduction to Finance and Accounting"
+    issuer: "University of Pennsylvania / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "finance", "accounting", "financial_reporting", "audit"]
+  - name: "Forensic Accounting and Fraud Examination"
+    issuer: "West Virginia University / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "fraud", "financial_crime", "audit_report", "internal_audit"]
+  - name: "Business Ethics"
+    issuer: "Santa Clara University / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "ethics", "governance", "regulatory", "process_audit"]
+  - name: "SQL for Data Science"
+    issuer: "UC Davis / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "sql", "data_analysis", "controls_testing", "audit_report"]
+  - name: "Cybersecurity for Business"
+    issuer: "University of Colorado / Coursera"
+    date: "In Progress"
+    tags: ["audit_analyst", "risk_management", "governance", "sox", "risk_controls"]
+
+tax_analyst:
+  - name: "Introduction to Finance and Accounting"
+    issuer: "University of Pennsylvania / Coursera"
+    date: "In Progress"
+    tags: ["tax_analyst", "finance", "accounting", "financial_reporting", "tax_compliance"]
+  - name: "U.S. Federal Taxation"
+    issuer: "University of Illinois / Coursera"
+    date: "In Progress"
+    tags: ["tax_analyst", "income_tax", "tax_compliance", "direct_tax", "tax_filing"]
+  - name: "Excel Skills for Business Specialization"
+    issuer: "Macquarie University / Coursera"
+    date: "In Progress"
+    tags: ["tax_analyst", "excel", "tax_compliance", "reporting", "data_analysis"]
+  - name: "Business Law and Ethics"
+    issuer: "University of Illinois / Coursera"
+    date: "In Progress"
+    tags: ["tax_analyst", "regulatory", "compliance", "tax_planning", "governance"]
+  - name: "Financial Analysis and Decision Making"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["tax_analyst", "financial_analysis", "tax_planning", "indirect_tax", "finance"]

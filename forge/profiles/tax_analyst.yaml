@@ -1,0 +1,47 @@
+id: tax_analyst
+display_name: "Tax Analyst"
+
+match_tags:
+  - tax_analyst
+  - tax_compliance
+  - gst
+  - income_tax
+  - tax_planning
+  - direct_tax
+  - indirect_tax
+  - tax_filing
+
+summary_focus: >
+  Frame as a Tax Analyst with data automation capabilities for tax compliance
+  workflows. Lead with experience in GST/income tax compliance, preparation of
+  tax workings using Excel and Python, and reconciliation of tax records with
+  financial statements. Emphasise accuracy, deadline management, and the ability
+  to automate repetitive tax data gathering using scripts and dashboards.
+  Use "Tax Analyst", "GST compliance", "direct/indirect tax", "tax planning",
+  and "tax filing" language throughout. Highlight experience with large
+  financial datasets and structured reporting for regulatory submissions.
+
+skills_order:
+  - data_tools
+  - languages
+  - bi_tools
+  - databases
+  - other
+
+experience_tags:
+  - tax_analyst
+  - compliance_analyst
+  - financial_analyst
+  - finance
+  - data_analyst
+
+project_tags:
+  - tax_analyst
+  - compliance_analyst
+  - financial_analyst
+  - finance
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

@@ -1,0 +1,50 @@
+id: mlops_engineer
+display_name: "MLOps Engineer"
+
+match_tags:
+  - mlops_engineer
+  - mlops
+  - ml_platform
+  - model_deployment
+  - model_monitoring
+  - ml_pipeline
+  - feature_store
+  - model_registry
+  - cicd_ml
+
+summary_focus: >
+  Frame as an MLOps Engineer who bridges ML research and production systems.
+  Lead with experience building ML pipelines — from data ingestion and feature
+  engineering through model training, evaluation, and deployment — using tools
+  like MLflow, DVC, and Docker. Highlight CI/CD automation for model releases,
+  monitoring for drift/degradation, and infrastructure-as-code for reproducible
+  experiments. Use "MLOps", "model deployment", "ML pipeline", "model monitoring",
+  "CI/CD", and "production ML" language throughout. Emphasise reliability,
+  experiment tracking, and the engineering rigour that turns notebooks into
+  production services.
+
+skills_order:
+  - ml_frameworks
+  - languages
+  - databases
+  - data_tools
+  - llm_rag
+  - other
+
+experience_tags:
+  - mlops_engineer
+  - ml_engineer
+  - data_engineer
+  - ai_developer
+  - data_scientist
+
+project_tags:
+  - mlops_engineer
+  - ml_engineer
+  - data_engineer
+  - ai_developer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

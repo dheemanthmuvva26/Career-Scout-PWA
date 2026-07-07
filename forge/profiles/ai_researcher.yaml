@@ -1,0 +1,50 @@
+id: ai_researcher
+display_name: "AI Research Engineer"
+
+match_tags:
+  - ai_researcher
+  - ai_research
+  - research_engineer
+  - ml_research
+  - research_scientist
+  - ai_lab
+  - applied_research
+  - model_research
+
+summary_focus: >
+  Frame as an AI Research Engineer with hands-on experimentation and
+  publication-adjacent experience. Lead with experience designing and running
+  ML experiments — ablation studies, benchmark evaluations, novel architecture
+  comparisons — and communicating findings clearly in technical write-ups and
+  presentations. Highlight familiarity with recent literature (transformers,
+  diffusion models, RLHF), the ability to reproduce and extend published results,
+  and any project work that mirrors research methodology. Use "AI Research",
+  "ML experimentation", "model evaluation", "benchmark", "research methodology",
+  and "applied research" language throughout. Emphasise curiosity, rigour,
+  and the ability to turn open questions into structured experiments.
+
+skills_order:
+  - ml_frameworks
+  - llm_rag
+  - languages
+  - data_tools
+  - databases
+  - other
+
+experience_tags:
+  - ai_researcher
+  - ml_engineer
+  - genai_engineer
+  - data_scientist
+  - ai_developer
+
+project_tags:
+  - ai_researcher
+  - ml_engineer
+  - genai_engineer
+  - data_scientist
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

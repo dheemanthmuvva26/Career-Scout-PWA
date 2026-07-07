@@ -1,0 +1,48 @@
+id: data_engineer
+display_name: "Data Engineer"
+
+match_tags:
+  - data_engineer
+  - data_engineering
+  - etl
+  - data_pipeline
+  - spark
+  - airflow
+  - kafka
+  - dbt
+  - data_warehouse
+  - bigquery
+
+summary_focus: >
+  Frame as a Data Engineer with strong pipeline and data infrastructure skills.
+  Lead with experience designing and maintaining ETL/ELT pipelines, building
+  data models for analytical workloads, and orchestrating workflows with tools
+  like Airflow and dbt. Emphasise Python, SQL, and cloud data stack proficiency.
+  Use "Data Engineer", "data pipeline", "ETL", "data warehouse", "orchestration",
+  and "data modelling" language throughout. Highlight scalability of pipelines
+  built, reduction in data latency, and impact on downstream analytics teams.
+
+skills_order:
+  - languages
+  - databases
+  - data_tools
+  - llm_rag
+  - other
+
+experience_tags:
+  - data_engineer
+  - data_scientist
+  - ml_engineer
+  - data_analyst
+  - bi
+
+project_tags:
+  - data_engineer
+  - data_scientist
+  - data_analyst
+  - bi
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

@@ -1,0 +1,49 @@
+id: applied_ai_engineer
+display_name: "Applied AI Engineer"
+
+match_tags:
+  - applied_ai_engineer
+  - applied_ai
+  - applied_ml
+  - ai_solutions
+  - ai_product
+  - applied_machine_learning
+  - real_world_ai
+  - industry_ai
+
+summary_focus: >
+  Frame as an Applied AI Engineer who translates research into working
+  products. Lead with experience adapting state-of-the-art models for
+  domain-specific problems — fine-tuning LLMs, building RAG pipelines,
+  designing evaluation frameworks, and deploying AI features used by
+  real users. Emphasise the ability to pick the right model for the
+  right problem, optimise cost/latency trade-offs, and collaborate with
+  product teams to ship AI-powered features. Use "Applied AI Engineer",
+  "applied machine learning", "AI solutions", "model fine-tuning",
+  "evaluation frameworks", and "production deployment" language throughout.
+
+skills_order:
+  - llm_rag
+  - ml_frameworks
+  - languages
+  - databases
+  - data_tools
+  - other
+
+experience_tags:
+  - applied_ai_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+  - ai_engineer
+
+project_tags:
+  - applied_ai_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3
