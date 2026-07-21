@@ -494,9 +494,11 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
         {confirmBanner}
 
         {/* Date footer */}
-        {job.posted_date && (
+        {(job.posted_date || job.created_at) && (
           <p className="text-[10px] mt-2 text-right" style={{ color: "var(--text-3)" }}>
-            Posted {job.posted_date.slice(0, 10)}
+            {job.posted_date && `Posted ${job.posted_date.slice(0, 10)}`}
+            {job.posted_date && job.created_at && "  ·  "}
+            {job.created_at && `Imported ${job.created_at.slice(0, 10)}`}
           </p>
         )}
       </div>

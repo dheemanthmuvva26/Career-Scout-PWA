@@ -70,6 +70,7 @@
 html {
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
+  height: 100%;
 }
 
 /* ── Body — layered depth system ── */
@@ -83,6 +84,8 @@ body {
   font-size: 15px;
   line-height: 1.5;
   overscroll-behavior: none;
+  height: 100%;
+  overflow: hidden;
 
   /* Subtle dot grid */
   background-image: radial-gradient(rgba(0,229,255,0.06) 1px, transparent 1px);
