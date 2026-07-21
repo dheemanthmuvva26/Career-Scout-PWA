@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
 import PullToRefresh from "@/components/PullToRefresh";
+import SearchBar from "@/components/SearchBar";
 
 const TABS = [
   { label: "New",       status: "new",       color: "#f59e0b" },
@@ -15,6 +16,7 @@ const TABS = [
 export default function JobsPage() {
   const [tab, setTab]           = useState("new");
   const [jobs, setJobs]         = useState<Job[]>([]);
+  const [search, setSearch]     = useState("");
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState("");
   // Default: paste (best for mobile copy-paste); persisted across sessions
@@ -58,6 +60,14 @@ export default function JobsPage() {
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);
+
+  const filteredJobs = jobs.filter((j) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return j.title?.toLowerCase().includes(q)
+      || j.company?.toLowerCase().includes(q)
+      || j.location?.toLowerCase().includes(q);
+  });
 
   function handleUpdate(id: string, changes: Partial<Job>) {
     if (changes.status && changes.status !== tab) {
@@ -299,6 +309,9 @@ export default function JobsPage() {
         })}
       </div>
 
+      {/* Search */}
+      <SearchBar value={search} onChange={setSearch} placeholder="Search title, company, location…" className="mb-4" />
+
       {error && (
         <div className="rounded-xl px-4 py-3 text-sm mb-4"
           style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
@@ -321,16 +334,18 @@ export default function JobsPage() {
             </div>
           ))}
         </div>
-      ) : jobs.length === 0 ? (
+      ) : filteredJobs.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-4xl mb-3">🎯</div>
-          <p className="font-medium mb-1" style={{ color: "var(--text-2)" }}>No {tab} jobs</p>
-          {tab === "new" && (
+          <p className="font-medium mb-1" style={{ color: "var(--text-2)" }}>
+            {search.trim() ? "No jobs match your search" : `No ${tab} jobs`}
+          </p>
+          {tab === "new" && !search.trim() && (
             <p className="text-sm" style={{ color: "var(--text-3)" }}>Run Scout from the dashboard to find new listings</p>
           )}
         </div>
       ) : (
-        jobs.map((job) => <JobCard key={job.id} job={job} onUpdate={handleUpdate} />)
+        filteredJobs.map((job) => <JobCard key={job.id} job={job} onUpdate={handleUpdate} />)
       )}
     </div>
     </PullToRefresh>

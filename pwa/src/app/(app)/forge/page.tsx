@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { api, type Job } from "@/lib/api";
 import { PROFILES, PROFILE_DISPLAY, detectProfile, matchByDescription } from "@/lib/profiles";
 import { useViewMode } from "@/lib/viewMode";
+import SearchBar from "@/components/SearchBar";
 
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };
 type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
@@ -36,6 +37,7 @@ function ForgePageInner() {
   const [profile, setProfile]     = useState("");
   const [loading, setLoading]     = useState(true);
   const [modal, setModal]         = useState<ModalState>(CLOSED_MODAL);
+  const [search, setSearch]       = useState("");
 
   const [auditing, setAuditing]         = useState(false);
   const [auditResult, setAuditResult]   = useState<AuditResult | null>(null);
@@ -157,6 +159,14 @@ function ForgePageInner() {
   }
 
   const scoreColor = (s: number) => s >= 75 ? "var(--green)" : s >= 55 ? "var(--amber)" : "var(--red)";
+
+  const filteredJobs = jobs.filter((j) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return j.title?.toLowerCase().includes(q)
+      || j.company?.toLowerCase().includes(q)
+      || j.location?.toLowerCase().includes(q);
+  });
 
   // ── Profile confirmation bottom sheet ──────────────────────────────────────
   const confirmModal = modal.open && (
@@ -292,16 +302,23 @@ function ForgePageInner() {
           </p>
 
           {sectionLabel("1 · Select a job")}
+          {!loading && jobs.length > 0 && (
+            <SearchBar value={search} onChange={setSearch} placeholder="Search title, company, location…" className="mb-3" />
+          )}
           {loading ? (
             <div className="space-y-2 mb-4">{[1,2,3].map(i => <div key={i} className="skeleton h-14 rounded-xl"/>)}</div>
           ) : jobs.length === 0 ? (
             <div className="card p-5 text-center mb-4">
               <p className="text-sm" style={{ color: "var(--text-3)" }}>No jobs found. Scout or import first.</p>
             </div>
+          ) : filteredJobs.length === 0 ? (
+            <div className="card p-5 text-center mb-4">
+              <p className="text-sm" style={{ color: "var(--text-3)" }}>No jobs match your search.</p>
+            </div>
           ) : (
             // Mobile: capped height; Desktop: tall scrollable list
             <div className={`space-y-2 overflow-y-auto no-scrollbar mb-4 ${isDesktop ? "max-h-[55vh]" : "max-h-52"}`}>
-              {jobs.map(job => {
+              {filteredJobs.map(job => {
                 const active = selected?.id === job.id;
                 return (
                   <button key={job.id} onClick={() => selectJob(job)}

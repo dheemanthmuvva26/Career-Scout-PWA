@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
+import SearchBar from "@/components/SearchBar";
 
 const COLUMNS = [
   { label: "Applied",   status: "applied",   color: "#60a5fa" },
@@ -17,6 +18,7 @@ export default function TrackerPage() {
   const [jobs, setJobs]   = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [counts, setCounts]   = useState<Record<string, number>>({});
+  const [search, setSearch]   = useState("");
 
   const loadAll = useCallback(async () => {
     try {
@@ -50,6 +52,14 @@ export default function TrackerPage() {
   }
 
   const active = COLUMNS.find((c) => c.status === col);
+
+  const filteredJobs = jobs.filter((j) => {
+    if (!search.trim()) return true;
+    const q = search.trim().toLowerCase();
+    return j.title?.toLowerCase().includes(q)
+      || j.company?.toLowerCase().includes(q)
+      || j.location?.toLowerCase().includes(q);
+  });
 
   return (
     <div className="pt-8 pb-4 fade-up">
@@ -91,6 +101,8 @@ export default function TrackerPage() {
         </div>
       )}
 
+      <SearchBar value={search} onChange={setSearch} placeholder="Search title, company, location…" className="mb-4" />
+
       {loading ? (
         <div className="space-y-3">
           {[1, 2].map((i) => (
@@ -106,16 +118,20 @@ export default function TrackerPage() {
             </div>
           ))}
         </div>
-      ) : jobs.length === 0 ? (
+      ) : filteredJobs.length === 0 ? (
         <div className="text-center py-20">
           <div className="text-4xl mb-3">📭</div>
-          <p className="font-medium" style={{ color: "var(--text-2)" }}>No {col} applications</p>
-          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
-            {col === "applied" ? "Apply to jobs from the Jobs tab" : `No applications moved to ${col} yet`}
+          <p className="font-medium" style={{ color: "var(--text-2)" }}>
+            {search.trim() ? "No applications match your search" : `No ${col} applications`}
           </p>
+          {!search.trim() && (
+            <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
+              {col === "applied" ? "Apply to jobs from the Jobs tab" : `No applications moved to ${col} yet`}
+            </p>
+          )}
         </div>
       ) : (
-        jobs.map((job) => <JobCard key={job.id} job={job} onUpdate={handleUpdate} compact />)
+        filteredJobs.map((job) => <JobCard key={job.id} job={job} onUpdate={handleUpdate} compact />)
       )}
     </div>
   );
