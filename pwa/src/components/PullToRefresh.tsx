@@ -21,7 +21,9 @@ export default function PullToRefresh({
   const [refreshing, setRefreshing] = useState(false);
   const [triggered, setTriggered]   = useState(false);
   const startY   = useRef(0);
+  const startX   = useRef(0);
   const pulling  = useRef(false);
+  const decided  = useRef(false); // has the gesture been classified as vertical-pull yet?
 
   const progress = Math.min(pullY / threshold, 1);
   const visible  = pullY > 8;
@@ -36,7 +38,9 @@ export default function PullToRefresh({
     const el = getScrollEl();
     if (!el || el.scrollTop > 0) return;     // only trigger at top
     startY.current = e.touches[0].clientY;
+    startX.current = e.touches[0].clientX;
     pulling.current = true;
+    decided.current = false;
   }, [refreshing, getScrollEl]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
@@ -44,6 +48,21 @@ export default function PullToRefresh({
     const el = getScrollEl();
     if (el && el.scrollTop > 0) { pulling.current = false; setPullY(0); return; }
     const dy = e.touches[0].clientY - startY.current;
+    const dx = e.touches[0].clientX - startX.current;
+
+    if (!decided.current) {
+      // Dead zone: wait for a clear, mostly-vertical downward drag before
+      // committing to the pull gesture — avoids hijacking small taps,
+      // horizontal card swipes, or momentum-scroll stop taps.
+      if (Math.abs(dy) < 12 && Math.abs(dx) < 12) return;
+      if (dy <= 0 || Math.abs(dx) > Math.abs(dy)) {
+        pulling.current = false;
+        setPullY(0);
+        return;
+      }
+      decided.current = true;
+    }
+
     if (dy <= 0) { setPullY(0); return; }
     e.preventDefault();
     // Rubber-band dampening
@@ -62,6 +81,7 @@ export default function PullToRefresh({
   const handleTouchEnd = useCallback(async () => {
     if (!pulling.current) return;
     pulling.current = false;
+    decided.current = false;
     if (pullY >= threshold) {
       setRefreshing(true);
       setPullY(threshold * 0.6);
