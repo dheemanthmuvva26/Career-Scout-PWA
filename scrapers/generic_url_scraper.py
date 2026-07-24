@@ -115,6 +115,21 @@ def fetch_job_from_url(url: str, location_override: str = "") -> dict:
                 "posted_date":  (ld.get("datePosted") or "")[:10] or None,
             }
 
+    # No JSON-LD JobPosting found. Many enterprise ATS platforms (Oracle
+    # Fusion/Taleo, some Workday deployments, custom React/Angular career
+    # sites) render the entire job description client-side — the static
+    # fetch gets just an empty shell plus a couple of thin <meta> tags.
+    # Falling through to Strategy 2/3 in that case would silently return a
+    # "successful" import with the wrong location and a one-line description
+    # instead of the real JD, so fail loudly instead: the app's Paste mode
+    # (LLM-based extraction from copied text) already handles exactly this.
+    visible_text = soup.get_text(separator=" ", strip=True)
+    if len(visible_text) < 500:
+        raise ValueError(
+            "This page needs JavaScript to load its content and can't be "
+            "scraped directly — copy the job description and use Paste mode instead."
+        )
+
     # ── Strategy 2: OpenGraph / meta tags ───────────────────────────────────
     def meta(prop: str) -> str:
         tag = soup.find("meta", attrs={"property": prop}) or soup.find("meta", attrs={"name": prop})
