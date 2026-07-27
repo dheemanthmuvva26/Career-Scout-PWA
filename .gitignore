@@ -1,5 +1,6 @@
 # Environment
 .env
+vercel-env-vars.txt
 
 # Shared data (never commit)
 shared/jobs.db

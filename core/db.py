@@ -259,6 +259,20 @@ def _init_pg() -> None:
             consecutive_failures INTEGER DEFAULT 0,
             last_error           TEXT
         )""",
+        """CREATE TABLE IF NOT EXISTS forage_sims (
+            id           TEXT PRIMARY KEY,
+            company_slug TEXT NOT NULL,
+            company      TEXT NOT NULL,
+            title        TEXT NOT NULL,
+            url          TEXT NOT NULL UNIQUE,
+            duration     TEXT,
+            difficulty   TEXT,
+            skills       TEXT,
+            careers      TEXT,
+            completed_at TEXT,
+            scraped_at   TEXT NOT NULL
+        )""",
+        "CREATE INDEX IF NOT EXISTS idx_forage_company ON forage_sims(company_slug)",
     ]
     with connect() as conn:
         for stmt in stmts:
@@ -305,6 +319,12 @@ def _init_sqlite() -> None:
         CREATE TABLE IF NOT EXISTS scraper_health (
             scraper TEXT PRIMARY KEY, last_success TEXT,
             consecutive_failures INTEGER DEFAULT 0, last_error TEXT)""")
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS forage_sims (
+            id TEXT PRIMARY KEY, company_slug TEXT NOT NULL, company TEXT NOT NULL,
+            title TEXT NOT NULL, url TEXT NOT NULL UNIQUE, duration TEXT, difficulty TEXT,
+            skills TEXT, careers TEXT, completed_at TEXT, scraped_at TEXT NOT NULL)""")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_forage_company ON forage_sims(company_slug)")
         for idx in [
             "CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status)",
             "CREATE INDEX IF NOT EXISTS idx_jobs_score   ON jobs(score)",
@@ -669,6 +689,136 @@ def get_jobs_for_auto_ghost() -> list[dict]:
               AND follow_up_due < datetime('now', '-7 days')
         """).fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Forage simulations ────────────────────────────────────────────────────────
+
+_COMPANY_SUFFIXES = re.compile(
+    r"\b(inc|incorporated|llc|ltd|limited|corp|corporation|co|company|"
+    r"group|plc|pvt|private|holdings)\b",
+    re.IGNORECASE,
+)
+
+def normalize_company(s: str) -> str:
+    """Pure-alnum lowercase form, with common corporate suffixes stripped, used
+    to match a job's company name against Forage's hyphenated company slugs
+    regardless of spacing/punctuation/legal-suffix differences."""
+    s = _COMPANY_SUFFIXES.sub(" ", s or "")
+    return re.sub(r"[^a-z0-9]", "", s.lower())
+
+
+def forage_sim_exists(url: str) -> bool:
+    with connect() as conn:
+        row = conn.execute("SELECT 1 FROM forage_sims WHERE url=?", (url,)).fetchone()
+    return row is not None
+
+
+def upsert_forage_sim(sim: dict) -> None:
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO forage_sims (
+                id, company_slug, company, title, url, duration, difficulty,
+                skills, careers, scraped_at
+            ) VALUES (
+                :id, :company_slug, :company, :title, :url, :duration, :difficulty,
+                :skills, :careers, :scraped_at
+            )
+            ON CONFLICT(url) DO UPDATE SET
+                company_slug = excluded.company_slug,
+                company      = excluded.company,
+                title        = excluded.title,
+                duration     = excluded.duration,
+                difficulty   = excluded.difficulty,
+                skills       = excluded.skills,
+                careers      = excluded.careers,
+                scraped_at   = excluded.scraped_at
+        """, {
+            "id": sim["id"],
+            "company_slug": sim["company_slug"],
+            "company": sim["company"],
+            "title": sim["title"],
+            "url": sim["url"],
+            "duration": sim.get("duration", ""),
+            "difficulty": sim.get("difficulty", ""),
+            "skills": json.dumps(sim.get("skills", [])),
+            "careers": json.dumps(sim.get("careers", [])),
+            "scraped_at": now_iso(),
+        })
+
+
+def get_forage_sims(company_slug: Optional[str] = None, completed_only: bool = False) -> list[dict]:
+    query = "SELECT * FROM forage_sims WHERE 1=1"
+    params: list = []
+    if company_slug:
+        query += " AND company_slug=?"
+        params.append(company_slug)
+    if completed_only:
+        query += " AND completed_at IS NOT NULL"
+    query += " ORDER BY company, title"
+    with connect() as conn:
+        rows = conn.execute(query, params).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_forage_sim(sim_id: str) -> Optional[dict]:
+    with connect() as conn:
+        row = conn.execute("SELECT * FROM forage_sims WHERE id=?", (sim_id,)).fetchone()
+    return dict(row) if row else None
+
+
+def set_forage_sim_completed(sim_id: str, completed: bool) -> bool:
+    with connect() as conn:
+        cur = conn.execute(
+            "UPDATE forage_sims SET completed_at=? WHERE id=?",
+            (now_iso() if completed else None, sim_id)
+        )
+    return cur.rowcount > 0
+
+
+def find_completed_forage_sim(company: str) -> Optional[dict]:
+    """Strict(ish) match — used to auto-include a cert on the resume. Matches
+    if the job's company equals the sim's company slug, or contains it whole
+    (e.g. "Goldman Sachs India" contains "Goldman Sachs") — but never the
+    other direction, since a short forage slug could coincidentally appear
+    inside an unrelated longer company name. Deliberately conservative: a
+    wrong company on a resume is worse than a missed match."""
+    target = normalize_company(company)
+    if not target:
+        return None
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM forage_sims WHERE completed_at IS NOT NULL"
+        ).fetchall()
+    for row in rows:
+        sim_norm = normalize_company(row["company_slug"].replace("-", " "))
+        if sim_norm and (sim_norm == target or sim_norm in target):
+            return dict(row)
+    return None
+
+
+def find_forage_matches_for_companies(companies: list[str]) -> dict[str, list[dict]]:
+    """Loose match (substring, min 4 chars) — used for recommendations, where
+    a human reviews the suggestion before acting, so false positives are
+    low-stakes. Returns {job_company: [sim, ...]} for incomplete sims only."""
+    with connect() as conn:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT * FROM forage_sims WHERE completed_at IS NULL"
+        ).fetchall()]
+    matches: dict[str, list[dict]] = {}
+    for company in set(companies):
+        norm = normalize_company(company)
+        if len(norm) < 4:
+            continue
+        found = []
+        for sim in rows:
+            sim_norm = normalize_company(sim["company_slug"].replace("-", " "))
+            if len(sim_norm) < 4:
+                continue
+            if norm == sim_norm or norm in sim_norm or sim_norm in norm:
+                found.append(sim)
+        if found:
+            matches[company] = found
+    return matches
 
 
 if __name__ == "__main__":

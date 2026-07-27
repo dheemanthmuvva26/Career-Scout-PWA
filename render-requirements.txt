@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+psycopg2-binary
+pyyaml
+python-dotenv
+requests
+groq
+supabase
+rapidfuzz
+beautifulsoup4
+pypdf

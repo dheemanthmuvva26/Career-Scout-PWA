@@ -58,6 +58,29 @@ def _load_role_certs(profile_id: str) -> list[dict]:
         return []
 
 
+def _apply_forage_cert(optimized: dict, master: dict, company: str) -> None:
+    """
+    If a completed Forage job simulation exists for this exact company, always
+    include it as a certification — it's a stronger, company-specific signal
+    than the generic role certs, so it's force-included rather than left to
+    the optimizer's discretion. Mutates optimized["selected_certifications"].
+    """
+    sim = db.find_completed_forage_sim(company)
+    if not sim:
+        return
+    cert = {
+        "name": f"{sim['title']} — {sim['company']} Job Simulation",
+        "issuer": "Forage",
+        "date": "Completed",
+    }
+    selected = optimized.get("selected_certifications")
+    if selected is None:
+        selected = list(master.get("certifications", []))
+    if not any(c.get("name") == cert["name"] for c in selected):
+        selected = [cert] + selected
+    optimized["selected_certifications"] = selected
+
+
 def _merge_certs(master_certs: list[dict], role_certs: list[dict]) -> list[dict]:
     """Prepend role-specific certs then master certs, deduplicating by name."""
     seen: set[str] = set()
@@ -399,6 +422,8 @@ def generate_resume(job_id: str, profile_override: str | None = None,
     optimized = optimize(job, master_for_opt, profile_config, ats_hints=ats_hints)
     if optimized.get("error"):
         return {"error": optimized["error"]}
+
+    _apply_forage_cert(optimized, master, job.get("company", ""))
 
     company_slug = _slugify(job.get("company", "company"))
     role_slug    = _slugify(job.get("title", "role"))

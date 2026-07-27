@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
+import json
 import os
 import threading
 import uuid as _uuid
@@ -27,6 +28,8 @@ from core.db import (
     get_active_companies, get_active_roles,
     upsert_company, upsert_role,
     get_jobs_for_auto_ghost,
+    get_forage_sims, set_forage_sim_completed,
+    find_forage_matches_for_companies, normalize_company,
 )
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
@@ -908,6 +911,13 @@ _PROFILE_TAG_MAP = {
     "data_engineer":       ["data_engineer", "data_engineering", "etl", "data_pipeline", "spark", "airflow", "kafka", "dbt", "data_warehouse", "bigquery"],
     "data_scientist":      ["data_scientist", "predictive_modeling", "statistical_analysis"],
     "bi_developer":        ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization", "business_intelligence"],
+    "nlp_engineer":        ["nlp_engineer", "nlp", "natural_language_processing", "text_classification", "sentiment_analysis", "named_entity_recognition", "ner", "text_mining", "conversational_ai", "speech_recognition"],
+    "computer_vision":     ["computer_vision", "cv_engineer", "image_classification", "object_detection", "image_segmentation", "yolo", "opencv", "image_processing", "video_analytics"],
+    "backend_developer":   ["backend_developer", "backend", "software_engineer", "rest_api", "microservices", "nodejs", "fastapi", "django", "spring_boot", "api_development"],
+    "ai_operations":       ["ai_operations", "ai_ops", "process_associate_ai", "data_annotation", "ai_quality_assurance", "ai_labeling", "ai_pipeline_ops", "content_moderation", "ai_reviewer"],
+    # ── Business ──
+    "business_analyst":    ["business_analyst", "business_analysis", "brd", "requirements_gathering", "process_mapping", "stakeholder_management", "use_case", "gap_analysis"],
+    "product_analyst":     ["product_analyst", "product_analytics", "ab_testing", "funnel_analysis", "user_behaviour", "product_metrics", "growth_analytics", "retention_analysis"],
     # ── Finance ──
     "investment_banking":  ["investment_banking", "ib_analyst", "mergers_acquisitions", "ma", "deal_structuring", "pitchbook", "dcf", "lbo", "capital_markets"],
     "fpa_analyst":         ["fpa", "fpa_analyst", "financial_planning", "budgeting", "forecasting", "variance_analysis", "management_reporting", "planning_analysis"],
@@ -994,6 +1004,91 @@ def batch_import(body: BatchImportRequest):
         results.append(entry)
 
     return {"results": results}
+
+
+# ── Forage job simulations ────────────────────────────────────────────────────
+
+_last_forage_sync: dict = {}
+
+def _run_forage_sync_task(limit: int):
+    global _last_forage_sync
+    try:
+        from scrapers.forage_scraper import sync_catalog
+        _last_forage_sync = sync_catalog(limit=limit)
+    except Exception as e:
+        _last_forage_sync = {"error": str(e)}
+
+@app.post("/forage/sync")
+def forage_sync(background_tasks: BackgroundTasks, limit: int = 30):
+    """
+    Fetch newly-added Forage simulations into the local catalog (up to `limit`
+    per call — simulations already in the DB are never re-fetched, so once
+    the catalog is backfilled, repeat calls are cheap and only pick up new
+    additions to Forage's public catalog).
+    Runs in the background; poll GET /forage/sync/status for the result.
+    """
+    background_tasks.add_task(_run_forage_sync_task, limit)
+    return {"ok": True, "message": "Forage sync started"}
+
+@app.get("/forage/sync/status")
+def forage_sync_status():
+    return _last_forage_sync or {"message": "No sync run yet"}
+
+
+def _decode_sim(sim: dict) -> dict:
+    sim["skills"] = json.loads(sim.get("skills") or "[]")
+    sim["careers"] = json.loads(sim.get("careers") or "[]")
+    return sim
+
+@app.get("/forage/sims")
+def forage_sims_list(company: Optional[str] = None, completed: Optional[bool] = None):
+    """List the Forage catalog, optionally filtered by company or completion."""
+    sims = get_forage_sims(completed_only=bool(completed)) if completed is not None else get_forage_sims()
+    if company:
+        target = normalize_company(company)
+        sims = [
+            s for s in sims
+            if target and (target in normalize_company(s["company"]) or normalize_company(s["company"]) in target)
+        ]
+    return [_decode_sim(s) for s in sims]
+
+
+class ForageCompleteRequest(BaseModel):
+    completed: bool = True
+
+@app.post("/forage/sims/{sim_id}/complete")
+def forage_mark_complete(sim_id: str, body: ForageCompleteRequest):
+    """Mark (or unmark) a simulation as completed — completed sims are what
+    forge.py matches against a job's company to auto-add a certification."""
+    if not set_forage_sim_completed(sim_id, body.completed):
+        raise HTTPException(status_code=404, detail="Simulation not found")
+    return {"ok": True}
+
+
+@app.get("/forage/recommendations")
+def forage_recommendations():
+    """
+    Cross-reference companies in your active job pipeline (new/applied/
+    interview/offer) against the Forage catalog for simulations you haven't
+    completed yet — grouped by simulation, with the matching jobs attached.
+    """
+    active_statuses = ["new", "applied", "interview", "offer"]
+    company_to_jobs: dict[str, list[dict]] = {}
+    for status in active_statuses:
+        for j in get_jobs(status=status, limit=200):
+            company_to_jobs.setdefault(j["company"], []).append(j)
+
+    matches = find_forage_matches_for_companies(list(company_to_jobs.keys()))
+
+    recs: dict[str, dict] = {}
+    for company, sims in matches.items():
+        for sim in sims:
+            entry = recs.setdefault(sim["id"], {**_decode_sim(dict(sim)), "matched_jobs": []})
+            entry["matched_jobs"].extend(
+                {"id": j["id"], "title": j["title"], "status": j["status"]}
+                for j in company_to_jobs[company]
+            )
+    return sorted(recs.values(), key=lambda r: -len(r["matched_jobs"]))
 
 
 # ── DB Backup ─────────────────────────────────────────────────────────────────
