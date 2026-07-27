@@ -1,0 +1,51 @@
+id: nlp_engineer
+display_name: "NLP Engineer"
+
+match_tags:
+  - nlp_engineer
+  - nlp
+  - natural_language_processing
+  - text_classification
+  - sentiment_analysis
+  - named_entity_recognition
+  - ner
+  - text_mining
+  - conversational_ai
+  - speech_recognition
+
+summary_focus: >
+  Frame as an NLP Engineer specialising in text intelligence and language model
+  applications. Lead with experience building NLP pipelines — text classification,
+  NER, sentiment analysis, and semantic search — using HuggingFace Transformers,
+  spaCy, and fine-tuned language models. Highlight production-grade pipelines,
+  evaluation metrics (F1, accuracy, BLEU), and integration with backend APIs.
+  Use "NLP Engineer", "natural language processing", "text classification",
+  "named entity recognition", "transformer models", and "language model
+  fine-tuning" language throughout. Emphasise measurable performance improvements
+  and real-world NLP problem-solving.
+
+skills_order:
+  - llm_rag
+  - ml_frameworks
+  - languages
+  - databases
+  - data_tools
+  - other
+
+experience_tags:
+  - nlp_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+  - data_scientist
+
+project_tags:
+  - nlp_engineer
+  - genai_engineer
+  - ai_developer
+  - ml_engineer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

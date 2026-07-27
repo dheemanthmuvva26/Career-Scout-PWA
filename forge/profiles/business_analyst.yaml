@@ -1,0 +1,48 @@
+id: business_analyst
+display_name: "Business Analyst"
+
+match_tags:
+  - business_analyst
+  - business_analysis
+  - brd
+  - requirements_gathering
+  - process_mapping
+  - stakeholder_management
+  - use_case
+  - gap_analysis
+
+summary_focus: >
+  Frame as a Business Analyst with AI-powered requirements and process analysis
+  capabilities. Lead with experience gathering and documenting business
+  requirements (BRD/FRD), mapping as-is/to-be processes, and translating
+  stakeholder needs into structured technical specifications. Emphasise data
+  analysis used to validate business decisions, build dashboards for KPI tracking,
+  and conduct gap analysis. Use "Business Analyst", "requirements gathering",
+  "BRD", "process mapping", "gap analysis", and "stakeholder management"
+  language throughout. Highlight cross-functional collaboration and
+  measurable business outcomes from your work.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - databases
+  - other
+
+experience_tags:
+  - business_analyst
+  - financial_analyst
+  - data_analyst
+  - bi
+  - compliance
+
+project_tags:
+  - business_analyst
+  - data_analyst
+  - financial_analyst
+  - bi
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

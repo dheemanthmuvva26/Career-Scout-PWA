@@ -102,6 +102,9 @@ function ForgePageInner() {
   async function forge(profileOverride: string) {
     if (!selected) return;
     setModal(CLOSED_MODAL);
+    // Persist the profile actually used so a later "Re-forge with ATS Fixes"
+    // reuses it instead of falling back to a fresh (possibly different) auto-detect.
+    setProfile(profileOverride);
     setForging(true);
     setForgeResult(null);
     setAtsResult(null);

@@ -1,0 +1,49 @@
+id: computer_vision
+display_name: "Computer Vision Engineer"
+
+match_tags:
+  - computer_vision
+  - cv_engineer
+  - image_classification
+  - object_detection
+  - image_segmentation
+  - yolo
+  - opencv
+  - image_processing
+  - video_analytics
+
+summary_focus: >
+  Frame as a Computer Vision Engineer with hands-on deep learning model experience.
+  Lead with experience building and training CNN and transformer-based vision models
+  (YOLO, ResNet, ViT) for object detection, image classification, and segmentation
+  using PyTorch and OpenCV. Highlight model optimisation for inference latency,
+  dataset preparation, and deployment pipelines. Use "Computer Vision Engineer",
+  "object detection", "image classification", "YOLO", "OpenCV", "PyTorch",
+  and "vision model" language throughout. Emphasise precision/recall metrics,
+  real-world dataset work, and end-to-end model deployment.
+
+skills_order:
+  - ml_frameworks
+  - languages
+  - llm_rag
+  - data_tools
+  - databases
+  - other
+
+experience_tags:
+  - computer_vision
+  - ml_engineer
+  - ai_developer
+  - data_scientist
+  - genai_engineer
+
+project_tags:
+  - computer_vision
+  - ml_engineer
+  - ai_developer
+  - data_scientist
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

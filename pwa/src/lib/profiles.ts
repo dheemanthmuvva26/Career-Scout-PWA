@@ -13,6 +13,13 @@ export const PROFILES = [
   { id: "data_engineer",         label: "Data Engineer" },
   { id: "data_scientist",        label: "Data Scientist" },
   { id: "bi_developer",          label: "Data Analyst" },
+  { id: "nlp_engineer",          label: "NLP Engineer" },
+  { id: "computer_vision",       label: "Computer Vision Engineer" },
+  { id: "backend_developer",     label: "Backend Developer" },
+  { id: "ai_operations",         label: "AI Operations Analyst" },
+  // ── Business ──
+  { id: "business_analyst",      label: "Business Analyst" },
+  { id: "product_analyst",       label: "Product Analyst" },
   // ── Finance ──
   { id: "investment_banking",    label: "IB Analyst" },
   { id: "fpa_analyst",           label: "FP&A Analyst" },
@@ -44,6 +51,13 @@ const PROFILE_TAG_MAP: Record<string, string[]> = {
   data_engineer:       ["data_engineer", "data_engineering", "etl", "data_pipeline", "spark", "airflow", "kafka", "dbt", "data_warehouse", "bigquery"],
   data_scientist:      ["data_scientist", "predictive_modeling", "statistical_analysis"],
   bi_developer:        ["bi_developer", "bi", "data_analyst", "reporting", "dashboard", "visualization", "business_intelligence"],
+  nlp_engineer:        ["nlp_engineer", "nlp", "natural_language_processing", "text_classification", "sentiment_analysis", "named_entity_recognition", "ner", "text_mining", "conversational_ai", "speech_recognition"],
+  computer_vision:     ["computer_vision", "cv_engineer", "image_classification", "object_detection", "image_segmentation", "yolo", "opencv", "image_processing", "video_analytics"],
+  backend_developer:   ["backend_developer", "backend", "software_engineer", "rest_api", "microservices", "nodejs", "fastapi", "django", "spring_boot", "api_development"],
+  ai_operations:       ["ai_operations", "ai_ops", "process_associate_ai", "data_annotation", "ai_quality_assurance", "ai_labeling", "ai_pipeline_ops", "content_moderation", "ai_reviewer"],
+  // ── Business ──
+  business_analyst:    ["business_analyst", "business_analysis", "brd", "requirements_gathering", "process_mapping", "stakeholder_management", "use_case", "gap_analysis"],
+  product_analyst:     ["product_analyst", "product_analytics", "ab_testing", "funnel_analysis", "user_behaviour", "product_metrics", "growth_analytics", "retention_analysis"],
   // ── Finance ──
   investment_banking:  ["investment_banking", "ib_analyst", "mergers_acquisitions", "ma", "deal_structuring", "pitchbook", "dcf", "lbo", "capital_markets"],
   fpa_analyst:         ["fpa", "fpa_analyst", "financial_planning", "budgeting", "forecasting", "variance_analysis", "management_reporting", "planning_analysis"],
@@ -70,6 +84,13 @@ const DESC_KEYWORDS: Record<string, string[]> = {
   data_engineer:       ["data engineer", "etl", "data pipeline", "spark", "airflow", "kafka", "dbt", "data warehouse", "bigquery", "orchestration"],
   data_scientist:      ["data scientist", "predictive", "statistical analysis", "eda", "experiment", "hypothesis"],
   bi_developer:        ["data analyst", "dashboard", "power bi", "tableau", "reporting", "business intelligence", "kpi", "sql analyst"],
+  nlp_engineer:        ["nlp", "natural language processing", "text classification", "sentiment analysis", "named entity recognition", "text mining", "conversational ai", "speech recognition"],
+  computer_vision:     ["computer vision", "image classification", "object detection", "image segmentation", "yolo", "opencv", "image processing", "video analytics"],
+  backend_developer:   ["backend developer", "backend engineer", "rest api", "microservices", "node.js", "fastapi", "django", "spring boot", "api development", "server-side"],
+  ai_operations:       ["ai operations", "data annotation", "data labeling", "content moderation", "quality assurance", "ai pipeline", "ai ops", "process associate"],
+  // ── Business ──
+  business_analyst:    ["business analyst", "business analysis", "brd", "requirements gathering", "process mapping", "stakeholder management", "gap analysis", "use case"],
+  product_analyst:     ["product analyst", "a/b testing", "funnel analysis", "user behaviour", "product metrics", "growth analytics", "retention", "product analytics"],
   // ── Finance ──
   investment_banking:  ["investment banking", "m&a", "mergers and acquisitions", "pitchbook", "dcf", "lbo", "deal", "capital markets", "ib analyst"],
   fpa_analyst:         ["fp&a", "financial planning", "budgeting", "forecasting", "variance analysis", "management reporting", "planning and analysis", "budget"],

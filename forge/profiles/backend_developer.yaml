@@ -1,0 +1,49 @@
+id: backend_developer
+display_name: "Backend Developer"
+
+match_tags:
+  - backend_developer
+  - backend
+  - software_engineer
+  - rest_api
+  - microservices
+  - nodejs
+  - fastapi
+  - django
+  - spring_boot
+  - api_development
+
+summary_focus: >
+  Frame as a Backend Developer with AI integration experience.
+  Lead with experience building production-grade REST APIs, microservices,
+  and server-side systems using Python/FastAPI and Node.js. Highlight
+  AI/LLM API integrations built on top of backend services, database design,
+  and performance optimisation. Use "Backend Developer", "REST API",
+  "microservices", "API development", and "server-side engineering" language
+  throughout. Emphasise system reliability, response time improvements,
+  and clean API contracts powering frontend and mobile clients.
+
+skills_order:
+  - languages
+  - databases
+  - llm_rag
+  - data_tools
+  - other
+
+experience_tags:
+  - backend_developer
+  - ai_developer
+  - genai_engineer
+  - ml_engineer
+  - data_engineer
+
+project_tags:
+  - backend_developer
+  - ai_developer
+  - genai_engineer
+  - ml_engineer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 3
+max_project_bullets: 3

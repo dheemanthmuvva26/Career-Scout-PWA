@@ -525,6 +525,138 @@ audit_analyst:
     date: "In Progress"
     tags: ["audit_analyst", "risk_management", "governance", "sox", "risk_controls"]
 
+ai_operations:
+  - name: "AI For Everyone"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_operations", "artificial_intelligence", "ai_fundamentals", "ai_literacy"]
+  - name: "Google AI Essentials"
+    issuer: "Google / Coursera"
+    date: "In Progress"
+    tags: ["ai_operations", "ai_tools", "ai_literacy", "generative_ai"]
+  - name: "Introduction to Data Analytics"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["ai_operations", "data_analyst", "data_quality", "data_analysis"]
+  - name: "Generative AI for Everyone"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["ai_operations", "genai", "ai_pipeline_ops", "generative_ai"]
+  - name: "Python for Data Science, AI & Development"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["ai_operations", "python", "automation", "data_annotation"]
+
+backend_developer:
+  - name: "Python for Everybody Specialization"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["backend_developer", "python", "programming_fundamentals", "web_scraping"]
+  - name: "Server-side Development with NodeJS, Express and MongoDB"
+    issuer: "Hong Kong University of Science and Technology / Coursera"
+    date: "In Progress"
+    tags: ["backend_developer", "nodejs", "rest_api", "mongodb", "microservices"]
+  - name: "Django for Everybody Specialization"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["backend_developer", "django", "python", "web_framework", "api_development"]
+  - name: "Database Design and Basic SQL in PostgreSQL"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["backend_developer", "sql", "database_design", "postgresql", "databases"]
+  - name: "Google Cloud Fundamentals: Core Infrastructure"
+    issuer: "Google Cloud / Coursera"
+    date: "In Progress"
+    tags: ["backend_developer", "cloud", "infrastructure", "deployment"]
+
+business_analyst:
+  - name: "Business Analysis & Process Management"
+    issuer: "University System of Georgia / Coursera"
+    date: "In Progress"
+    tags: ["business_analyst", "process_mapping", "brd", "requirements_gathering"]
+  - name: "Business Analytics Specialization"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["business_analyst", "business_analytics", "data_analysis", "decision_making"]
+  - name: "Agile Meets Design Thinking"
+    issuer: "University of Virginia / Coursera"
+    date: "In Progress"
+    tags: ["business_analyst", "agile", "requirements_gathering", "use_case"]
+  - name: "Excel Skills for Business Specialization"
+    issuer: "Macquarie University / Coursera"
+    date: "In Progress"
+    tags: ["business_analyst", "excel", "reporting", "data_analysis"]
+  - name: "Introduction to Data Analytics"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["business_analyst", "data_analysis", "sql", "gap_analysis"]
+
+computer_vision:
+  - name: "Convolutional Neural Networks"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["computer_vision", "cnn", "deep_learning", "image_classification"]
+  - name: "Deep Learning Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["computer_vision", "deep_learning", "neural_networks", "pytorch"]
+  - name: "TensorFlow: Advanced Techniques Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["computer_vision", "tensorflow", "object_detection", "image_segmentation"]
+  - name: "Introduction to Computer Vision and Image Processing"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["computer_vision", "image_processing", "opencv", "cv_engineer"]
+  - name: "Deep Neural Networks with PyTorch"
+    issuer: "IBM / Coursera"
+    date: "In Progress"
+    tags: ["computer_vision", "pytorch", "deep_learning", "yolo"]
+
+nlp_engineer:
+  - name: "Natural Language Processing Specialization"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["nlp_engineer", "nlp", "transformers", "text_classification"]
+  - name: "Generative AI with Large Language Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["nlp_engineer", "llm", "genai", "fine_tuning"]
+  - name: "Applied Text Mining in Python"
+    issuer: "University of Michigan / Coursera"
+    date: "In Progress"
+    tags: ["nlp_engineer", "text_mining", "python", "sentiment_analysis"]
+  - name: "Natural Language Processing with Attention Models"
+    issuer: "DeepLearning.AI / Coursera"
+    date: "In Progress"
+    tags: ["nlp_engineer", "attention", "transformers", "named_entity_recognition"]
+  - name: "Building AI Applications with Hugging Face"
+    issuer: "Hugging Face / edX"
+    date: "In Progress"
+    tags: ["nlp_engineer", "huggingface", "transformers", "conversational_ai"]
+
+product_analyst:
+  - name: "Google Data Analytics Professional Certificate"
+    issuer: "Google / Coursera"
+    date: "In Progress"
+    tags: ["product_analyst", "data_analysis", "sql", "product_metrics"]
+  - name: "A/B Testing"
+    issuer: "Google / Coursera"
+    date: "In Progress"
+    tags: ["product_analyst", "ab_testing", "funnel_analysis", "experimentation"]
+  - name: "Digital Product Management Specialization"
+    issuer: "University of Virginia / Coursera"
+    date: "In Progress"
+    tags: ["product_analyst", "product_management", "product_metrics", "growth_analytics"]
+  - name: "SQL for Data Science"
+    issuer: "UC Davis / Coursera"
+    date: "In Progress"
+    tags: ["product_analyst", "sql", "data_analysis", "retention_analysis"]
+  - name: "Business Analytics Specialization"
+    issuer: "University of Pennsylvania (Wharton) / Coursera"
+    date: "In Progress"
+    tags: ["product_analyst", "business_analytics", "decision_making", "user_behaviour"]
+
 tax_analyst:
   - name: "Introduction to Finance and Accounting"
     issuer: "University of Pennsylvania / Coursera"

@@ -1,0 +1,51 @@
+id: ai_operations
+display_name: "AI Operations Analyst"
+
+match_tags:
+  - ai_operations
+  - ai_ops
+  - process_associate_ai
+  - data_annotation
+  - ai_quality_assurance
+  - ai_labeling
+  - ai_pipeline_ops
+  - content_moderation
+  - ai_reviewer
+
+summary_focus: >
+  Frame as an AI Operations Analyst with a strong foundation in AI/ML concepts
+  and data quality workflows. Lead with experience in data annotation, quality
+  assurance for AI model outputs, and operational support for AI pipelines.
+  Highlight Python automation skills used to streamline labelling workflows,
+  the ability to evaluate AI model outputs against ground truth, and familiarity
+  with AI tools and platforms. Use "AI Operations", "data annotation",
+  "quality assurance", "AI pipeline", "process optimisation", and "AI/ML
+  operations" language throughout. Emphasise communication skills, attention
+  to detail, analytical rigour, and the ability to bridge technical AI teams
+  and operational workflows.
+
+skills_order:
+  - data_tools
+  - languages
+  - llm_rag
+  - bi_tools
+  - databases
+  - other
+
+experience_tags:
+  - ai_operations
+  - ai_developer
+  - data_analyst
+  - data_scientist
+  - bi
+
+project_tags:
+  - ai_operations
+  - ai_developer
+  - data_analyst
+  - ml_engineer
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

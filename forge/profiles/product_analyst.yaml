@@ -1,0 +1,48 @@
+id: product_analyst
+display_name: "Product Analyst"
+
+match_tags:
+  - product_analyst
+  - product_analytics
+  - ab_testing
+  - funnel_analysis
+  - user_behaviour
+  - product_metrics
+  - growth_analytics
+  - retention_analysis
+
+summary_focus: >
+  Frame as a Product Analyst with AI-powered behavioural analytics skills.
+  Lead with experience analysing user funnels, running A/B tests, and building
+  product dashboards that surface retention, engagement, and conversion metrics
+  for product teams. Emphasise SQL and Python proficiency for cohort analysis,
+  experimentation frameworks, and the ability to translate product data into
+  actionable recommendations. Use "Product Analyst", "A/B testing",
+  "funnel analysis", "retention", "user behaviour", and "product metrics"
+  language throughout. Highlight measurable product improvements driven by
+  data-backed insights you delivered.
+
+skills_order:
+  - data_tools
+  - bi_tools
+  - languages
+  - databases
+  - other
+
+experience_tags:
+  - product_analyst
+  - data_scientist
+  - data_analyst
+  - bi
+  - ml
+
+project_tags:
+  - product_analyst
+  - data_scientist
+  - data_analyst
+  - bi
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3
