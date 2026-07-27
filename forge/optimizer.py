@@ -19,6 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core import llm
+from core.jd_clean import strip_boilerplate
 
 
 def optimize(job: dict, master_profile: dict, profile_config: dict,
@@ -39,7 +40,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict,
       "ats_score_estimate": <int 0-100>
     }
     """
-    jd = (job.get("description") or "")[:2000]
+    jd = strip_boilerplate(job.get("description") or "")[:4000]
 
     score_detail: dict = {}
     try:
@@ -49,8 +50,7 @@ def optimize(job: dict, master_profile: dict, profile_config: dict,
         pass
 
     # profile_slim excludes internal-only fields (tags, github) that the LLM
-    # never uses for selection decisions — saves ~390 tokens vs original,
-    # keeping total under gpt-oss-120b's 8k TPM limit without any quality loss.
+    # never uses for selection decisions — saves ~390 tokens vs original.
     # (github is re-injected at render time by forge.py from master_profile)
     profile_slim = {
         "skills": master_profile.get("skills", {}),
@@ -88,7 +88,7 @@ JOB:
 Title: {job.get("title")}
 Company: {job.get("company")}
 Location: {job.get("location")}
-Description (first 2000 chars):
+Description (full posting — read responsibilities and qualifications, not just the intro):
 {jd}
 
 SCORING CONTEXT:
@@ -119,7 +119,18 @@ STRICT RULES:
 3. skills_section: include at most 4 skill categories — choose the ones with the highest overlap with this JD; within each category keep only the 4-5 most JD-relevant items (drop low-relevance items). Reorder within each retained category to surface JD keywords first. Drop a category entirely if it has fewer than 2 items relevant to this role.
 4. selected_experience: pick exactly "Max experience roles" roles (the most relevant ones); select EXACTLY "Max experience bullets per role" bullets per role — not 1, not 2 if the max is 3; always hit the exact count. GOOGLE XYZ FORMAT: structure each bullet as "Accomplished [X outcome] as measured by [Y metric/impact], by doing [Z specific method/tool]" — the outcome leads, the metric quantifies it, the method explains how. BULLET LENGTH: 16-22 words — single-line bullets, never wrap to 2 lines. ORDERING: list the selected roles newest-first (most recent end date first) — never reorder to oldest-first regardless of relevance ranking. REWRITE each selected bullet with a noticeably different sentence structure than the original (don't just swap one or two words) — reorder clauses, change the lead verb, and lead with whichever part of the bullet best matches the JD — while using the JD's own terminology ONLY for a skill, tool, or technique that is the SAME thing already present in the bullet (e.g. "exploratory data analysis" -> "data analytics", "Power BI dashboard" -> "BI & visualization", "predictive model" -> "forecasting model" if the JD says "forecasting" and the bullet is genuinely a predictive model). Lead each bullet with a strong action verb and frame its impact around the high-level themes the JD emphasizes (e.g. automation, efficiency, reporting, risk reduction, collaboration, accuracy) — connect the concrete deliverable to why it matters for this role. Do NOT change the subject matter, domain, or industry of the work — e.g. do not recast an automobile-sales analysis as "financial data analysis", or a flight-price-prediction model as "budget/financial forecasting". Every fact, tool, technology, number, and outcome from the original bullet must still be present — only the phrasing, structure, and framing change. Each bullet must come from, and only from, its own role/project's bullets in the profile — never copy or merge in a bullet from a different role or project.
 5. selected_projects: pick exactly "Max projects" projects whose tags overlap with the JD's domain (the most relevant ones); select EXACTLY "Max project bullets" bullets per project — not 1, not 2 if the max is 3; always hit the exact count. GOOGLE XYZ FORMAT: same structure as rule 4 — Accomplished [X] as measured by [Y], by doing [Z]. BULLET LENGTH: 16-22 words — single-line bullets, never wrap to 2 lines. — when a project has bullets spanning both technical/ML implementation and business-outcome work (e.g. dashboards, reporting, risk or decision-support), prioritize the business-outcome bullets if they align with the JD's core function, while still selecting only from that project's own bullets. ORDER the selected bullets so the one most aligned with the JD's core function comes FIRST, regardless of its order in the source profile. Apply the same rewrite constraints as rule 4.
-6. ats_score_estimate: integer 0-100 reflecting how well this resume will pass ATS for this JD
+6. ats_score_estimate: integer 0-100 — a strict, realistic estimate of how well THIS resume
+   (not the candidate's hypothetical potential) will pass an ATS keyword scan AND a human
+   recruiter skim for THIS specific JD. Calibrate against genuine keyword/requirement coverage
+   in the finished resume above, cross-checked against the JD's actual requirements (including
+   ones in "Missing skills" above, which by definition drag the score down since they can't be
+   truthfully added to the resume): 85-100 only when the resume's skills/experience/projects
+   substantively cover the JD's core requirements with matching terminology; 65-84 for solid
+   but incomplete coverage (some JD requirements have no resume match); 40-64 when several
+   JD requirements — domain expertise, named tools, years of experience, certifications — are
+   simply absent from the resume; below 40 when the JD's core function is outside what this
+   resume can honestly demonstrate. Do NOT default to a "safe" 70-85 range regardless of fit —
+   a resume with real, unaddressed gaps against the JD should score low, even if well-written.
 7. NEVER include a skill, domain, or claim (in the summary, ats_keywords, or any bullet) that is not present in the profile above. If a JD keyword (e.g. "Financial Reporting", "Budgeting") names a skill/domain the candidate's profile does not have, do NOT work it into the summary, ats_keywords, or any bullet.
 8. The final resume should fill close to a full single US-letter page — use the bullet/project/skill counts above as TARGETS, not maximums to undercut. Do not pad with filler, but do not under-fill either.
 9. selected_certifications: ALWAYS include this section — pick exactly 2 certifications from the profile list whose name, issuer, or tags best match this JD's domain/keywords. Prioritise certifications from brand-name institutions (Wharton, Google, etc.) and ones tagged with finance, risk, data_analyst, or similar JD-relevant domains. Return the full cert object (name, issuer, date) unchanged — do not omit this field.

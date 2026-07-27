@@ -39,6 +39,7 @@ load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core import db
+from core.jd_clean import strip_boilerplate
 from forge.matcher import select_profile, get_profile_by_id
 from forge.optimizer import optimize
 
@@ -457,7 +458,7 @@ def audit_resume(job_id: str) -> dict:
         return {"error": f"Job {job_id} not found"}
 
     master = _load_master()
-    jd = (job.get("description") or "")[:1500]
+    jd = strip_boilerplate(job.get("description") or "")[:4000]
     p = master.get("personal", {})
     skills_flat = ", ".join(
         v if isinstance(v, str) else ", ".join(v)
@@ -473,8 +474,10 @@ def audit_resume(job_id: str) -> dict:
     )
 
     prompt = f"""You are a senior recruiter scoring a fresher candidate against a job description.
+Be strict and realistic, not encouraging — most fresher candidates do not meet every
+requirement, and a superficial keyword overlap should not inflate the score.
 
-JOB:
+JOB (read the full posting below — responsibilities and qualifications included — before scoring):
 Title: {job.get("title")}
 Company: {job.get("company")}
 Description: {jd}
@@ -486,8 +489,12 @@ Experience:
 Projects:
 {proj_lines}
 
-Score the candidate out of 100, identify the 5 most critical missing keywords,
-and name 3 red flags a hiring manager would notice immediately.
+Score the candidate out of 100 based on genuine, documented overlap between the JD's actual
+requirements and the candidate's real experience/projects — not adjacent or hypothetical fit.
+Identify the 5 most critical missing keywords/requirements (domain expertise, tools, years of
+experience, certifications, etc. the JD calls for that the profile above does not demonstrate),
+and name 3 red flags a hiring manager would notice immediately (e.g. missing required domain
+background, no evidence of a specifically-named tool/skill, seniority mismatch).
 
 Respond ONLY with valid JSON:
 {{
@@ -529,7 +536,7 @@ def ats_check(job_id: str) -> dict:
     except Exception as e:
         return {"error": f"Could not load resume data: {e}"}
 
-    jd = (job.get("description") or "")[:1000]
+    jd = strip_boilerplate(job.get("description") or "")[:4000]
     summary = optimized.get("summary", "")
     skills  = optimized.get("skills_section", {})
     skills_text = "\n".join(f"  {k}: {', '.join(v)}" for k, v in skills.items())
@@ -543,10 +550,13 @@ def ats_check(job_id: str) -> dict:
         for p in optimized.get("selected_projects", [])
     )
 
-    prompt = f"""You are simultaneously an ATS system and a senior hiring manager reviewing a resume for this role:
+    prompt = f"""You are simultaneously an ATS system and a senior hiring manager reviewing a resume for this role.
+Be a realistic, skeptical reviewer — most resumes have real gaps against a full JD, and your
+job is to surface them, not to reassure the candidate. Read the entire JD below (responsibilities,
+qualifications, requirements) before judging, not just the opening paragraph.
 
 JOB: {job.get("title")} at {job.get("company")}
-JD (excerpt): {jd}
+JD: {jd}
 
 RESUME:
 Summary: {summary}
@@ -560,8 +570,14 @@ Experience:
 Projects:
 {proj_text}
 
-As ATS: which sections contain sufficient keywords and will be parsed correctly?
-As Hiring Manager: which sections would make you slow down or skip? What specific rewrites would increase selection chances?
+As ATS: which sections contain sufficient JD-matching keywords and will be parsed correctly?
+Which JD requirements (tools, domain terms, years of experience, certifications) have NO
+keyword match anywhere in this resume — call these out explicitly, don't omit them.
+As Hiring Manager: which sections would make you slow down or skip? Be specific about gaps
+against the JD's actual requirements, not generic resume advice. What specific rewrites would
+increase selection chances?
+The overall_verdict must reflect genuine selection likelihood given the gaps found — do not
+default to an optimistic verdict when significant JD requirements are unaddressed.
 
 Respond ONLY with valid JSON:
 {{
@@ -569,7 +585,7 @@ Respond ONLY with valid JSON:
   "flagged": [
     {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix"}}
   ],
-  "overall_verdict": "one concise sentence on selection likelihood"
+  "overall_verdict": "one concise, honest sentence on selection likelihood"
 }}"""
 
     raw = llm.score(prompt)

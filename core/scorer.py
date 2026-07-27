@@ -16,6 +16,7 @@ from typing import Optional
 import yaml
 
 from core import db, llm
+from core.jd_clean import strip_boilerplate
 
 _HASH_FILE = Path("shared/.config_hash")
 
@@ -44,9 +45,9 @@ def _build_prompt(job: dict) -> str:
     internships    = "\n".join(f"  - {i}" for i in c.get("internships", []))
     projects       = "\n".join(f"  - {p}" for p in c.get("notable_projects", []))
 
-    description = (job.get("description") or "")[:1500]
+    description = strip_boilerplate(job.get("description") or "")[:4000]
 
-    return f"""You are evaluating a job posting for a fresher candidate graduating 2026.
+    return f"""You are a strict, realistic job-fit evaluator for a fresher candidate graduating 2026. Your job is to catch mismatches, not to be encouraging — a hiring manager will judge this candidate on hard requirements, not potential.
 
 CANDIDATE PROFILE:
 Name:             {c.get('name', 'Candidate')}
@@ -65,7 +66,8 @@ Internships:
 Notable projects:
 {projects}
 
-JOB POSTING:
+JOB POSTING (read the entire posting below — including responsibilities, qualifications,
+and requirements sections, not just the intro paragraph — before scoring):
 Title:       {job.get('title', '')}
 Company:     {job.get('company', '')}
 Location:    {job.get('location', '')}
@@ -73,10 +75,29 @@ Source:      {job.get('source', '')}
 Description:
 {description}
 
+SCORING RULES — be strict and realistic, not hypothetical:
+- Only list a skill in "matched_skills" if the candidate has clear, specific, documented
+  experience with it (a named tool/technique/project) — not just an adjacent buzzword or
+  something plausibly transferable. A JD mentioning "data" does not mean every data-adjacent
+  skill on the candidate's profile counts as a match.
+- List EVERY meaningfully important requirement, qualification, or domain the JD calls for
+  that the candidate's profile does not clearly demonstrate in "missing_skills" — do not
+  soften this list to make the fit look better than it is.
+- If the JD requires specific years of experience, a professional license/certification,
+  domain expertise (e.g. accounting, law, healthcare), or seniority the candidate does not
+  have, reflect that honestly in the score and set seniority_fit accordingly — do not let a
+  few keyword overlaps pull the score up despite a fundamental mismatch.
+- Calibrate the score against genuine requirement coverage: 4.0-5.0 only for a role whose
+  core responsibilities and required skills are substantially covered by the candidate's
+  actual documented experience; 2.5-3.9 for partial/adjacent fit with real gaps; below 2.5
+  when the role's core function or hard requirements are outside the candidate's profile.
+  Do not default to a "safe middle" score (e.g. always landing at 2.5-3.5) — commit to
+  whatever the actual overlap supports, even if that means a very low or very high score.
+
 Respond ONLY with valid JSON — no explanation, no markdown, no code fences:
 {{
   "score": <float 0.0–5.0>,
-  "fit_summary": "<one sentence>",
+  "fit_summary": "<one honest sentence — name the biggest gap if the fit is weak>",
   "matched_skills": ["skill1", "skill2"],
   "missing_skills": ["skill1"],
   "seniority_fit": true|false,
