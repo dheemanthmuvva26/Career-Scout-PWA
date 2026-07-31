@@ -98,10 +98,14 @@ def stats():
 @app.get("/jobs")
 def list_jobs(
     status: Optional[str] = None,
-    min_score: float = 0.0,
+    min_score: float = -1.0,
     urgency: Optional[str] = None,
     limit: int = 50,
 ):
+    # Default includes score=-1 (not-yet-scored) jobs — otherwise a job whose
+    # background scoring call fails or hasn't run yet (rate limit, cold
+    # backend, transient error) silently vanishes from every tab in the feed
+    # even though it saved successfully.
     return get_jobs(status=status, min_score=min_score, urgency=urgency, limit=limit)
 
 
