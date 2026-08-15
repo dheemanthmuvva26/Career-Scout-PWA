@@ -4,10 +4,12 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
 function ShareHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [phase, setPhase] = useState<"importing" | "paste-fallback" | "pasting" | "success" | "error">("importing");
+  const [phase, setPhase] = useState<"waking" | "importing" | "paste-fallback" | "pasting" | "success" | "error">("waking");
   const [jobUrl, setJobUrl] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [message, setMessage] = useState("");
@@ -29,6 +31,14 @@ function ShareHandler() {
         return;
       }
 
+      // This route never mounts the app shell's keep-alive pinger, so on
+      // Render's free tier the backend is very often asleep when a share
+      // lands here — wake it up first so the real import doesn't just hang.
+      try {
+        await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(45_000) });
+      } catch {}
+
+      setPhase("importing");
       try {
         await api.importJob(url);
         setPhase("success");
@@ -61,6 +71,24 @@ function ShareHandler() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 safe-top"
       style={{ background: "var(--bg)" }}>
+
+      {/* ── Waking server (Render free-tier cold start) ── */}
+      {phase === "waking" && (
+        <div className="text-center fade-up">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
+            style={{ background: "var(--accent-10)", border: "1px solid var(--accent-25)" }}>
+            <svg className="spin w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ color: "var(--accent)" }}>
+              <path d="M12 4V2M12 22v-2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                strokeLinecap="round"/>
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold mb-2" style={{ color: "var(--text)" }}>Waking up the server…</h2>
+          <p className="text-xs max-w-xs mx-auto" style={{ color: "var(--text-3)" }}>
+            First request after a while can take up to 30s — hang tight.
+          </p>
+        </div>
+      )}
 
       {/* ── Importing spinner ── */}
       {phase === "importing" && (

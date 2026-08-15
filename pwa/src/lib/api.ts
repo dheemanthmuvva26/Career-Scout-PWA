@@ -7,7 +7,18 @@ async function apiFetch(path: string, init?: RequestInit) {
     "X-API-Key": API_KEY,
   };
 
-  const res = await fetch(BASE + path, { ...init, headers });
+  let res: Response;
+  try {
+    // Safety net so a request never hangs forever (e.g. Render cold start
+    // taking longer than usual, or a dropped connection) — surfaces a clear,
+    // actionable error instead of a spinner stuck on screen indefinitely.
+    res = await fetch(BASE + path, { ...init, headers, signal: AbortSignal.timeout(60_000) });
+  } catch (e) {
+    if (e instanceof Error && e.name === "TimeoutError") {
+      throw new Error("Request timed out — the server may be waking up, try again in a moment");
+    }
+    throw e;
+  }
   if (!res.ok) {
     let detail = "";
     try { const j = await res.json(); detail = j.detail || j.error || ""; } catch {}
