@@ -71,8 +71,14 @@ schedule:
 llm:
   provider: groq
   # GROQ_API_KEY via env var
-  scoring_model: llama-3.3-70b-versatile   # high volume, fast, generous rate limits
-  writing_model: llama-3.3-70b-versatile    # confirmed working, ATS 70-80
+  # llama-3.3-70b-versatile was removed from Groq's catalog entirely (2026-07) --
+  # every model call was failing with a 404 model_not_found until this switch.
+  # Both are "reasoning" models that spend completion tokens on hidden reasoning
+  # before the visible answer (core.llm passes reasoning_effort="low" to limit
+  # this) -- the 20b model still exhausts its budget on the full resume-optimizer
+  # prompt (~5k tokens), so writing uses 120b, which finishes with tokens to spare.
+  scoring_model: openai/gpt-oss-20b     # short prompt, fits comfortably in the 8k TPM cap
+  writing_model: openai/gpt-oss-120b    # confirmed valid JSON on the full resume-optimizer schema
   writing_provider: groq                    # groq | openrouter
 
 scraping:

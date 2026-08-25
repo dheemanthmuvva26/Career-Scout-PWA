@@ -5,10 +5,14 @@ Provider is auto-detected from env vars:
   OPENROUTER_API_KEY set → writing model uses OpenRouter (openrouter.ai/api/v1)
   Otherwise             → writing model uses Groq
 
-scoring_model : llama-3.3-70b-versatile  (always Groq — fast, no rate issues)
-writing_model : configured in config.yaml
-  Groq options     : llama-3.3-70b-versatile, openai/gpt-oss-120b
-  OpenRouter free  : google/gemma-4-31b-it:free, meta-llama/llama-3.3-70b-instruct:free
+scoring_model / writing_model : configured in config.yaml (currently
+  openai/gpt-oss-20b / openai/gpt-oss-120b — llama-3.3-70b-versatile was
+  removed from Groq's catalog entirely in 2026-07 and no longer exists as
+  a callable model). Both are "reasoning" models that spend completion
+  tokens on hidden reasoning before the visible answer — score()/write()
+  pass reasoning_effort="low" to limit that; even so, the smaller 20b model
+  exhausts its budget on the full resume-optimizer prompt, which is why
+  writing uses the larger 120b (empirically more decisive, not less).
 
 Usage:
     from core.llm import score, write
@@ -98,7 +102,8 @@ def _is_rate_limit(e: Exception) -> bool:
 def _call(model: str, prompt: str, max_tokens: int = 1024,
           system: str = "You are a helpful assistant.",
           json_mode: bool = False,
-          use_writing_client: bool = False) -> str:
+          use_writing_client: bool = False,
+          reasoning_effort: str | None = None) -> str:
     """Raw LLM call. Rotates Groq API keys on 429. Uses OpenRouter if writing_provider=openrouter."""
     if use_writing_client and _WRITING_PROVIDER == "openrouter":
         return _call_openrouter(model, prompt, max_tokens, system)
@@ -114,6 +119,11 @@ def _call(model: str, prompt: str, max_tokens: int = 1024,
     )
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
+    if reasoning_effort:
+        # gpt-oss models spend completion tokens on hidden reasoning before
+        # the visible answer — on a tight max_tokens budget (e.g. scoring)
+        # that can burn the whole budget and return an empty response.
+        kwargs["reasoning_effort"] = reasoning_effort
 
     keys = _groq_keys()
     last_err: Exception | None = None
@@ -135,7 +145,7 @@ def _call(model: str, prompt: str, max_tokens: int = 1024,
 
 def score(prompt: str) -> str:
     """
-    Call the scoring model (llama-3.3-70b-versatile).
+    Call the scoring model.
     Used for: job scoring per JD.
     Returns raw text — caller is responsible for JSON parsing.
     Falls back to score=-1 string on failure so pipeline never crashes.
@@ -144,11 +154,12 @@ def score(prompt: str) -> str:
         return _call(
             model=_SCORING_MODEL,
             prompt=prompt,
-            max_tokens=512,
+            max_tokens=700,
             system=(
                 "You are a job-fit evaluator. Always respond with valid JSON only. "
                 "No explanation, no markdown, no code fences."
             ),
+            reasoning_effort="low",
         )
     except Exception as e:
         # Return a valid fallback JSON so caller can store score=-1 and retry later
@@ -178,6 +189,7 @@ def write(prompt: str, max_tokens: int = 2048, json_mode: bool = False) -> str:
         ),
         json_mode=json_mode,
         use_writing_client=True,
+        reasoning_effort="low",
     )
 
 

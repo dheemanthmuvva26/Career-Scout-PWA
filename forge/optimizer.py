@@ -40,7 +40,11 @@ def optimize(job: dict, master_profile: dict, profile_config: dict,
       "ats_score_estimate": <int 0-100>
     }
     """
-    jd = strip_boilerplate(job.get("description") or "")[:4000]
+    # Kept shorter than the scoring/audit prompts' 4000 -- this call already
+    # gets score_detail's matched/missing skills for JD context, and the full
+    # prompt (candidate profile + strict rules) needs to stay under Groq's
+    # 8000 TPM cap on this model alongside a large enough completion budget.
+    jd = strip_boilerplate(job.get("description") or "")[:2800]
 
     score_detail: dict = {}
     try:
@@ -175,7 +179,7 @@ Respond ONLY with valid JSON — no markdown, no explanation:
   "ats_score_estimate": 0
 }}"""
 
-    raw = llm.write(prompt, max_tokens=3000)
+    raw = llm.write(prompt, max_tokens=3500)
     try:
         return llm.parse_json(raw)
     except Exception as e:
