@@ -150,4 +150,8 @@ export const api = {
     }),
 
   forgePoll: (token: string) => apiFetch(`/forge/poll/${token}`),
+
+  confirmSkill: (skill: string) =>
+    apiFetch("/skills/confirm", { method: "POST", body: JSON.stringify({ skill }) }),
+  confirmedSkills: () => apiFetch("/skills/confirmed"),
 };

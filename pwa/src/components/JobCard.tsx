@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { api, type Job } from "@/lib/api";
 import { haptics } from "@/lib/haptics";
 import { detectProfile, PROFILES, PROFILE_DISPLAY } from "@/lib/profiles";
+import MissingSkillChip from "./MissingSkillChip";
 
 const URGENCY: Record<string, { label: string; color: string }> = {
   hot:    { label: "Hot",    color: "#ef4444" },
@@ -354,10 +355,7 @@ export default function JobCard({ job, onUpdate, compact = false }: Props) {
               </span>
             ))}
             {missing.map((t) => (
-              <span key={t} className="text-xs px-2.5 py-1 rounded-full font-medium"
-                style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.15)" }}>
-                ✗ {t}
-              </span>
+              <MissingSkillChip key={t} skill={t} />
             ))}
           </div>
         )}

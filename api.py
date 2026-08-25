@@ -30,6 +30,7 @@ from core.db import (
     get_jobs_for_auto_ghost,
     get_forage_sims, set_forage_sim_completed,
     find_forage_matches_for_companies, normalize_company,
+    add_confirmed_skill, get_confirmed_skills, remove_confirmed_skill,
 )
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
@@ -1093,6 +1094,34 @@ def forage_recommendations():
                 for j in company_to_jobs[company]
             )
     return sorted(recs.values(), key=lambda r: -len(r["matched_jobs"]))
+
+
+# ── Confirmed skills ──────────────────────────────────────────────────────────
+
+class ConfirmSkillRequest(BaseModel):
+    skill: str
+
+@app.post("/skills/confirm")
+def confirm_skill(body: ConfirmSkillRequest):
+    """
+    Record a skill the user has confirmed they have (from a "missing keyword"
+    prompt in the app). Fed back into future scoring/audit prompts so the
+    same skill doesn't keep getting flagged as missing.
+    """
+    skill = body.skill.strip()
+    if not skill:
+        raise HTTPException(status_code=400, detail="skill is required")
+    return add_confirmed_skill(skill)
+
+@app.get("/skills/confirmed")
+def list_confirmed_skills():
+    return get_confirmed_skills()
+
+@app.delete("/skills/confirmed/{skill_id}")
+def unconfirm_skill(skill_id: str):
+    if not remove_confirmed_skill(skill_id):
+        raise HTTPException(status_code=404, detail="Skill not found")
+    return {"ok": True}
 
 
 # ── DB Backup ─────────────────────────────────────────────────────────────────

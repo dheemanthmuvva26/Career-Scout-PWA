@@ -273,6 +273,11 @@ def _init_pg() -> None:
             scraped_at   TEXT NOT NULL
         )""",
         "CREATE INDEX IF NOT EXISTS idx_forage_company ON forage_sims(company_slug)",
+        """CREATE TABLE IF NOT EXISTS confirmed_skills (
+            id       TEXT PRIMARY KEY,
+            skill    TEXT NOT NULL,
+            added_at TEXT NOT NULL
+        )""",
     ]
     with connect() as conn:
         for stmt in stmts:
@@ -325,6 +330,9 @@ def _init_sqlite() -> None:
             title TEXT NOT NULL, url TEXT NOT NULL UNIQUE, duration TEXT, difficulty TEXT,
             skills TEXT, careers TEXT, completed_at TEXT, scraped_at TEXT NOT NULL)""")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_forage_company ON forage_sims(company_slug)")
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS confirmed_skills (
+            id TEXT PRIMARY KEY, skill TEXT NOT NULL, added_at TEXT NOT NULL)""")
         for idx in [
             "CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status)",
             "CREATE INDEX IF NOT EXISTS idx_jobs_score   ON jobs(score)",
@@ -487,7 +495,10 @@ def get_jobs(status: Optional[str] = None, min_score: float = 0.0,
     if urgency:
         query += " AND urgency=?"
         params.append(urgency)
-    query += " ORDER BY score DESC LIMIT ?"
+    # Recency, not score — this feeds the Jobs tab, and a job's fit score
+    # (or -1 while unscored) shouldn't determine whether a freshly imported
+    # job is even visible. Score is still shown per-card for triage.
+    query += " ORDER BY created_at DESC LIMIT ?"
     params.append(limit)
     with connect() as conn:
         rows = conn.execute(query, params).fetchall()
@@ -819,6 +830,40 @@ def find_forage_matches_for_companies(companies: list[str]) -> dict[str, list[di
         if found:
             matches[company] = found
     return matches
+
+
+# ── Confirmed skills ─────────────────────────────────────────────────────────
+# Skills the candidate has manually confirmed they have, even if not yet
+# reflected in master_profile.yaml — fed back into scoring/audit prompts so
+# a skill flagged "missing" once doesn't keep getting flagged after the user
+# says "yes I have this."
+
+def _normalize_skill(s: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def add_confirmed_skill(skill: str) -> dict:
+    skill = skill.strip()
+    skill_id = _normalize_skill(skill)
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO confirmed_skills (id, skill, added_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id) DO NOTHING
+        """, (skill_id, skill, now_iso()))
+    return {"id": skill_id, "skill": skill}
+
+
+def get_confirmed_skills() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute("SELECT * FROM confirmed_skills ORDER BY skill").fetchall()
+    return [dict(r) for r in rows]
+
+
+def remove_confirmed_skill(skill_id: str) -> bool:
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM confirmed_skills WHERE id=?", (skill_id,))
+    return cur.rowcount > 0
 
 
 if __name__ == "__main__":

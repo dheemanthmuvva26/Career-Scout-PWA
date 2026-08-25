@@ -6,6 +6,7 @@ import { api, type Job } from "@/lib/api";
 import { PROFILES, PROFILE_DISPLAY, detectProfile, matchByDescription } from "@/lib/profiles";
 import { useViewMode } from "@/lib/viewMode";
 import SearchBar from "@/components/SearchBar";
+import MissingSkillChip from "@/components/MissingSkillChip";
 
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };
 type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
@@ -418,10 +419,7 @@ function ForgePageInner() {
                       <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "var(--text-3)" }}>Top missing keywords</p>
                       <div className="flex flex-wrap gap-1.5">
                         {auditResult.missing_keywords.map(kw => (
-                          <span key={kw} className="text-xs px-2 py-0.5 rounded-full"
-                            style={{ background: "rgba(239,68,68,0.08)", color: "#fca5a5", border: "1px solid rgba(239,68,68,0.2)" }}>
-                            {kw}
-                          </span>
+                          <MissingSkillChip key={kw} skill={kw} className="text-xs px-2 py-0.5 rounded-full" />
                         ))}
                       </div>
                     </div>

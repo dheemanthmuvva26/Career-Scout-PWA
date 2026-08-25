@@ -47,6 +47,9 @@ def _build_prompt(job: dict) -> str:
 
     description = strip_boilerplate(job.get("description") or "")[:4000]
 
+    confirmed = db.get_confirmed_skills()
+    confirmed_str = "\n".join(f"  - {s['skill']}" for s in confirmed)
+
     return f"""You are a strict, realistic job-fit evaluator for a fresher candidate graduating 2026. Your job is to catch mismatches, not to be encouraging — a hiring manager will judge this candidate on hard requirements, not potential.
 
 CANDIDATE PROFILE:
@@ -65,6 +68,12 @@ Internships:
 
 Notable projects:
 {projects}
+{f'''
+Additional confirmed skills (candidate has verified having these even though
+they may not appear in the profile above — treat them as fully matched, not
+as buzzwords, when relevant to this JD):
+{confirmed_str}
+''' if confirmed else ""}
 
 JOB POSTING (read the entire posting below — including responsibilities, qualifications,
 and requirements sections, not just the intro paragraph — before scoring):
@@ -80,6 +89,8 @@ SCORING RULES — be strict and realistic, not hypothetical:
   experience with it (a named tool/technique/project) — not just an adjacent buzzword or
   something plausibly transferable. A JD mentioning "data" does not mean every data-adjacent
   skill on the candidate's profile counts as a match.
+- Exception: a skill listed under "Additional confirmed skills" above is always treated as
+  matched when the JD calls for it — never list it in missing_skills.
 - List EVERY meaningfully important requirement, qualification, or domain the JD calls for
   that the candidate's profile does not clearly demonstrate in "missing_skills" — do not
   soften this list to make the fit look better than it is.

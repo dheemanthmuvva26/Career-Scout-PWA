@@ -497,6 +497,8 @@ def audit_resume(job_id: str) -> dict:
         f"- {p['name']} ({', '.join(p.get('tech',[])[:4])})"
         for p in master.get("projects", [])
     )
+    confirmed = db.get_confirmed_skills()
+    confirmed_line = f"Additional confirmed skills: {', '.join(s['skill'] for s in confirmed)}" if confirmed else ""
 
     prompt = f"""You are a senior recruiter scoring a fresher candidate against a job description.
 Be strict and realistic, not encouraging — most fresher candidates do not meet every
@@ -513,9 +515,12 @@ Experience:
 {exp_lines}
 Projects:
 {proj_lines}
+{confirmed_line}
 
 Score the candidate out of 100 based on genuine, documented overlap between the JD's actual
 requirements and the candidate's real experience/projects — not adjacent or hypothetical fit.
+A skill listed under "Additional confirmed skills" counts as matched even though it isn't
+reflected in the experience/projects above — never list it as a missing keyword.
 Identify the 5 most critical missing keywords/requirements (domain expertise, tools, years of
 experience, certifications, etc. the JD calls for that the profile above does not demonstrate),
 and name 3 red flags a hiring manager would notice immediately (e.g. missing required domain
