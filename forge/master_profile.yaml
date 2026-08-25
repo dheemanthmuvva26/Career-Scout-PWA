@@ -105,6 +105,22 @@ projects:
       - text: "Developed a 4-mode Streamlit dashboard (Dashboard, Case Tracker, Facility View, AI Query Engine) giving district health officers real-time KPIs, drill-through analysis, and natural-language data access across 2,488 facilities"
         tags: ["data_analyst", "bi", "bi_developer", "govt", "risk_analyst", "data_scientist"]
 
+  - name: "FDIP — Fertilizer Demand Intelligence Platform"
+    sponsor: "RTGS, Govt. of AP"
+    status: "Ongoing"
+    description: "Dealer/district-level Urea, DAP, and NPK demand forecasting PoC for AP's Dept of Agriculture, built on real iFMS point-of-sale transaction data with automated multi-source data refresh and a risk-scoring dashboard"
+    tech: ["Python", "XGBoost", "scikit-learn", "Pandas", "Streamlit", "Plotly", "BeautifulSoup", "pdfplumber"]
+    tags: ["data_scientist", "ml", "data_analyst", "data_engineer", "bi", "bi_developer", "risk_analyst", "govt", "forecasting"]
+    bullets:
+      - text: "Built a dealer-level fertilizer demand forecasting pipeline on real iFMS point-of-sale data across ~9,000 dealers in Andhra Pradesh, cutting backtested error from 19.1% to 9.3% against a real held-out month"
+        tags: ["data_scientist", "ml", "forecasting", "data_analyst", "govt"]
+      - text: "Engineered an automated refresh pipeline integrating IMD rainfall, NOAA ONI, World Bank commodity prices, and government fertilizer bulletins, re-triggering the forecast only when a real model input changed"
+        tags: ["data_engineer", "data_pipeline", "automation", "govt"]
+      - text: "Built a Streamlit dashboard scoring all 26 AP districts on supply health, ranking dealer-level risk alerts, and auto-generating stock pre-positioning recommendations for at-risk districts"
+        tags: ["bi", "bi_developer", "data_analyst", "risk_analyst", "govt"]
+      - text: "Validated model accuracy via a 26-district cross-check against official government Urea sales data and a 1,000-resample bootstrap confirming the improved method outperformed the prior approach in every resample"
+        tags: ["data_scientist", "risk_analyst", "data_analyst", "govt"]
+
   - name: "AI Coder — Agentic VS Code Extension"
     description: "Agentic AI-powered VS Code extension for automated code generation and developer workflows"
     tech: ["TypeScript", "VS Code Extension API", "OpenAI API", "Claude API", "Gemini API", "Groq", "Ollama"]
@@ -161,6 +177,10 @@ projects:
         tags: ["ai_engineer", "llm", "rag"]
 
 certifications:
+  - name: "Investment Banking Job Simulation — Bank of America"
+    issuer: "Forage"
+    date: "2026"
+    tags: ["investment_banking", "finance", "financial_analyst", "financial_modeling", "capital_markets", "research_analyst"]
   - name: "GenAI Powered Data Analytics"
     issuer: "Forage"
     date: "2025"
