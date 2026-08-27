@@ -177,6 +177,10 @@ projects:
         tags: ["ai_engineer", "llm", "rag"]
 
 certifications:
+  - name: "Investment Banking Job Simulation — Citi"
+    issuer: "Forage"
+    date: "2026"
+    tags: ["investment_banking", "finance", "financial_analyst", "financial_modeling", "valuation", "enterprise_valuation", "forecasting", "research_analyst", "company_analysis"]
   - name: "Investment Banking Job Simulation — Bank of America"
     issuer: "Forage"
     date: "2026"
