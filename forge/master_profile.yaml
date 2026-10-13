@@ -11,7 +11,7 @@ education:
     institution: "Sri Ramachandra Institute of Higher Education and Research"
     location: "Chennai, Tamil Nadu"
     dates: "2022 – 2026"
-    gpa: "8.40 / 10"
+    gpa: "8.45 / 10"
     highlights:
       - "Relevant coursework: Machine Learning, NLP, Knowledge Graphs, Data Structures, Statistics, DBMS"
 
@@ -29,14 +29,14 @@ experience:
     role: "AI/Data Analytics Intern"
     location: ""
     dates: "Feb 2026 – Present"
-    tags: ["risk_analyst", "compliance", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance"]
+    tags: ["risk_analyst", "compliance", "ai_engineer", "data_analyst", "python", "llm", "rag", "data_scientist", "decision_engine", "govt", "finance", "data_quality", "data_engineer", "automation"]
     bullets:
-      - text: "Built a risk-stratified decision engine for the AP Zero Maternal Death Mission that classifies 225,000+ pregnancies across 29 districts into Low/High/Critical risk tiers and auto-generates 9 clinical alert types (High BP, Low Haemoglobin, Eclampsia Warning) to trigger field worker interventions"
-        tags: ["risk_analyst", "compliance", "ai_engineer", "decision_engine", "data_analyst", "finance"]
+      - text: "Operating within the Data Quality Team — the internship's core, highest-priority team — on Citizen 360, an enterprise/data-lake-scale citizen platform for Andhra Pradesh's 5.5+ crore population across every state department, driving data quality checks, profiling, and automation across the full assessment sequence (saturation finding, scope definition, deviation analysis)"
+        tags: ["data_quality", "data_engineer", "compliance", "govt", "automation", "data_analyst"]
+      - text: "Built a risk-stratified decision engine for the AP Zero Maternal Death Mission — classifying 225,000+ pregnancies across 29 districts into Low/High/Critical tiers and auto-generating clinical alerts to trigger field worker interventions — on a Neo4j knowledge graph of 2.7M+ relationships spanning 724 mandals and 2,488 facilities, validated by a 10-stage, 5-validator NL-to-Cypher pipeline"
+        tags: ["risk_analyst", "compliance", "ai_engineer", "decision_engine", "data_analyst", "finance", "llm", "rag", "data_scientist"]
       - text: "Authored Business Requirements Documents and PoC architecture specifications for multiple government AI use cases — translating domain expert requirements into implementable ML and graph-based system designs"
         tags: ["risk_analyst", "compliance", "data_analyst", "ai_engineer", "govt"]
-      - text: "Architected a Neo4j knowledge graph over 2M+ government health records spanning 724 mandals and 2,488 facilities, with a 6-stage NL-to-Cypher validation pipeline ensuring data integrity and blocking invalid queries before execution"
-        tags: ["compliance", "ai_engineer", "llm", "rag", "data_scientist", "data_analyst"]
       - text: "Developing an AI-driven farmer welfare analytics PoC to surface crop and disbursement insights from large-scale government agricultural datasets for state-level policy decision support"
         tags: ["ai_engineer", "data_analyst", "govt", "data_scientist"]
 
@@ -75,13 +75,12 @@ experience:
 
 projects:
   - name: "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)"
-    sponsor: "RTGS, Govt. of AP"
     description: "Graph RAG pipeline for natural-language governance queries over a large-scale knowledge graph, with an interactive analytics dashboard"
     tech: ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Groq", "Streamlit"]
     tags: ["llm", "rag", "genai", "ai_engineer", "data_scientist", "graph", "knowledge_graph", "bi", "bi_developer", "data_analyst"]
     github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Architected a Graph RAG pipeline using Neo4j, LangChain, FAISS, and Gemini to support natural-language governance queries across 25+ entity types over a knowledge graph with 538k+ nodes and 2M+ relationships"
+      - text: "Architected a Graph RAG pipeline using Neo4j, LangChain, FAISS, and Gemini to support natural-language governance queries across 19 entity types over a knowledge graph with 916k+ nodes and 1.3M+ relationships"
         tags: ["llm", "rag", "graph", "ai_engineer", "genai"]
       - text: "Built a Streamlit analytics dashboard enabling stakeholders to explore and visualise governance data, query results, and entity relationships without writing code"
         tags: ["bi", "bi_developer", "data_analyst", "data_scientist"]
@@ -98,11 +97,11 @@ projects:
     tags: ["risk_analyst", "compliance", "ai_engineer", "data_scientist", "decision_engine", "govt", "data_analyst", "bi", "financial_analyst"]
     github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Engineered a risk-stratified decision engine classifying 225,000+ pregnancies across 29 AP districts into Low/High/Critical tiers, auto-generating 9 clinical alert types to drive targeted field worker interventions"
+      - text: "Engineered a risk-stratified decision engine classifying 225,000+ pregnancies across 29 AP districts into Low/High/Critical tiers, auto-generating clinical alerts to drive targeted field worker interventions"
         tags: ["risk_analyst", "compliance", "decision_engine", "data_analyst", "govt"]
-      - text: "Built a 6-stage NL-to-Cypher validation pipeline (intent detection, schema validation, aggregation fixing, alignment checks) querying a graph of 2M+ relationships across 724 mandals, hard-blocking invalid queries before execution"
+      - text: "Built a 10-stage, 5-validator NL-to-Cypher pipeline (schema-path validation, aggregation-distinct fixing, geography-backbone checks, intent-alignment checks) querying a graph of 2.7M+ relationships across 724 mandals, hard-blocking invalid queries before execution"
         tags: ["ai_engineer", "compliance", "data_scientist", "govt", "risk_analyst"]
-      - text: "Developed a 4-mode Streamlit dashboard (Dashboard, Case Tracker, Facility View, AI Query Engine) giving district health officers real-time KPIs, drill-through analysis, and natural-language data access across 2,488 facilities"
+      - text: "Developed a 4-mode Streamlit dashboard (BRD Browser, CRUD, Alerts, AI Query) giving district health officers real-time KPIs, drill-through analysis, and natural-language data access across 2,488 facilities"
         tags: ["data_analyst", "bi", "bi_developer", "govt", "risk_analyst", "data_scientist"]
 
   - name: "FDIP — Fertilizer Demand Intelligence Platform"
@@ -112,7 +111,7 @@ projects:
     tech: ["Python", "XGBoost", "scikit-learn", "Pandas", "Streamlit", "Plotly", "BeautifulSoup", "pdfplumber"]
     tags: ["data_scientist", "ml", "data_analyst", "data_engineer", "bi", "bi_developer", "risk_analyst", "govt", "forecasting"]
     bullets:
-      - text: "Built a dealer-level fertilizer demand forecasting pipeline on real iFMS point-of-sale data across ~9,000 dealers in Andhra Pradesh, cutting backtested error from 19.1% to 9.3% against a real held-out month"
+      - text: "Built a dealer-level fertilizer demand forecasting pipeline on real iFMS point-of-sale data across 17,925 dealers in Andhra Pradesh, cutting backtested error from 19.1% to 9.3% against a real held-out month"
         tags: ["data_scientist", "ml", "forecasting", "data_analyst", "govt"]
       - text: "Engineered an automated refresh pipeline integrating IMD rainfall, NOAA ONI, World Bank commodity prices, and government fertilizer bulletins, re-triggering the forecast only when a real model input changed"
         tags: ["data_engineer", "data_pipeline", "automation", "govt"]
@@ -141,11 +140,11 @@ projects:
     tags: ["ml", "data_scientist", "ai_engineer", "agentic", "llm", "rag", "bi", "bi_developer", "data_analyst", "risk_analyst", "compliance", "finance", "credit_risk"]
     github: "github.com/Dheemanth2610"
     bullets:
-      - text: "Building an XGBoost-based credit default prediction model with SHAP-driven explainability for individual risk scores"
+      - text: "Building an XGBoost-based credit default prediction model, using SHAP to make every individual risk score explainable rather than a black-box output"
         tags: ["ml", "data_scientist", "risk_analyst", "credit_risk", "finance"]
-      - text: "Designing a multi-agent pipeline (data, scoring, underwriter, and policy-QA agents) using LangChain to generate explainable underwriting memos and approve/reject recommendations"
+      - text: "Designing a four-agent LangChain pipeline — data, scoring, underwriter, and policy-QA — producing explainable underwriting memos and approve/reject recommendations"
         tags: ["ai_engineer", "agentic", "llm", "risk_analyst"]
-      - text: "Developing a Power BI dashboard for portfolio-level risk distribution and case-level drill-through"
+      - text: "Developing a Power BI dashboard that gives risk officers both portfolio-level risk distribution and case-level drill-through in a single view"
         tags: ["bi", "bi_developer", "data_analyst", "risk_analyst", "finance"]
 
   - name: "Agentic Financial Filings Research Assistant"
