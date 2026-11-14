@@ -2,23 +2,34 @@ name: Keep Render Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes
+    - cron: "*/10 * * * *"   # every 10 minutes (Render free tier sleeps after 15 idle)
   workflow_dispatch:           # manual trigger from GitHub Actions tab
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render health endpoint
+      - name: Ping Render health endpoint (also keeps Supabase awake)
         run: |
-          # --max-time 35: Render cold start takes 20-30s; old 15s was too short
-          # || true: a sleeping/waking Render should never fail the job —
-          #          the whole point is to wake it up, not to verify it's awake
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 35 \
-            https://career-scout-pwa.onrender.com/health || echo "000")
-          echo "Health check returned HTTP $STATUS"
-          if [ "$STATUS" = "200" ]; then
-            echo "Render is warm"
-          else
-            echo "Render waking up (status $STATUS — normal on cold start)"
-          fi
+          # /health runs a real DB query, so each ping also counts as Supabase
+          # activity (free-tier projects pause after ~7 idle days).
+          # Retry through Render cold starts (30-60s). Only a confirmed 503
+          # (DB down) or repeated no-response fails the job — a failed run makes
+          # GitHub email the repo owner instead of the outage going unnoticed.
+          URL=https://career-scout-pwa.onrender.com/health
+          for attempt in 1 2 3; do
+            BODY=$(curl -s --max-time 60 -w "\n%{http_code}" "$URL" || echo -e "\n000")
+            STATUS=$(echo "$BODY" | tail -n1)
+            echo "Attempt $attempt: HTTP $STATUS — $(echo "$BODY" | head -n1)"
+            if [ "$STATUS" = "200" ]; then
+              echo "Render + DB healthy"
+              exit 0
+            fi
+            if [ "$STATUS" = "503" ]; then
+              echo "::error::API is up but the database is DOWN (Supabase paused?). Restore it in the Supabase dashboard."
+              exit 1
+            fi
+            sleep 20
+          done
+          echo "::error::Render did not respond after 3 attempts."
+          exit 1

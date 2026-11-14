@@ -80,6 +80,7 @@ class _PgConn:
             user=url.username,
             password=url.password,
             sslmode="require",
+            connect_timeout=10,
         )
         self._conn.autocommit = False
         self._RDC = psycopg2.extras.RealDictCursor

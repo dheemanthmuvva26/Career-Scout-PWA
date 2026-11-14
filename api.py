@@ -63,12 +63,26 @@ async def require_api_key(request: Request, call_next):
             return JSONResponse(status_code=401, content={"detail": "Invalid or missing API key"})
     return await call_next(request)
 
-# Initialise DB on startup
+# Initialise DB on startup. A failed init must not crash the process: when
+# Supabase pauses (free tier, ~7 days idle) a crash-on-boot made the whole API
+# go silent. Instead stay up, report the DB as down via /health, and retry
+# init on the next health check once the DB is reachable again.
+_db_ready = False
+
+def _try_init_db() -> Optional[str]:
+    global _db_ready
+    try:
+        init_db()
+        _db_ready = True
+        return None
+    except Exception as e:
+        return str(e)
+
 @app.on_event("startup")
 def startup():
     os.makedirs("shared/resumes", exist_ok=True)
-    init_db()
-    print("DB initialised")
+    err = _try_init_db()
+    print("DB initialised" if err is None else f"DB init FAILED (will retry via /health): {err}")
     # Pre-download typst on Render (Linux) during startup so the first
     # forge request doesn't pay the 30-60s download cost inside the 90s timeout
     try:
@@ -82,11 +96,26 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20261114-webpush-rls"
+_BUILD = "20261114-resilient-health"
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "build": _BUILD}
+    # Touches the DB on purpose: the keepalive pings this every 10 min, and a
+    # real query is what keeps the Supabase free-tier project from pausing.
+    from core.db import connect
+    try:
+        if not _db_ready:
+            err = _try_init_db()
+            if err:
+                raise RuntimeError(err)
+        with connect() as conn:
+            conn.execute("SELECT 1").fetchone()
+    except Exception as e:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "degraded", "build": _BUILD, "db": "down", "error": str(e)[:300]},
+        )
+    return {"status": "ok", "build": _BUILD, "db": "ok"}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
