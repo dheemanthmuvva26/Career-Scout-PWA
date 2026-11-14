@@ -6,7 +6,7 @@ Tracks already-fired skills in shared/.gaps_fired.json so each skill
 triggers a roadmap message exactly once (until that file is deleted to reset).
 
 Usage: python insights/gaps.py
-Prints one Telegram message per newly triggered skill, separated by ---NEXT---
+Prints one notification message per newly triggered skill, separated by ---NEXT---
 """
 
 import json

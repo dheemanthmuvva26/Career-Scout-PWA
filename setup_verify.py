@@ -117,13 +117,13 @@ groq_key = os.getenv("GROQ_API_KEY", "")
 check("GROQ_API_KEY set", bool(groq_key),
       "Add to .env: GROQ_API_KEY=your_key  (get from console.groq.com)")
 
-tg_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
-check("TELEGRAM_BOT_TOKEN set", bool(tg_token),
-      "Add to .env: TELEGRAM_BOT_TOKEN=your_token  (get from @BotFather)")
+vapid_priv = os.getenv("VAPID_PRIVATE_KEY", "")
+check("VAPID_PRIVATE_KEY set", bool(vapid_priv),
+      "Generate with py_vapid and add to .env: VAPID_PRIVATE_KEY=<base64-encoded PEM>")
 
-tg_chat = os.getenv("TELEGRAM_CHAT_ID", "")
-check("TELEGRAM_CHAT_ID set", bool(tg_chat),
-      "Add to .env: TELEGRAM_CHAT_ID=your_id  (get from @userinfobot)")
+vapid_pub = os.getenv("VAPID_PUBLIC_KEY", "")
+check("VAPID_PUBLIC_KEY set", bool(vapid_pub),
+      "Add to .env: VAPID_PUBLIC_KEY=<base64url public key> (and as NEXT_PUBLIC_VAPID_PUBLIC_KEY in pwa/.env.local)")
 
 
 print("\n── Groq API connection ──────────────────────────────────────")

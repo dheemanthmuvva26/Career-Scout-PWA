@@ -56,7 +56,7 @@
       "name": "Notify Ghosted",
       "type": "n8n-nodes-base.code",
       "parameters": {
-        "jsCode": "const ghosted = $json.ghosted || [];\nconst messages = [];\nfor (const j of ghosted) {\n  messages.push({ text: `👻 Auto-marked as ghosted (14 days, no update):\\n*${j.title}* @ ${j.company}\\nJob ID: ${j.id}` });\n}\nif (ghosted.length === 0) {\n  return [];\n}\nreturn messages.map(m => ({ json: m }));"
+        "jsCode": "const ghosted = $json.ghosted || [];\nconst messages = [];\nfor (const j of ghosted) {\n  messages.push({ title: \"Auto-marked as ghosted\", body: `${j.title} @ ${j.company} — no update in 14 days`, url: \"/tracker\" });\n}\nif (ghosted.length === 0) {\n  return [];\n}\nreturn messages.map(m => ({ json: m }));"
       },
       "position": [
         920,
@@ -67,26 +67,27 @@
     {
       "id": "4bba384f-0b2b-4e59-9f01-993825f2177f",
       "name": "Send Ghost Notifications",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.text }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, body: $json.body, url: $json.url }) }}",
+        "options": {}
       },
       "position": [
         1160,
         300
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     },
     {
       "id": "4c2fcb9b-2dc3-4bf6-bd89-f3f0bcaf3ddb",
@@ -106,7 +107,7 @@
       "name": "Format Nudge Message",
       "type": "n8n-nodes-base.code",
       "parameters": {
-        "jsCode": "const j = $json;\nconst due = j.follow_up_due ? j.follow_up_due.substring(0, 10) : '?';\nreturn [{ json: {\n  text: `⏰ *Follow-up due:* ${j.title} @ ${j.company}\\nApplied on: ${due}\\n\\nUpdate status:\\n/interview ${j.id}  |  /rejected ${j.id}  |  /ghosted ${j.id}`\n}}];"
+        "jsCode": "const j = $json;\nconst due = j.follow_up_due ? j.follow_up_due.substring(0, 10) : '?';\nreturn [{ json: {\n  title: \"Follow-up due\",\n  body: `${j.title} @ ${j.company} — applied ${due}. Open Tracker to update status.`,\n  url: \"/tracker\"\n}}];"
       },
       "position": [
         680,
@@ -117,26 +118,27 @@
     {
       "id": "ebcb35c5-e516-4326-91cc-628067314829",
       "name": "Send Follow-up Nudge",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.text }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: $json.title, body: $json.body, url: $json.url }) }}",
+        "options": {}
       },
       "position": [
         920,
         500
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     }
   ],
   "connections": {

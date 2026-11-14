@@ -24,7 +24,6 @@ IMPORT_ORDER = [
     "morning_digest",
     "db_backup",
     "followup",
-    "telegram_bot",
     "weekly_insights",
     "gmail_monitor",
 ]
@@ -113,13 +112,9 @@ def main() -> None:
         print()
         print("Next steps:")
         print("  1. Open http://localhost:5678")
-        print("  2. In each workflow: click Telegram / Gmail / Google Sheets nodes")
+        print("  2. In each workflow: click Gmail / Google Sheets nodes")
         print("     and select your saved credential")
         print("  3. Activate each workflow (toggle top-right inside the workflow)")
-        print()
-        print("  telegram_bot: copy the Webhook URL from the Telegram Trigger node,")
-        print("  then register it with Telegram:")
-        print("  https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WEBHOOK_URL>")
 
 
 if __name__ == "__main__":

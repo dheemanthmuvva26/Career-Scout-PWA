@@ -69,26 +69,27 @@
     {
       "id": "fe2a77fb-3832-41da-8315-44abe7336827",
       "name": "Send Weekly Report",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.report }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Weekly Insights\", body: $json.report, url: \"/insights\" }) }}",
+        "options": {}
       },
       "position": [
         680,
         200
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     },
     {
       "id": "12ea47a8-16a0-4b06-899d-3fe39d925386",
@@ -106,26 +107,27 @@
     {
       "id": "d0066a5c-7945-4e62-a5ba-68aa26bf6fd0",
       "name": "Send Gap Roadmaps",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.messages }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Skill Gap\", body: $json.messages, url: \"/insights\" }) }}",
+        "options": {}
       },
       "position": [
         920,
         400
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     },
     {
       "id": "937a3677-3358-4c75-9eb3-533cc6de13d0",
@@ -143,26 +145,27 @@
     {
       "id": "283aff6c-75cf-4a55-af68-bf72b4efde19",
       "name": "Send Hiring Signals",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.messages }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Hiring Signal\", body: $json.messages, url: \"/insights\" }) }}",
+        "options": {}
       },
       "position": [
         920,
         600
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     }
   ],
   "connections": {

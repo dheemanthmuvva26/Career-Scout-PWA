@@ -2,7 +2,7 @@
 Scout pipeline — full run orchestration.
 
 run_scout() is called by:
-  - POST /scout  (FastAPI, triggered by n8n or /scout Telegram command)
+  - POST /scout  (FastAPI, triggered by n8n or the PWA's Scout button)
   - CLI: python -m scrapers.pipeline
 
 Flow per (company, role) pair:
@@ -16,7 +16,7 @@ Then per job:
   db.upsert_job()     → write new records
   scorer.score_pending() → Groq score all unscored (batched at end)
 
-Returns a summary dict consumed by api.py for Telegram notification.
+Returns a summary dict consumed by api.py for the push notification.
 """
 
 import logging
@@ -221,11 +221,11 @@ def run_scout() -> dict:
     return summary
 
 
-# ── Telegram message builder ──────────────────────────────────────────────────
+# ── Notification message builder (CLI preview only) ────────────────────────────
 
 def format_new_jobs_alert(min_score: float = 3.5) -> str:
     """
-    Build a Telegram message for newly scored jobs above min_score
+    Build an alert message for newly scored jobs above min_score
     that are hot or active urgency.
     """
     jobs = db.get_jobs(status="new", min_score=min_score, limit=10)
@@ -268,6 +268,6 @@ if __name__ == "__main__":
 
     alert = format_new_jobs_alert()
     if alert:
-        print("\n=== Telegram Alert Preview ===")
+        print("\n=== New Jobs Alert Preview ===")
         print(alert)
     sys.exit(0)

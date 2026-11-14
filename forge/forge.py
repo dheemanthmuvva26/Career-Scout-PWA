@@ -10,7 +10,7 @@ Flow:
 Output:
   - PDF saved to shared/resumes/<company>_<role>_<date>.pdf
   - resume_path written to DB
-  - ATS summary printed to stdout (captured by n8n / Telegram)
+  - ATS summary printed to stdout (captured by n8n)
 
 Requires:
   - typst on PATH: winget install Typst.Typst
@@ -129,7 +129,7 @@ def _skills_block(skills_section: dict, skills_order: list[str]) -> str:
 def _experience_block(selected_experience: list[dict], block_gap: str = "8pt") -> str:
     blocks = []
     for exp in selected_experience:
-        bullets = "\n".join(f"- {b}" for b in exp.get("bullets", []))
+        bullets = "\n".join(f"- {_escape_typst(b)}" for b in exp.get("bullets", []))
         loc = f", {_escape_typst(exp['location'])}" if exp.get("location") else ""
         role_company = f"*{_escape_typst(exp.get('role',''))} — {_escape_typst(exp.get('company',''))}{loc}*"
         dates = _escape_typst(exp.get("dates", ""))
@@ -145,7 +145,7 @@ def _projects_block(selected_projects: list[dict], master_projects: list[dict], 
     for proj in selected_projects:
         name = proj.get("name", "")
         tech_str = ", ".join(proj.get("tech", []))
-        bullets = "\n".join(f"- {b}" for b in proj.get("bullets", []))
+        bullets = "\n".join(f"- {_escape_typst(b)}" for b in proj.get("bullets", []))
         header = f"*{name}*"
         sponsor = sponsors.get(name)
         if sponsor:
@@ -191,7 +191,7 @@ def _certs_block(certifications: list[dict]) -> str:
 def _escape_typst(s: str) -> str:
     """Escape characters that Typst markup would otherwise interpret
     (e.g. '@' in an email address starts a label reference)."""
-    for ch in ("\\", "@", "#", "_", "*", "<", ">", "$", "`"):
+    for ch in ("\\", "@", "#", "_", "*", "<", ">", "$", "`", "~"):
         s = s.replace(ch, "\\" + ch)
     return s
 
@@ -222,16 +222,16 @@ def _contact_line(p: dict) -> str:
 _SPACING_LEVELS = [
     {"font_size": "10pt",   "margin_x": "0.45in", "margin_y": "0.25in",
      "par_leading": "0.45em", "par_spacing": "0.7em",
-     "heading_gap_before": "10pt", "heading_gap_after": "5pt", "block_gap": "8pt"},
+     "heading_gap_before": "12pt", "heading_gap_after": "3pt", "block_gap": "8pt"},
     {"font_size": "9.7pt",  "margin_x": "0.42in", "margin_y": "0.22in",
      "par_leading": "0.42em", "par_spacing": "0.6em",
-     "heading_gap_before": "8pt",  "heading_gap_after": "4pt", "block_gap": "6pt"},
+     "heading_gap_before": "10pt", "heading_gap_after": "2.5pt", "block_gap": "6pt"},
     {"font_size": "9.4pt",  "margin_x": "0.4in",  "margin_y": "0.2in",
      "par_leading": "0.4em",  "par_spacing": "0.5em",
-     "heading_gap_before": "6pt",  "heading_gap_after": "3pt", "block_gap": "4pt"},
+     "heading_gap_before": "8pt",  "heading_gap_after": "2pt", "block_gap": "4pt"},
     {"font_size": "9.2pt",  "margin_x": "0.38in", "margin_y": "0.18in",
      "par_leading": "0.38em", "par_spacing": "0.45em",
-     "heading_gap_before": "5pt",  "heading_gap_after": "2pt", "block_gap": "3pt"},
+     "heading_gap_before": "6pt",  "heading_gap_after": "1.5pt", "block_gap": "3pt"},
 ]
 
 
@@ -625,7 +625,7 @@ Respond ONLY with valid JSON:
         return {"error": "ATS check parsing failed — try again"}
 
 
-def _telegram_message(result: dict) -> str:
+def _summary_message(result: dict) -> str:
     if result.get("error"):
         return f"❌ Resume generation failed:\n{result['error']}"
 
@@ -653,5 +653,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     result = generate_resume(args.job_id)
-    print(_telegram_message(result))
+    print(_summary_message(result))
     sys.exit(0 if result.get("ok") else 1)

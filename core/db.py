@@ -278,10 +278,25 @@ def _init_pg() -> None:
             skill    TEXT NOT NULL,
             added_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS push_subscriptions (
+            endpoint   TEXT PRIMARY KEY,
+            p256dh     TEXT NOT NULL,
+            auth       TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )""",
     ]
     with connect() as conn:
         for stmt in stmts:
             conn.execute(stmt)
+        # Supabase exposes every public table over its REST API to anyone
+        # holding the anon key (which ships in the PWA bundle). RLS with no
+        # policies blocks that; this backend connects as `postgres`, which
+        # bypasses RLS, so it's unaffected.
+        tables = conn.execute(
+            "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+        ).fetchall()
+        for row in tables:
+            conn.execute(f'ALTER TABLE public."{row["tablename"]}" ENABLE ROW LEVEL SECURITY')
 
 
 def _init_sqlite() -> None:
@@ -333,6 +348,10 @@ def _init_sqlite() -> None:
         conn.execute("""
         CREATE TABLE IF NOT EXISTS confirmed_skills (
             id TEXT PRIMARY KEY, skill TEXT NOT NULL, added_at TEXT NOT NULL)""")
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+            endpoint TEXT PRIMARY KEY, p256dh TEXT NOT NULL,
+            auth TEXT NOT NULL, created_at TEXT NOT NULL)""")
         for idx in [
             "CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status)",
             "CREATE INDEX IF NOT EXISTS idx_jobs_score   ON jobs(score)",
@@ -486,7 +505,8 @@ def _resolve_id(job_id: str, conn) -> str:
     return row["id"] if row else job_id
 
 def get_jobs(status: Optional[str] = None, min_score: float = 0.0,
-             urgency: Optional[str] = None, limit: int = 100) -> list[dict]:
+             urgency: Optional[str] = None, outcome: Optional[str] = None,
+             limit: int = 100) -> list[dict]:
     query = "SELECT * FROM jobs WHERE score >= ?"
     params: list = [min_score]
     if status:
@@ -495,6 +515,9 @@ def get_jobs(status: Optional[str] = None, min_score: float = 0.0,
     if urgency:
         query += " AND urgency=?"
         params.append(urgency)
+    if outcome:
+        query += " AND outcome=?"
+        params.append(outcome)
     # Recency, not score — this feeds the Jobs tab, and a job's fit score
     # (or -1 while unscored) shouldn't determine whether a freshly imported
     # job is even visible. Score is still shown per-card for triage.
@@ -858,6 +881,31 @@ def get_confirmed_skills() -> list[dict]:
     with connect() as conn:
         rows = conn.execute("SELECT * FROM confirmed_skills ORDER BY skill").fetchall()
     return [dict(r) for r in rows]
+
+
+# ── Push subscriptions ───────────────────────────────────────────────────────
+# Web Push replaces the old Telegram bot for proactive notifications (digest,
+# scout results, follow-up nudges). One row per browser/device that has
+# granted notification permission and subscribed.
+
+def save_push_subscription(endpoint: str, p256dh: str, auth: str) -> None:
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO push_subscriptions (endpoint, p256dh, auth, created_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(endpoint) DO UPDATE SET p256dh=excluded.p256dh, auth=excluded.auth
+        """, (endpoint, p256dh, auth, now_iso()))
+
+
+def get_push_subscriptions() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute("SELECT * FROM push_subscriptions").fetchall()
+    return [dict(r) for r in rows]
+
+
+def delete_push_subscription(endpoint: str) -> None:
+    with connect() as conn:
+        conn.execute("DELETE FROM push_subscriptions WHERE endpoint=?", (endpoint,))
 
 
 def remove_confirmed_skill(skill_id: str) -> bool:

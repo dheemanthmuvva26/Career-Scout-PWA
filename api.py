@@ -31,7 +31,9 @@ from core.db import (
     get_forage_sims, set_forage_sim_completed,
     find_forage_matches_for_companies, normalize_company,
     add_confirmed_skill, get_confirmed_skills, remove_confirmed_skill,
+    save_push_subscription, delete_push_subscription,
 )
+from core import push as push_lib
 
 app = FastAPI(title="Career Scout API", version="1.0.0")
 
@@ -80,7 +82,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20260701-strict-one-page"
+_BUILD = "20261114-webpush-rls"
 
 @app.get("/health")
 def health():
@@ -101,13 +103,14 @@ def list_jobs(
     status: Optional[str] = None,
     min_score: float = -1.0,
     urgency: Optional[str] = None,
+    outcome: Optional[str] = None,
     limit: int = 50,
 ):
     # Default includes score=-1 (not-yet-scored) jobs — otherwise a job whose
     # background scoring call fails or hasn't run yet (rate limit, cold
     # backend, transient error) silently vanishes from every tab in the feed
     # even though it saved successfully.
-    return get_jobs(status=status, min_score=min_score, urgency=urgency, limit=limit)
+    return get_jobs(status=status, min_score=min_score, urgency=urgency, outcome=outcome, limit=limit)
 
 
 @app.get("/jobs/digest")
@@ -304,7 +307,7 @@ def _run_scout_task():
 @app.post("/scout")
 def trigger_scout(background_tasks: BackgroundTasks):
     """
-    Triggered by n8n schedule or /scout Telegram command.
+    Triggered by n8n schedule or the PWA's Scout button.
     Runs the full scout pipeline in the background.
     Returns immediately; poll GET /scout/last for the result.
     """
@@ -322,7 +325,7 @@ def last_scout_summary():
 
 @app.get("/insights/weekly")
 def insights_weekly():
-    """Run the weekly report and return the Telegram-formatted string."""
+    """Run the weekly report and return the formatted summary string."""
     from insights.weekly import build_report
     return {"report": build_report()}
 
@@ -371,11 +374,11 @@ def trigger_forge(job_id: str, profile: str | None = None, body: ForgeBody = For
 
     def _run():
         try:
-            from forge.forge import generate_resume, _telegram_message
+            from forge.forge import generate_resume, _summary_message
             result = generate_resume(job_id, profile_override=profile,
                                      ats_hints=body.ats_hints)
             _forge_jobs[token] = {"status": "done", **result,
-                                  "telegram_message": _telegram_message(result)}
+                                  "summary_message": _summary_message(result)}
         except Exception as e:
             _forge_jobs[token] = {"status": "done", "error": str(e)}
         def _cleanup():
@@ -423,403 +426,46 @@ def forge_ats_check(job_id: str):
     return ats_check(job_id)
 
 
-# ── Telegram bot command handler ─────────────────────────────────────────────
+# ── Web Push (proactive notifications — replaces the old Telegram bot) ─────────
 
-HELP_TEXT = """🤖 *Career Scout — Command Reference*
-
-📋 *Browsing Jobs*
-/digest — Today's top scored matches
-/jobs — List latest new jobs (score ≥ 3.5)
-/job <id> — Full detail: score, skills, fit summary
-
-📩 *Tracking Applications*
-/apply <id> — Mark as applied, sets 7-day follow-up reminder
-/interview <id> — Mark interview received
-/offer <id> — Mark offer received
-/rejected <id> [reason] — Mark as rejected
-/ghosted <id> — Mark as ghosted (no response after 14 days)
-/note <id> <text> — Add a private note to a job
-
-📎 *Import*
-/import <url> — Save a job from LinkedIn or any company career page
-
-📄 *Resumes*
-/resume <id> — Generate ATS-optimised PDF resume for a job
-
-🔍 *Scouting*
-/scout — Trigger a fresh job scan right now
-/stats — Dashboard summary (pipeline counts + interview rate)
-
-⚙️ *Manage Watchlists*
-/add company <name> [url] — Add company to target watchlist
-/add role <title> — Add role keyword to search for
-/blacklist <company name> — Never show jobs from this company again
-
-💡 *Tips*
-• Job IDs appear after each listing — tap to copy, then use in commands
-• Urgency: 🔴 hot (<24h)  🟡 active  ⚪ aging  💀 stale
-• Scores are out of 5 ★
-• /start shows this help any time"""
-
-_URG = {"hot": "🔴", "active": "🟡", "aging": "⚪", "stale": "💀"}
+class PushSubscribeRequest(BaseModel):
+    endpoint: str
+    keys: dict  # {"p256dh": "...", "auth": "..."}
 
 
-# ── Telegram API helpers ──────────────────────────────────────────────────────
-
-TELEGRAM_API = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN', '')}"
-
-# MarkdownV2 reserved characters that must be escaped in dynamic text
-_MD_SPECIAL = set(r"_*[]()~`>#+-=|{}.!")
+class PushUnsubscribeRequest(BaseModel):
+    endpoint: str
 
 
-def _esc(text) -> str:
-    """Escape MarkdownV2 special characters in dynamically interpolated text."""
-    return "".join(("\\" + c) if c in _MD_SPECIAL else c for c in str(text))
+class PushNotifyRequest(BaseModel):
+    title: str
+    body: str
+    url: str = "/dashboard"
 
 
-def _esc_url(url: str) -> str:
-    """Escape characters required inside a MarkdownV2 link's parentheses."""
-    return str(url).replace("\\", "\\\\").replace(")", "\\)")
+@app.get("/push/vapid-public-key")
+def push_vapid_public_key():
+    """The browser needs this to call pushManager.subscribe()."""
+    return {"publicKey": os.environ.get("VAPID_PUBLIC_KEY", "")}
 
 
-def _tg(method: str, **params) -> dict:
-    """Call the Telegram Bot API. Returns the parsed JSON response."""
-    import requests
-    try:
-        r = requests.post(f"{TELEGRAM_API}/{method}", json=params, timeout=10)
-        data = r.json()
-        if not data.get("ok"):
-            print(f"[telegram] {method} failed: {data}")
-        return data
-    except Exception as e:
-        print(f"[telegram] {method} error: {e}")
-        return {"ok": False, "error": str(e)}
-
-
-def _tg_send(chat_id: int, text: str, reply_markup: Optional[dict] = None) -> None:
-    """Send a message. Falls back to plain text if MarkdownV2 parsing fails."""
-    params = {"chat_id": chat_id, "text": text, "parse_mode": "MarkdownV2"}
-    if reply_markup:
-        params["reply_markup"] = reply_markup
-    resp = _tg("sendMessage", **params)
-    if not resp.get("ok"):
-        # MarkdownV2 escaping bug shouldn't make the reply vanish silently —
-        # retry as plain text so the user still sees something.
-        params.pop("parse_mode", None)
-        _tg("sendMessage", **params)
-
-
-def _tg_send_document(chat_id: int, file_path: str, caption: str = "") -> bool:
-    """Upload and send a local file (e.g. a generated resume PDF). Caption is plain text."""
-    import requests
-    try:
-        with open(file_path, "rb") as f:
-            r = requests.post(
-                f"{TELEGRAM_API}/sendDocument",
-                data={"chat_id": chat_id, "caption": caption[:1024]},
-                files={"document": f},
-                timeout=60,
-            )
-        data = r.json()
-        if not data.get("ok"):
-            print(f"[telegram] sendDocument failed: {data}")
-        return bool(data.get("ok"))
-    except Exception as e:
-        print(f"[telegram] sendDocument error: {e}")
-        return False
-
-
-# ── Inline keyboard builders ──────────────────────────────────────────────────
-
-def _job_row(short_id: str) -> list:
-    return [
-        {"text": "📋 Details", "callback_data": f"job:{short_id}"},
-        {"text": "✅ Apply",   "callback_data": f"apply:{short_id}"},
-        {"text": "❌ Skip",    "callback_data": f"skip:{short_id}"},
-    ]
-
-
-def _detail_markup(short_id: str) -> dict:
-    return {"inline_keyboard": [[
-        {"text": "✅ Apply",  "callback_data": f"apply:{short_id}"},
-        {"text": "📄 Resume", "callback_data": f"resume:{short_id}"},
-        {"text": "❌ Reject", "callback_data": f"rejected:{short_id}"},
-    ]]}
-
-
-def _outcome_markup(short_id: str) -> dict:
-    return {"inline_keyboard": [[
-        {"text": "🎉 Interview", "callback_data": f"interview:{short_id}"},
-        {"text": "👎 Rejected",  "callback_data": f"rejected:{short_id}"},
-        {"text": "👻 Ghosted",   "callback_data": f"ghosted:{short_id}"},
-    ]]}
-
-
-class BotRequest(BaseModel):
-    cmd: str
-    args: list[str] = []
-    chat_id: int
-    callback_query_id: Optional[str] = None
-
-
-@app.post("/bot")
-def bot_command(body: BotRequest):
-    """Handle all Telegram bot commands (messages and button taps)."""
-    cmd = body.cmd.lower().strip()
-    args = body.args
-    chat_id = body.chat_id
-
-    # Dismiss the loading spinner on the tapped button, if any
-    cb_id = (body.callback_query_id or "").strip()
-    if cb_id and cb_id.lower() != "null":
-        _tg("answerCallbackQuery", callback_query_id=cb_id)
-
-    # Handle /add sub-commands
-    if cmd == "add" and args:
-        cmd = "add_" + args[0].lower()
-        args = args[1:]
-
-    reply, markup = _dispatch(cmd, args, chat_id)
-    if reply is not None:
-        _tg_send(chat_id, reply, markup)
+@app.post("/push/subscribe")
+def push_subscribe(body: PushSubscribeRequest):
+    save_push_subscription(body.endpoint, body.keys.get("p256dh", ""), body.keys.get("auth", ""))
     return {"ok": True}
 
 
-def _dispatch(cmd: str, args: list[str], chat_id: Optional[int] = None) -> tuple[str, Optional[dict]]:
-    """Returns (reply_text, reply_markup). reply_markup is an inline-keyboard
-    dict or None."""
-    import json as _json
+@app.post("/push/unsubscribe")
+def push_unsubscribe(body: PushUnsubscribeRequest):
+    delete_push_subscription(body.endpoint)
+    return {"ok": True}
 
-    if cmd in ("start", "help"):
-        prefix = "👋 Welcome to *Career Scout*\\!\n\nI scan job boards every 6 hours and send you the best Data / AI / BI roles in India — scored and ranked for your profile.\n\n" if cmd == "start" else ""
-        return prefix + HELP_TEXT, None
 
-    if cmd == "stats":
-        s = get_stats()
-        pct = round(s["interviews"] / s["applied"] * 100) if s["applied"] else 0
-        return (
-            f"📊 *Career Scout Stats*\n\n"
-            f"💼 Total tracked: {s['total']}\n"
-            f"🆕 New / unreviewed: {s['new']}\n"
-            f"📨 Applied: {s['applied']}\n"
-            f"🤝 Interviews: {s['interviews']}\n"
-            f"🎊 Offers: {s['offers']}\n"
-            f"⏳ Unscored: {s['unscored']}\n\n"
-            f"📈 Interview rate: {pct}%"
-        ), None
-
-    if cmd in ("jobs", "digest"):
-        if cmd == "jobs":
-            jobs = get_jobs(status="new", min_score=3.5, limit=5)
-            empty_msg = "No new jobs right now\\. Try /scout to run a fresh scan\\."
-            header = "🗂 *Top new jobs:*\n\n"
-            footer = ""
-        else:
-            import yaml
-            from pathlib import Path
-            cfg = yaml.safe_load((Path(__file__).parent / "config.yaml").read_text())
-            min_score = cfg.get("min_score", 3.5)
-            hot    = get_jobs(min_score=min_score, urgency="hot",    limit=5)
-            active = get_jobs(min_score=min_score, urgency="active", limit=5)
-            combined = {j["id"]: j for j in hot + active}
-            jobs = sorted(combined.values(), key=lambda j: j.get("score") or 0, reverse=True)[:5]
-            empty_msg = "No high-scoring jobs today\\. Try /scout to fetch fresh listings\\."
-            header = "☀️ *Today's top matches:*\n\n"
-            footer = "\n\n_Use the buttons below, or /job <id> for full details\\._"
-
-        if not jobs:
-            return empty_msg, None
-
-        lines = []
-        keyboard = []
-        for j in jobs:
-            sid = j.get('short_id') or j['id']
-            lines.append(
-                f"{_URG.get(j.get('urgency',''), '⚪')} *{_esc(j['title'])}* @ {_esc(j['company'])} "
-                f"\\({(j.get('score') or 0):.1f}★\\)\n"
-                f"  {_esc(j.get('location') or 'N/A')} — `{sid}`"
-            )
-            keyboard.append(_job_row(sid))
-        return header + "\n\n".join(lines) + footer, {"inline_keyboard": keyboard}
-
-    if cmd == "job":
-        if not args:
-            return "Usage: /job <id>", None
-        j = get_job(args[0])
-        if not j:
-            return "Job not found\\. Use /jobs to get valid IDs\\.", None
-        try:
-            d = _json.loads(j.get("score_detail") or "{}")
-        except Exception:
-            d = {}
-        matched = ", ".join(d.get("matched_skills", [])) or "N/A"
-        missing = ", ".join(d.get("missing_skills", [])) or "None"
-        score = (j.get("score") or 0)
-        sid = j.get('short_id') or j['id']
-        url = j.get('url') or ''
-        url_line = f"🔗 [Open posting]({_esc_url(url)})" if url else "🔗 N/A"
-        text = (
-            f"{_URG.get(j.get('urgency',''), '⚪')} *{_esc(j['title'])}* @ {_esc(j['company'])}\n"
-            f"{_esc(j.get('location') or 'N/A')} — Score: {score:.1f}★ — _{_esc(j.get('status','new'))}_\n\n"
-            f"💡 {_esc(d.get('fit_summary', 'No summary.'))}\n\n"
-            f"✅ *Matched:* {_esc(matched)}\n"
-            f"❌ *Missing:* {_esc(missing)}\n\n"
-            f"{url_line}\n\n"
-            f"ID: `{sid}`"
-        )
-        return text, _detail_markup(sid)
-
-    if cmd == "apply":
-        if not args:
-            return "Usage: /apply <job\\_id>", None
-        j = get_job(args[0])
-        if not j:
-            return "Job not found\\. Check the ID\\.", None
-        from datetime import datetime, timedelta, timezone
-        due = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
-        update_job_status(args[0], "applied")
-        update_job_outcome(args[0], "pending")
-        set_follow_up_due(args[0], due)
-        sid = j.get('short_id') or j['id']
-        text = f"✅ Applied to *{_esc(j['title'])}* @ {_esc(j['company'])}\nFollow\\-up reminder set for {due[:10]}\\."
-        return text, _outcome_markup(sid)
-
-    if cmd == "skip":
-        if not args:
-            return "Usage: /skip <job\\_id>", None
-        j = get_job(args[0])
-        if not j:
-            return "Job not found\\.", None
-        update_job_status(args[0], "skipped")
-        return f"⏭️ Skipped *{_esc(j['title'])}* @ {_esc(j['company'])}\\.", None
-
-    if cmd == "interview":
-        if not args:
-            return "Usage: /interview <job\\_id>", None
-        update_job_outcome(args[0], "interview")
-        return "🎉 *Interview scheduled\\!* Marked\\. Go prep — you got this\\!", None
-
-    if cmd == "offer":
-        if not args:
-            return "Usage: /offer <job\\_id>", None
-        update_job_outcome(args[0], "offer")
-        return "🎊 *OFFER received\\! Congratulations\\!* 🍳", None
-
-    if cmd == "rejected":
-        if not args:
-            return "Usage: /rejected <job\\_id> \\[optional reason\\]", None
-        reason = " ".join(args[1:]) or None
-        update_job_outcome(args[0], "rejected", reason)
-        return "👎 Marked as rejected\\. Every no gets you closer to a yes\\.", None
-
-    if cmd == "ghosted":
-        if not args:
-            return "Usage: /ghosted <job\\_id>", None
-        update_job_outcome(args[0], "ghosted")
-        return "👻 Marked as ghosted\\. Auto\\-ghost runs after 14 days anyway\\.", None
-
-    if cmd == "note":
-        if len(args) < 2:
-            return "Usage: /note <job\\_id> <your note text>", None
-        append_note(args[0], " ".join(args[1:]))
-        return "📝 Note saved\\.", None
-
-    if cmd == "blacklist":
-        if not args:
-            return "Usage: /blacklist <company name>", None
-        name = " ".join(args)
-        blacklist_company(name)
-        return f"🚫 *{_esc(name)}* blacklisted\\. No more jobs from them\\.", None
-
-    if cmd == "add_company":
-        if not args:
-            return "Usage: /add company <name> \\[careers\\_url\\]", None
-        import hashlib
-        cid = hashlib.sha256(args[0].lower().encode()).hexdigest()[:16]
-        upsert_company({"id": cid, "name": args[0], "careers_url": args[1] if len(args) > 1 else "", "linkedin_slug": "", "priority": 1, "active": True})
-        return f"🏢 *{_esc(args[0])}* added to watchlist\\.", None
-
-    if cmd == "add_role":
-        if not args:
-            return "Usage: /add role <job title>", None
-        import hashlib
-        title = " ".join(args)
-        rid = hashlib.sha256(title.lower().encode()).hexdigest()[:16]
-        upsert_role({"id": rid, "title": title, "keywords": [], "tags": [], "active": True})
-        return f"🎯 Role *{_esc(title)}* added to watchlist\\.", None
-
-    if cmd == "scout":
-        # Fire-and-forget; already has background task in /scout endpoint
-        import threading
-        from scrapers.pipeline import run_scout
-        threading.Thread(target=run_scout, daemon=True).start()
-        return "🔍 Scout started\\! New jobs will appear in your next digest\\. Check back with /jobs in a few minutes\\.", None
-
-    if cmd == "resume":
-        if not args:
-            return "Usage: /resume <job\\_id>\n\nGenerates an ATS\\-optimised PDF resume tailored to that specific job\\.", None
-        j = get_job(args[0])
-        if not j:
-            return "Job not found\\.", None
-        try:
-            from forge.forge import generate_resume, _telegram_message
-            result = generate_resume(args[0])
-            pdf_path = result.get("pdf_path")
-            if pdf_path and chat_id is not None:
-                ats = result.get("ats_score", -1)
-                ats_str = f"{ats}%" if ats >= 0 else "N/A"
-                caption = (
-                    f"Resume — {result.get('title','')} @ {result.get('company','')}\n"
-                    f"Profile: {result.get('profile_used','')}\n"
-                    f"ATS score estimate: {ats_str}"
-                )
-                if not _tg_send_document(chat_id, pdf_path, caption=caption):
-                    return _telegram_message(result), None
-                return None, None
-            return _telegram_message(result), None
-        except Exception as e:
-            return f"❌ Resume generation failed: {_esc(e)}", None
-
-    if cmd == "import":
-        if not args or not args[0].startswith("http"):
-            return "📎 *Import a job*\n\nUsage: /import <url>\n\nPaste a LinkedIn job URL, or any company career page / ATS job link\\.", None
-        url = args[0]
-        try:
-            from scrapers import dedup
-            from core import urgency, scorer
-            from core.db import upsert_job
-
-            if "linkedin.com" in url:
-                from scrapers.linkedin_url_scraper import fetch_linkedin_job
-                job = fetch_linkedin_job(url)
-            else:
-                from scrapers.generic_url_scraper import fetch_job_from_url
-                job = fetch_job_from_url(url)
-            job["urgency"] = urgency.classify(job.get("posted_date"))
-            result = dedup.process(job)
-
-            if result.action in ("insert", "repost"):
-                upsert_job(job)
-                scorer.score_pending(batch_size=1)
-
-            j = get_job(result.job_id) or job
-            score = j.get("score") or -1
-            score_str = f"{score:.1f}★" if score > 0 else "scoring pending"
-            badge = "✅ *Saved to Career Scout*" if result.action in ("insert", "repost") else "📋 *Already in your tracker*"
-            sid = j.get('short_id') or j.get('id', '?')
-            text = (
-                f"{badge}\n\n"
-                f"*{_esc(j.get('title','Unknown'))}* @ {_esc(j.get('company','Unknown'))}\n"
-                f"📍 {_esc(j.get('location') or 'N/A')}  ·  ⭐ {score_str}\n\n"
-                f"ID: `{sid}`"
-            )
-            return text, _detail_markup(sid)
-        except ValueError as e:
-            return f"❌ {_esc(e)}", None
-        except Exception as e:
-            return f"❌ Could not import: {_esc(e)}", None
-
-    return f"❓ Unknown command: */{_esc(cmd)}*\n\nSend /help to see all available commands\\.", None
+@app.post("/push/notify")
+def push_notify(body: PushNotifyRequest):
+    """Called by n8n (morning digest, scout results, follow-up nudges) instead
+    of the old Telegram sendMessage API."""
+    return push_lib.send_push(body.title, body.body, body.url)
 
 
 # ── LinkedIn URL import ───────────────────────────────────────────────────────
@@ -990,10 +636,10 @@ def batch_import(body: BatchImportRequest):
 
             def _run(jid=job_id_cap, prof=profile_cap, tok=token_cap):
                 try:
-                    from forge.forge import generate_resume, _telegram_message
+                    from forge.forge import generate_resume, _summary_message
                     result = generate_resume(jid, profile_override=prof)
                     _forge_jobs[tok] = {"status": "done", **result,
-                                        "telegram_message": _telegram_message(result)}
+                                        "summary_message": _summary_message(result)}
                 except Exception as exc:
                     _forge_jobs[tok] = {"status": "done", "error": str(exc)}
                 def _cleanup():

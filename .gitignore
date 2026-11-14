@@ -60,3 +60,4 @@ pwa/tsconfig.tsbuildinfo
 pwa/public/sw.js
 pwa/public/workbox-*.js
 pwa/public/swe-worker-*.js
+pwa/public/worker-*.js

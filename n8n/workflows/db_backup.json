@@ -57,26 +57,28 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=⚠️ *DB backup failed!*\n\n{{ $('Run Backup').item.json.stderr || $('Run Backup').item.json.stdout }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"DB backup failed\", body: $('Run Backup').item.json.stderr || $('Run Backup').item.json.stdout || \"\", url: \"/settings\" }) }}",
+        "options": {}
       },
       "id": "c4b3fd2c-1a8e-468b-adb3-37079dd6a696",
       "name": "Alert Failure",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
       "position": [
         900,
         200
-      ],
-      "credentials": {
-        "telegramApi": {
-          "id": "1",
-          "name": "Telegram Bot"
-        }
-      }
+      ]
     }
   ],
   "connections": {

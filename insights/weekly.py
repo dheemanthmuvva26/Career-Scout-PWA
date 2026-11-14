@@ -1,6 +1,6 @@
 """
 Weekly insights report — run every Sunday at 9am.
-Prints a Telegram-formatted report to stdout; n8n captures and sends it.
+Prints a formatted report to stdout; n8n captures it and sends it as a push notification.
 
 Usage: python insights/weekly.py
 """

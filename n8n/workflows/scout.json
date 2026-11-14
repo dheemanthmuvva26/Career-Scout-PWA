@@ -103,26 +103,28 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=🔍 *Scout run complete*\n\nFound: {{ $('Get Summary').item.json.raw_scraped }} raw\nNew: {{ $('Get Summary').item.json.inserted }}\nMerged: {{ $('Get Summary').item.json.merged }}\nScored: {{ $('Get Summary').item.json.scored }}\n\n{{ $json.length > 0 ? '🆕 *Top matches (score ≥ 3.5):*' : 'No new matches above threshold.' }}\n{{ $json.map(j => `${ j.urgency === 'hot' ? '🔴' : '🟡' } *${j.title}* @ ${j.company}\\n   ⭐ ${j.score?.toFixed(1)}  📍 ${j.location || '?'}\\n   ID: \\`${j.id}\\``).join('\\n\\n') }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Scout run complete\", body: `${$('Get Summary').item.json.inserted} new, ${$('Get Summary').item.json.scored} scored. ${$json.length} top match(es) waiting.`, url: \"/jobs\" }) }}",
+        "options": {}
       },
       "id": "bd8fc246-d93b-486e-a437-9a31d4d4d4cc",
       "name": "Send Job Alert",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
       "position": [
         1560,
         200
-      ],
-      "credentials": {
-        "telegramApi": {
-          "id": "1",
-          "name": "Telegram Bot"
-        }
-      }
+      ]
     },
     {
       "parameters": {
@@ -147,26 +149,28 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "=⚠️ *Scraper health alerts:*\n{{ $('Get Summary').item.json.health_alerts.join('\\n') }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Scraper health alert\", body: $('Get Summary').item.json.health_alerts.join('; '), url: \"/settings\" }) }}",
+        "options": {}
       },
       "id": "952d0229-bcc6-48b9-9d59-164e5dbca7cd",
       "name": "Send Health Alert",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
       "position": [
         1560,
         500
-      ],
-      "credentials": {
-        "telegramApi": {
-          "id": "1",
-          "name": "Telegram Bot"
-        }
-      }
+      ]
     }
   ],
   "connections": {

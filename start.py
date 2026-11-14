@@ -1,6 +1,6 @@
 """
 Career Scout — one-command startup
-Starts: Docker/n8n  |  ngrok tunnel  |  FastAPI  |  Telegram webhook
+Starts: Docker/n8n  |  ngrok tunnel  |  FastAPI
 
 Usage:
     python start.py
@@ -25,8 +25,6 @@ try:
 except ImportError:
     pass
 
-BOT_TOKEN  = os.getenv("TELEGRAM_BOT_TOKEN", "")
-CHAT_ID    = os.getenv("TELEGRAM_CHAT_ID", "")
 N8N_KEY    = os.getenv("N8N_API_KEY", "")
 N8N_API    = "http://localhost:5678/api/v1"
 ROOT       = Path(__file__).parent
@@ -60,18 +58,6 @@ def n8n(method, path, body=None):
             return json.loads(r.read())
     except Exception:
         return {}
-
-def tg(endpoint, **kwargs):
-    data = json.dumps(kwargs).encode()
-    req  = urllib.request.Request(
-        f"https://api.telegram.org/bot{BOT_TOKEN}/{endpoint}",
-        data=data, headers={"Content-Type": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=10) as r:
-            return json.loads(r.read())
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
 
 # ── Step 1: Docker / n8n ──────────────────────────────────────────────────────
 step("Starting n8n (Docker)...")
@@ -193,33 +179,7 @@ else:
     if not api_running:
         warn("FastAPI did not start cleanly — check shared/api.log")
 
-# ── Step 6: Register Telegram webhook ─────────────────────────────────────────
-# Uses a fixed path (plain Webhook node — more reliable than telegramTrigger)
-TELEGRAM_WEBHOOK_PATH = "career-scout-telegram"
-
-step("Registering Telegram webhook...")
-webhook_url = f"{ngrok_url}/webhook/{TELEGRAM_WEBHOOK_PATH}"
-result = tg("setWebhook", url=webhook_url, allowed_updates=["message", "callback_query"])
-if result.get("ok"):
-    ok(f"Webhook set: {webhook_url} (messages + button taps)")
-else:
-    warn(f"setWebhook failed: {result}")
-
-# Verify path is live in n8n
-try:
-    req = urllib.request.Request(
-        f"http://localhost:5678/webhook/{TELEGRAM_WEBHOOK_PATH}",
-        data=b"{}", headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=5) as r:
-        ok(f"n8n webhook path responding (HTTP {r.status})")
-except urllib.error.HTTPError as e:
-    if e.code == 404:
-        warn("n8n webhook path 404 — telegram_bot workflow may need reactivation")
-    else:
-        ok(f"n8n webhook path HTTP {e.code}")
-
-# ── Step 8: Activate any inactive workflows ────────────────────────────────────
+# ── Step 6: Activate any inactive workflows ────────────────────────────────────
 step("Activating workflows...")
 
 all_wfs = n8n("GET", "/workflows").get("data", [])
@@ -233,9 +193,9 @@ for wf in all_wfs:
         print(f"    {wf['name']:30s} {status}")
 
 if all_active:
-    ok("All 8 workflows already active")
+    ok("All 7 workflows already active")
 
-# ── Step 9: Final summary ──────────────────────────────────────────────────────
+# ── Step 7: Final summary ──────────────────────────────────────────────────────
 print()
 print("=" * 55)
 print("  Career Scout is LIVE")
@@ -243,11 +203,5 @@ print("=" * 55)
 print(f"  n8n dashboard : http://localhost:5678")
 print(f"  API server    : http://localhost:8000/docs")
 print(f"  ngrok tunnel  : {ngrok_url}")
-print(f"  Telegram bot  : ready — try /stats or /jobs")
+print(f"  PWA           : https://career-scout-red.vercel.app")
 print("=" * 55)
-
-# Send startup notification to Telegram
-tg("sendMessage",
-   chat_id=CHAT_ID,
-   text="Career Scout started. Try /stats or /jobs",
-)

@@ -119,26 +119,27 @@
     {
       "id": "00378bd8-01af-4b73-bb13-28cf02b6e737",
       "name": "Send Email Alert",
-      "type": "n8n-nodes-base.telegram",
+      "type": "n8n-nodes-base.httpRequest",
       "parameters": {
-        "operation": "sendMessage",
-        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
-        "text": "={{ $json.text }}",
-        "additionalFields": {
-          "parse_mode": "Markdown"
-        }
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/push/notify",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "X-API-Key", "value": "={{ $env.API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ title: \"Email match found\", body: $json.text, url: \"/tracker\" }) }}",
+        "options": {}
       },
       "position": [
         1640,
         200
       ],
-      "typeVersion": 1,
-      "credentials": {
-        "telegramApi": {
-          "id": "telegram-creds",
-          "name": "Telegram"
-        }
-      }
+      "typeVersion": 4
     }
   ],
   "connections": {

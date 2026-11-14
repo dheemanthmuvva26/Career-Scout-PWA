@@ -381,7 +381,7 @@ def tab_resumes():
 
     resumes_dir = Path("shared/resumes")
     if not resumes_dir.exists() or not list(resumes_dir.glob("*.pdf")):
-        st.info("No resumes generated yet. Use /resume <id> in Telegram or click 'Forge PDF' on a job.")
+        st.info("No resumes generated yet. Click 'Forge PDF' on a job.")
         return
 
     pdfs = sorted(resumes_dir.glob("*.pdf"), key=lambda f: f.stat().st_mtime, reverse=True)

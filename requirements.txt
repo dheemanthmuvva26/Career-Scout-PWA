@@ -9,3 +9,5 @@ supabase
 rapidfuzz
 beautifulsoup4
 pypdf
+pywebpush
+python-jobspy
