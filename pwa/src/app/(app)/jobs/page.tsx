@@ -6,11 +6,13 @@ import JobCard from "@/components/JobCard";
 import PullToRefresh from "@/components/PullToRefresh";
 import SearchBar from "@/components/SearchBar";
 
+// "New"/"Applied" are job *statuses*; "Interview"/"Offer" are *outcomes* —
+// two different columns on the backend (see Tracker page for the same split).
 const TABS = [
-  { label: "New",       status: "new",       color: "#f59e0b" },
-  { label: "Applied",   status: "applied",   color: "#60a5fa" },
-  { label: "Interview", status: "interview", color: "#a855f7" },
-  { label: "Offer",     status: "offer",     color: "#22c55e" },
+  { label: "New",       key: "new",       field: "status" as const,  color: "#f59e0b" },
+  { label: "Applied",   key: "applied",   field: "status" as const,  color: "#60a5fa" },
+  { label: "Interview", key: "interview", field: "outcome" as const, color: "#a855f7" },
+  { label: "Offer",     key: "offer",     field: "outcome" as const, color: "#22c55e" },
 ];
 
 export default function JobsPage() {
@@ -53,7 +55,8 @@ export default function JobsPage() {
   const load = useCallback(async () => {
     setLoading(true); setError("");
     try {
-      const data = await api.jobs({ status: tab, limit: "50" });
+      const column = TABS.find((t) => t.key === tab);
+      const data = await api.jobs({ [column?.field ?? "status"]: tab, limit: "50" });
       setJobs(Array.isArray(data) ? data : []);
     } catch { setError("Failed to load jobs."); }
     setLoading(false);
@@ -70,7 +73,10 @@ export default function JobsPage() {
   });
 
   function handleUpdate(id: string, changes: Partial<Job>) {
-    if (changes.status && changes.status !== tab) {
+    const movedAway =
+      (changes.status && changes.status !== tab) ||
+      (changes.outcome && changes.outcome !== tab);
+    if (movedAway) {
       setJobs((p) => p.filter((j) => j.id !== id));
     } else {
       setJobs((p) => p.map((j) => j.id === id ? { ...j, ...changes } : j));
@@ -294,9 +300,9 @@ export default function JobsPage() {
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto no-scrollbar mb-4">
         {TABS.map((t) => {
-          const active = tab === t.status;
+          const active = tab === t.key;
           return (
-            <button key={t.status} onClick={() => setTab(t.status)}
+            <button key={t.key} onClick={() => setTab(t.key)}
               className="px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition active:scale-95"
               style={{
                 background: active ? `${t.color}18` : "var(--surface-2)",

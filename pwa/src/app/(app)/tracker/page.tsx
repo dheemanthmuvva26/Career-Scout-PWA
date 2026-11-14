@@ -5,12 +5,16 @@ import { api, type Job } from "@/lib/api";
 import JobCard from "@/components/JobCard";
 import SearchBar from "@/components/SearchBar";
 
+// "Applied" is a job *status* (application lifecycle stage); the other four
+// are job *outcomes* (what happened after applying) — two different columns
+// on the backend. Each entry's `key` is its unique column id (also used for
+// the status/outcome value itself, since they happen to match).
 const COLUMNS = [
-  { label: "Applied",   status: "applied",   color: "#60a5fa" },
-  { label: "Interview", status: "interview",  color: "#a855f7" },
-  { label: "Offer",     status: "offer",      color: "#22c55e" },
-  { label: "Rejected",  status: "rejected",   color: "#ef4444" },
-  { label: "Ghosted",   status: "ghosted",    color: "#52525b" },
+  { label: "Applied",   key: "applied",   field: "status" as const,  color: "#60a5fa" },
+  { label: "Interview", key: "interview", field: "outcome" as const, color: "#a855f7" },
+  { label: "Offer",     key: "offer",     field: "outcome" as const, color: "#22c55e" },
+  { label: "Rejected",  key: "rejected",  field: "outcome" as const, color: "#ef4444" },
+  { label: "Ghosted",   key: "ghosted",   field: "outcome" as const, color: "#52525b" },
 ];
 
 export default function TrackerPage() {
@@ -22,19 +26,23 @@ export default function TrackerPage() {
 
   const loadAll = useCallback(async () => {
     try {
-      const results = await Promise.all(COLUMNS.map((c) => api.jobs({ status: c.status, limit: "100" })));
+      const results = await Promise.all(
+        COLUMNS.map((c) => api.jobs({ [c.field]: c.key, limit: "100" }))
+      );
       const map: Record<string, number> = {};
-      COLUMNS.forEach((c, i) => { map[c.status] = results[i].length; });
+      COLUMNS.forEach((c, i) => { map[c.key] = results[i].length; });
       setCounts(map);
-      const idx = COLUMNS.findIndex((c) => c.status === col);
+      const idx = COLUMNS.findIndex((c) => c.key === col);
       setJobs(results[idx] || []);
     } catch {}
     setLoading(false);
   }, [col]);
 
-  const loadCol = useCallback(async (status: string) => {
+  const loadCol = useCallback(async (key: string) => {
     setLoading(true);
-    try { setJobs(await api.jobs({ status, limit: "100" })); } catch {}
+    const column = COLUMNS.find((c) => c.key === key);
+    if (!column) { setLoading(false); return; }
+    try { setJobs(await api.jobs({ [column.field]: column.key, limit: "100" })); } catch {}
     setLoading(false);
   }, []);
 
@@ -44,14 +52,17 @@ export default function TrackerPage() {
   useEffect(() => { loadCol(col); }, [col]);
 
   function handleUpdate(id: string, changes: Partial<Job>) {
-    if (changes.status && changes.status !== col) {
+    const movedAway =
+      (changes.status && changes.status !== col) ||
+      (changes.outcome && changes.outcome !== col);
+    if (movedAway) {
       setJobs((p) => p.filter((j) => j.id !== id));
     } else {
       setJobs((p) => p.map((j) => (j.id === id ? { ...j, ...changes } : j)));
     }
   }
 
-  const active = COLUMNS.find((c) => c.status === col);
+  const active = COLUMNS.find((c) => c.key === col);
 
   const filteredJobs = jobs.filter((j) => {
     if (!search.trim()) return true;
@@ -69,9 +80,9 @@ export default function TrackerPage() {
       {/* Tab strip */}
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-5">
         {COLUMNS.map((c) => {
-          const isActive = col === c.status;
+          const isActive = col === c.key;
           return (
-            <button key={c.status} onClick={() => setCol(c.status)}
+            <button key={c.key} onClick={() => setCol(c.key)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition active:scale-95"
               style={{
                 background: isActive ? `${c.color}15` : "var(--surface-2)",
@@ -79,10 +90,10 @@ export default function TrackerPage() {
                 border: `1px solid ${isActive ? c.color + "35" : "var(--border)"}`,
               }}>
               {c.label}
-              {counts[c.status] !== undefined && (
+              {counts[c.key] !== undefined && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded-full min-w-5 text-center"
                   style={{ background: isActive ? `${c.color}25` : "var(--border)", color: isActive ? c.color : "var(--text-3)" }}>
-                  {counts[c.status]}
+                  {counts[c.key]}
                 </span>
               )}
             </button>

@@ -89,7 +89,7 @@ export const api = {
   note: (id: string, note: string) =>
     apiFetch(`/jobs/${id}/note`, {
       method: "POST",
-      body: JSON.stringify({ note }),
+      body: JSON.stringify({ text: note }),
     }),
 
   auditResume: (id: string) =>
@@ -126,9 +126,9 @@ export const api = {
 
   companies: () => apiFetch("/companies"),
   addCompany: (name: string, url?: string) =>
-    apiFetch("/companies", { method: "POST", body: JSON.stringify({ name, url }) }),
+    apiFetch("/companies", { method: "POST", body: JSON.stringify({ name, careers_url: url }) }),
   blacklist: (name: string) =>
-    apiFetch("/companies/blacklist", { method: "POST", body: JSON.stringify({ name }) }),
+    apiFetch(`/companies/blacklist?${new URLSearchParams({ name }).toString()}`, { method: "POST" }),
 
   roles: () => apiFetch("/roles"),
   addRole: (title: string) =>
@@ -154,4 +154,13 @@ export const api = {
   confirmSkill: (skill: string) =>
     apiFetch("/skills/confirm", { method: "POST", body: JSON.stringify({ skill }) }),
   confirmedSkills: () => apiFetch("/skills/confirmed"),
+
+  pushVapidPublicKey: (): Promise<{ publicKey: string }> => apiFetch("/push/vapid-public-key"),
+  pushSubscribe: (endpoint: string, p256dh: string, auth: string) =>
+    apiFetch("/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ endpoint, keys: { p256dh, auth } }),
+    }),
+  pushUnsubscribe: (endpoint: string) =>
+    apiFetch("/push/unsubscribe", { method: "POST", body: JSON.stringify({ endpoint }) }),
 };
