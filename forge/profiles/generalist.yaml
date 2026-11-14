@@ -1,0 +1,51 @@
+id: generalist
+display_name: "Data/AI & Finance Generalist"
+
+# Not auto-selected by the matcher for any specific JD tag set — this is a
+# general-purpose resume meant to be requested explicitly via
+# ?profile=generalist, not picked automatically for a targeted application.
+match_tags:
+  - generalist
+
+summary_focus: >
+  Frame as a data/AI engineer with genuine, demonstrated interest in finance —
+  represent BOTH sides honestly. Lead with real production data/ML/graph
+  engineering work. For the finance side, only reference what has actually
+  been done: completed Forage investment-banking simulations, in-progress
+  finance coursework, and finance-flavored ML projects like credit-risk
+  scoring. Never claim real deal, trading, valuation, or accounting work
+  experience that isn't demonstrated in the profile data — this resume is for
+  general-purpose use across both tech/data and entry-level finance
+  applications, so accuracy matters more than punchiness.
+
+skills_order:
+  - languages
+  - data_tools
+  - bi_tools
+  - ml_frameworks
+  - llm_rag
+  - databases
+  - other
+
+experience_tags:
+  - data_analyst
+  - ai_engineer
+  - data_scientist
+  - risk_analyst
+  - finance
+  - compliance
+  - govt
+
+project_tags:
+  - data_scientist
+  - ai_engineer
+  - llm
+  - rag
+  - risk_analyst
+  - finance
+  - credit_risk
+
+max_experience_roles: 2
+max_experience_bullets: 3
+max_projects: 2
+max_project_bullets: 3

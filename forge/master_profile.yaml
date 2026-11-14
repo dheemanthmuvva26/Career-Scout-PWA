@@ -11,7 +11,7 @@ education:
     institution: "Sri Ramachandra Institute of Higher Education and Research"
     location: "Chennai, Tamil Nadu"
     dates: "2022 – 2026"
-    gpa: "8.45 / 10"
+    gpa: "8.5 / 10"
     highlights:
       - "Relevant coursework: Machine Learning, NLP, Knowledge Graphs, Data Structures, Statistics, DBMS"
 
@@ -108,7 +108,7 @@ projects:
     sponsor: "RTGS, Govt. of AP"
     status: "Ongoing"
     description: "Dealer/district-level Urea, DAP, and NPK demand forecasting PoC for AP's Dept of Agriculture, built on real iFMS point-of-sale transaction data with automated multi-source data refresh and a risk-scoring dashboard"
-    tech: ["Python", "XGBoost", "scikit-learn", "Pandas", "Streamlit", "Plotly", "BeautifulSoup", "pdfplumber"]
+    tech: ["Python", "NumPy", "Pandas", "SciPy", "scikit-learn", "Streamlit", "Plotly", "BeautifulSoup", "pdfplumber"]
     tags: ["data_scientist", "ml", "data_analyst", "data_engineer", "bi", "bi_developer", "risk_analyst", "govt", "forecasting"]
     bullets:
       - text: "Built a dealer-level fertilizer demand forecasting pipeline on real iFMS point-of-sale data across 17,925 dealers in Andhra Pradesh, cutting backtested error from 19.1% to 9.3% against a real held-out month"
