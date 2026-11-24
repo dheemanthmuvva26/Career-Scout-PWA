@@ -99,7 +99,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20261124-gmail-import"
+_BUILD = "20261124-fdip-metrics"
 
 @app.get("/health")
 def health():
