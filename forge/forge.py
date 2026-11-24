@@ -419,7 +419,7 @@ def generate_resume(job_id: str, profile_override: str | None = None,
         "certifications": _merge_certs(master.get("certifications", []), role_certs),
     }
 
-    optimized = optimize(job, master_for_opt, profile_config, ats_hints=ats_hints)
+    optimized = optimize(job, master_for_opt, profile_config, ats_hints=honest_hints(ats_hints))
     if optimized.get("error"):
         return {"error": optimized["error"]}
 
@@ -581,6 +581,11 @@ def ats_check(job_id: str) -> dict:
     except Exception as e:
         return {"error": f"Could not load resume data: {e}"}
 
+    from forge.fact_check import graduation_status
+    master = _load_master()
+    grad = graduation_status(master)
+    facts = _candidate_facts(master, grad)
+
     jd = strip_boilerplate(job.get("description") or "")[:4000]
     summary = optimized.get("summary", "")
     skills  = optimized.get("skills_section", {})
@@ -615,6 +620,9 @@ Experience:
 Projects:
 {proj_text}
 
+CANDIDATE FACTS (the only things a fix may use — a fix must never add anything beyond these):
+{facts}
+
 As ATS: which sections contain sufficient JD-matching keywords and will be parsed correctly?
 Which JD requirements (tools, domain terms, years of experience, certifications) have NO
 keyword match anywhere in this resume — call these out explicitly, don't omit them.
@@ -623,21 +631,82 @@ against the JD's actual requirements, not generic resume advice. What specific r
 increase selection chances?
 The overall_verdict must reflect genuine selection likelihood given the gaps found — do not
 default to an optimistic verdict when significant JD requirements are unaddressed.
+For every flagged item set "honest": true only if the fix can be made using CANDIDATE FACTS
+alone (rewording, reordering, surfacing something already true). If closing the gap would need
+a claim that isn't in the facts (a title, client work, enrollment status, a skill, a number),
+set "honest": false, keep the issue, and put a real-world action in "alternative" instead
+(e.g. a specific free course or job simulation, or targeting a different role level).
 
 Respond ONLY with valid JSON:
 {{
   "ats_pass": ["Section1","Section2"],
   "flagged": [
-    {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix"}}
+    {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix","honest":true,"alternative":""}}
   ],
   "overall_verdict": "one concise, honest sentence on selection likelihood"
 }}"""
 
     raw = llm.score(prompt)
     try:
-        return llm.parse_json(raw)
+        result = llm.parse_json(raw)
     except Exception:
         return {"error": "ATS check parsing failed — try again"}
+    result["flagged"] = [_vet_fix(f, master, grad) for f in (result.get("flagged") or [])
+                         if isinstance(f, dict)]
+    return result
+
+
+# Fix suggestions that would put something untrue on the resume. The ATS model
+# twice suggested "add 'currently in final year'" for a candidate who graduated.
+_ENROLMENT_RE = re.compile(
+    r"final[- ]year|currently (?:pursuing|enrolled|studying|a student)|\bstudent\b|"
+    r"expected graduation|graduating in|pursuing (?:a |my |the )?(?:b\.?tech|degree|bachelor)", re.I)
+_CLIENT_RE = re.compile(r"\bclients?\b|consult(?:ing|ant|ancy)|advisory engagement", re.I)
+
+
+def _candidate_facts(master: dict, grad: dict) -> str:
+    edu = (master.get("education") or [{}])[0]
+    status = ("graduated (degree completed)" if grad["graduated"]
+              else f"currently studying, graduating {grad['end_year']}")
+    roles = "; ".join(f"{e.get('role')} at {e.get('company')} ({e.get('dates')})"
+                      for e in master.get("experience", []))
+    skills = ", ".join(s for items in (master.get("skills") or {}).values() for s in items)
+    certs = ", ".join(f"{c['name']} ({c.get('date', '')})" for c in master.get("certifications", []))
+    return (f"- Education: {edu.get('degree', '')}, {edu.get('dates', '')} — {status}\n"
+            f"- Roles held (all of them): {roles}\n"
+            f"- Skills: {skills}\n"
+            f"- Certifications: {certs}")
+
+
+def _vet_fix(f: dict, master: dict, grad: dict) -> dict:
+    """Deterministic backstop on top of the model's own honest flag."""
+    from forge.fact_check import unsupported_numbers, _all_profile_numbers
+    fix = f.get("fix") or ""
+    reason = None
+    if grad["graduated"] and _ENROLMENT_RE.search(fix):
+        reason = (f"You completed your degree in {grad['end_year']}, so this would be untrue.",
+                  "Target roles open to graduates (Associate / Analyst / Graduate Trainee) instead.")
+    elif _CLIENT_RE.search(fix) and not _CLIENT_RE.search(yaml.safe_dump(master)):
+        reason = ("Your profile has no client or consulting work.",
+                  "Complete a free consulting job simulation on Forage (e.g. PwC, Deloitte, BCG) "
+                  "and add it to your profile — then this can be claimed honestly.")
+    elif unsupported_numbers(fix, _all_profile_numbers(master)):
+        reason = ("This fix adds a number that isn't in your profile.", f.get("alternative") or "")
+    out = {**f, "honest": bool(f.get("honest", True)) and reason is None}
+    if reason:
+        out["why_not"], out["alternative"] = reason[0], reason[1] or f.get("alternative", "")
+    elif not out["honest"] and not out.get("why_not"):
+        out["why_not"] = "Would need a claim that isn't in your profile."
+    return out
+
+
+def honest_hints(ats_hints: dict | None) -> dict | None:
+    """Only ever feed honest fixes back into the optimizer on a re-forge."""
+    if not ats_hints:
+        return ats_hints
+    flagged = [f for f in (ats_hints.get("flagged") or []) if f.get("honest", True)
+               and not _ENROLMENT_RE.search(f.get("fix") or "")]
+    return {**ats_hints, "flagged": flagged}
 
 
 def _summary_message(result: dict) -> str:
