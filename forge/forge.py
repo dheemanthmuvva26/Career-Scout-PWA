@@ -425,6 +425,17 @@ def generate_resume(job_id: str, profile_override: str | None = None,
 
     _apply_forage_cert(optimized, master, job.get("company", ""))
 
+    # Fact check: the optimizer invents metrics and outcomes. Every bullet is
+    # checked against its own entry in the master profile; unsupported ones are
+    # swapped for the user's verbatim bullet (or dropped) before rendering.
+    from forge.fact_check import check_resume, llm_judge
+    forage_certs = [c for c in (optimized.get("selected_certifications") or [])
+                    if c.get("issuer") == "Forage" and c.get("date") == "Completed"]
+    optimized, integrity = check_resume(
+        optimized, master, mode="repair",
+        allowed_certs=role_certs + forage_certs, judge=llm_judge,
+    )
+
     company_slug = _slugify(job.get("company", "company"))
     role_slug    = _slugify(job.get("title", "role"))
     date_str     = datetime.now().strftime("%Y-%m-%d")
@@ -449,6 +460,9 @@ def generate_resume(job_id: str, profile_override: str | None = None,
             "selected_projects":        optimized.get("selected_projects", []),
             "selected_certifications":  optimized.get("selected_certifications", []),
             "ats_keywords":             optimized.get("ats_keywords", []),
+            "profile_id":               profile_config.get("id", "default"),
+            "skills_order":             profile_config.get("skills_order", []),
+            "integrity":                integrity,
         }, indent=2), encoding="utf-8")
     except Exception:
         pass  # non-critical
@@ -469,6 +483,7 @@ def generate_resume(job_id: str, profile_override: str | None = None,
         "profile_used": profile_config.get("display_name", "default"),
         "title": job.get("title", ""),
         "company": job.get("company", ""),
+        "integrity": integrity,
     }
 
 

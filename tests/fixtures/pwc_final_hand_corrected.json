@@ -1,0 +1,111 @@
+{
+  "summary": "B.Tech CSE (AI & Data Analytics) graduate with hands-on data analysis experience on government-scale datasets at RTGS, Govt. of Andhra Pradesh. Experienced in data profiling, research, BRD authoring and translating stakeholder needs into data-driven solutions using Python, SQL, Power BI and Excel, including a demand forecast within 15-17% of real government sales; eager to support client teams on analytics engagements.",
+  "skills_section": {
+    "data_tools": [
+      "Pandas",
+      "NumPy",
+      "Excel",
+      "MS PowerPoint"
+    ],
+    "bi_tools": [
+      "Power BI",
+      "Tableau"
+    ],
+    "languages": [
+      "Python",
+      "SQL"
+    ],
+    "databases": [
+      "Neo4j",
+      "MongoDB"
+    ],
+    "other": [
+      "Business Requirements Documents (BRD)",
+      "Data Quality & Profiling",
+      "Stakeholder Requirements",
+      "English (fluent)"
+    ]
+  },
+  "selected_experience": [
+    {
+      "company": "Real Time Governance Society (RTG), Secretariat, Govt. of Andhra Pradesh",
+      "role": "AI/Data Analytics Intern",
+      "dates": "Feb 2026 – Present",
+      "location": "",
+      "bullets": [
+        "Drove data quality checks, profiling and deviation analysis on Citizen 360, a statewide citizen data platform covering 5.5+ crore residents across every department",
+        "Built a risk-stratified decision engine classifying 225,000+ pregnancies across 29 districts into Low/High/Critical tiers, auto-generating alerts for field-worker interventions",
+        "Collaborated with department domain experts to author Business Requirements Documents and PoC specifications for multiple government AI use cases"
+      ]
+    },
+    {
+      "company": "Innologic Technologies Pvt. Ltd.",
+      "role": "Data Analytics Intern",
+      "dates": "Feb 2024 – Apr 2024",
+      "location": "Hyderabad",
+      "bullets": [
+        "Performed exploratory data analysis on 20,000+ automobile sales records using Python, Pandas and Excel pivot tables to identify business trends and customer insights",
+        "Created interactive Power BI dashboards with drill-through analysis and visual storytelling to support data-driven decision making for stakeholders"
+      ]
+    }
+  ],
+  "selected_projects": [
+    {
+      "name": "FDIP — Fertilizer Demand Intelligence Platform",
+      "tech": [
+        "Python",
+        "Pandas",
+        "scikit-learn",
+        "Streamlit",
+        "Plotly"
+      ],
+      "github": "",
+      "bullets": [
+        "Forecast July 2026 fertilizer demand across 17,925 dealers for AP's Dept of Agriculture within 15.1% (Urea) and 17.0% (DAP) of real government sales, inside the ±20% accuracy target",
+        "Traced a 47% raw DAP forecast miss to dealers with no anchor-month sales and built a correction validated on two independent real years (-17.3% in 2025, +17.0% in 2026)",
+        "Halved state-level error in a held-out-year backtest (19.1% to 9.3%), beating the old method in 100% of 1,000 bootstrap resamples"
+      ]
+    },
+    {
+      "name": "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)",
+      "tech": [
+        "Neo4j",
+        "LangChain",
+        "FAISS",
+        "Gemini API",
+        "Python",
+        "Streamlit"
+      ],
+      "github": "",
+      "bullets": [
+        "Architected a Graph RAG pipeline enabling natural-language governance queries over a knowledge graph of 916k+ nodes and 1.3M+ relationships across 19 entity types",
+        "Built a Streamlit analytics dashboard letting non-technical stakeholders explore governance data and entity relationships without writing code",
+        "Engineered a 9-stage NL-to-Cypher workflow with semantic entity resolution and schema-aware query generation for accurate data retrieval"
+      ]
+    }
+  ],
+  "selected_certifications": [
+    {
+      "name": "GenAI Powered Data Analytics",
+      "issuer": "Forage",
+      "date": "2025"
+    },
+    {
+      "name": "Google Data Analytics Professional Certificate",
+      "issuer": "Google / Coursera",
+      "date": "In Progress"
+    }
+  ],
+  "ats_keywords": [
+    "data analysis",
+    "data analytics",
+    "research",
+    "client",
+    "stakeholder",
+    "Python",
+    "SQL",
+    "Power BI",
+    "Excel",
+    "PowerPoint"
+  ]
+}

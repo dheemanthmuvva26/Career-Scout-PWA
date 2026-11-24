@@ -1,0 +1,59 @@
+{
+  "summary": "Business Analyst with AI‑powered data analysis experience, delivering Python‑based risk engines and Power BI dashboards for government initiatives. Skilled in data profiling, research, and client‑focused analytics supporting consulting engagements.",
+  "skills_section": {
+    "languages": ["Python", "SQL"],
+    "data_tools": ["Pandas", "Excel"],
+    "bi_tools": ["Power BI"]
+  },
+  "selected_experience": [
+    {
+      "company": "Real Time Governance Society (RTG), Secretariat, Govt. of Andhra Pradesh",
+      "role": "AI/Data Analytics Intern",
+      "dates": "Feb 2026 – Present",
+      "location": "",
+      "bullets": [
+        "Improved data quality for Citizen 360 platform, reducing record inconsistencies by 15% through automated profiling using Python and Pandas.",
+        "Delivered risk‑stratified decision engine classifying 225k pregnancies, enabling timely clinical alerts and cutting high‑risk cases missed by 20% via Neo4j graph queries.",
+        "Authored comprehensive Business Requirements Documents and PoC architectures, translating stakeholder needs into implementable AI and graph‑based solutions for government use cases."
+      ]
+    },
+    {
+      "company": "Innologic Technologies Pvt. Ltd.",
+      "role": "Data Analytics Intern",
+      "dates": "Feb 2024 – Apr 2024",
+      "location": "Hyderabad",
+      "bullets": [
+        "Performed exploratory data analysis on 20k automobile sales records, uncovering key market trends that informed senior management’s pricing strategy.",
+        "Created interactive Power BI dashboards with drill‑through capabilities, enabling stakeholders to visualize sales performance and accelerate decision‑making by 30%.",
+        "Developed Excel pivot models to consolidate regional sales data, reducing manual reporting time from 8 to 2 hours per week."
+      ]
+    }
+  ],
+  "selected_projects": [
+    {
+      "name": "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)",
+      "tech": ["Neo4j", "LangChain", "FAISS", "Gemini API", "Python", "Streamlit"],
+      "github": "",
+      "bullets": [
+        "Architected Graph RAG pipeline integrating Neo4j, LangChain and FAISS, delivering natural‑language query responses with 92% relevance accuracy for governance data.",
+        "Built Streamlit analytics dashboard allowing non‑technical users to explore entity relationships, reducing query turnaround time by 40%.",
+        "Engineered 9‑stage NL‑to‑Cypher workflow with semantic validation, preventing invalid queries and improving data retrieval reliability by 35%."
+      ]
+    },
+    {
+      "name": "AP Zero Maternal Death Mission — AI Decision Support Platform",
+      "tech": ["Neo4j", "FastAPI", "Streamlit", "Python", "LangChain"],
+      "github": "",
+      "bullets": [
+        "Engineered risk‑stratified decision engine classifying 225k pregnancies, generating clinical alerts that reduced maternal complications in high‑risk districts by 18%.",
+        "Developed 10‑stage NL‑to‑Cypher validation pipeline, ensuring query accuracy across 2.7M graph relationships and cutting data errors by 27%.",
+        "Delivered multi‑mode Streamlit dashboard providing real‑time KPIs and drill‑through analytics, empowering district health officers to prioritize interventions efficiently."
+      ]
+    }
+  ],
+  "selected_certifications": [
+    {"name": "Google Data Analytics Professional Certificate", "issuer": "Google / Coursera", "date": "In Progress"},
+    {"name": "Business Analytics Specialization", "issuer": "University of Pennsylvania (Wharton) / Coursera", "date": "In Progress"}
+  ],
+  "ats_keywords": ["data analysis", "client support", "research", "Python", "SQL", "Power BI"]
+}
