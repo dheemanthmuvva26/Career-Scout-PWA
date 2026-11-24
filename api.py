@@ -98,7 +98,7 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20261124-fdip-metrics"
+_BUILD = "20261125-integrity-storage"
 
 @app.get("/health")
 def health():
