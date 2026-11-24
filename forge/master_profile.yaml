@@ -111,13 +111,19 @@ projects:
     tech: ["Python", "NumPy", "Pandas", "SciPy", "scikit-learn", "Streamlit", "Plotly", "BeautifulSoup", "pdfplumber"]
     tags: ["data_scientist", "ml", "data_analyst", "data_engineer", "bi", "bi_developer", "risk_analyst", "govt", "forecasting"]
     bullets:
-      - text: "Built a dealer-level fertilizer demand forecasting pipeline on real iFMS point-of-sale data across 17,925 dealers in Andhra Pradesh, cutting backtested error from 19.1% to 9.3% against a real held-out month"
-        tags: ["data_scientist", "ml", "forecasting", "data_analyst", "govt"]
+      - text: "Built a dealer-level fertilizer demand forecasting model on real iFMS point-of-sale data across 17,925 AP dealers; a held-out-year backtest halved state-level error (19.1% to 9.3%), and the new method beat the old one in 100% of 1,000 paired bootstrap resamples"
+        tags: ["data_scientist", "ml", "forecasting", "data_analyst", "govt", "statistical_analysis"]
+      - text: "Forecast July 2026 fertilizer demand within 15.1% (Urea) and 17.0% (DAP) of real government sales, inside the ±20% accuracy target, checked against an outcome that did not exist when the forecast was made"
+        tags: ["data_analyst", "data_scientist", "forecasting", "risk_analyst", "govt", "statistical_analysis"]
+      - text: "Traced a 47% raw DAP forecast miss to dealers with no anchor-month sales and built a correction validated on two independent real years (−17.3% in 2025, +17.0% in 2026)"
+        tags: ["data_analyst", "data_scientist", "forecasting", "risk_analyst", "govt", "root_cause_analysis"]
+      - text: "Ran hypothesis tests on candidate demand drivers, rejecting sowing progress (r = 0.014, p = 0.92) and crop mix (r = -0.012 across 26 districts) on evidence before shipping"
+        tags: ["data_scientist", "data_analyst", "statistical_analysis", "forecasting", "govt"]
       - text: "Engineered an automated refresh pipeline integrating IMD rainfall, NOAA ONI, World Bank commodity prices, and government fertilizer bulletins, re-triggering the forecast only when a real model input changed"
         tags: ["data_engineer", "data_pipeline", "automation", "govt"]
       - text: "Built a Streamlit dashboard scoring all 26 AP districts on supply health, ranking dealer-level risk alerts, and auto-generating stock pre-positioning recommendations for at-risk districts"
         tags: ["bi", "bi_developer", "data_analyst", "risk_analyst", "govt"]
-      - text: "Validated model accuracy via a 26-district cross-check against official government Urea sales data and a 1,000-resample bootstrap confirming the improved method outperformed the prior approach in every resample"
+      - text: "Validated district-level forecasts via a 26-district cross-check against official government Urea sales data, reporting agreement tiers separately from state-level error"
         tags: ["data_scientist", "risk_analyst", "data_analyst", "govt"]
 
   - name: "AI Coder — Agentic VS Code Extension"
