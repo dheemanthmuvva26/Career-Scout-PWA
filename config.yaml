@@ -121,6 +121,20 @@ gmail:
   address: "dheemanth.muvva26@gmail.com"
   poll_interval_minutes: 30
 
+  # Job-alert email import (core/gmail_ingest.py). Reads Gmail over IMAP,
+  # read-only, using GMAIL_ADDRESS + GMAIL_APP_PASSWORD from the environment.
+  # LinkedIn alerts are resolved to full postings via the LinkedIn guest API;
+  # other senders are parsed by the LLM. The include/exclude title keywords
+  # under linkedin_alerts below apply to every source.
+  alert_import:
+    enabled: true
+    lookback_days: 3          # only emails newer than this are considered
+    max_jobs_per_run: 40      # cap on new jobs per sync (protects Groq quota)
+    other_senders:            # Gmail "from:" terms — a domain matches any sender there
+      naukri: "naukri.com"
+      indeed: "indeed.com"
+      internshala: "internshala.com"
+
   # LinkedIn job alert parsing
   linkedin_alerts:
     enabled: true

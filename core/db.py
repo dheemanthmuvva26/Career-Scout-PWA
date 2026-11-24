@@ -285,6 +285,12 @@ def _init_pg() -> None:
             auth       TEXT NOT NULL,
             created_at TEXT NOT NULL
         )""",
+        """CREATE TABLE IF NOT EXISTS ingested_emails (
+            message_id   TEXT PRIMARY KEY,
+            source       TEXT,
+            jobs_found   INTEGER DEFAULT 0,
+            processed_at TEXT NOT NULL
+        )""",
     ]
     with connect() as conn:
         for stmt in stmts:
@@ -353,6 +359,10 @@ def _init_sqlite() -> None:
         CREATE TABLE IF NOT EXISTS push_subscriptions (
             endpoint TEXT PRIMARY KEY, p256dh TEXT NOT NULL,
             auth TEXT NOT NULL, created_at TEXT NOT NULL)""")
+        conn.execute("""
+        CREATE TABLE IF NOT EXISTS ingested_emails (
+            message_id TEXT PRIMARY KEY, source TEXT,
+            jobs_found INTEGER DEFAULT 0, processed_at TEXT NOT NULL)""")
         for idx in [
             "CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status)",
             "CREATE INDEX IF NOT EXISTS idx_jobs_score   ON jobs(score)",
@@ -907,6 +917,27 @@ def get_push_subscriptions() -> list[dict]:
 def delete_push_subscription(endpoint: str) -> None:
     with connect() as conn:
         conn.execute("DELETE FROM push_subscriptions WHERE endpoint=?", (endpoint,))
+
+
+# ── Ingested emails ──────────────────────────────────────────────────────────
+# Job-alert emails already turned into jobs, keyed by RFC 822 Message-ID, so
+# each email is parsed (and LLM-extracted) once no matter how often we poll.
+
+def email_already_ingested(message_id: str) -> bool:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM ingested_emails WHERE message_id=?", (message_id,)
+        ).fetchone()
+    return row is not None
+
+
+def mark_email_ingested(message_id: str, source: str, jobs_found: int) -> None:
+    with connect() as conn:
+        conn.execute("""
+            INSERT INTO ingested_emails (message_id, source, jobs_found, processed_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(message_id) DO NOTHING
+        """, (message_id, source, jobs_found, now_iso()))
 
 
 def remove_confirmed_skill(skill_id: str) -> bool:

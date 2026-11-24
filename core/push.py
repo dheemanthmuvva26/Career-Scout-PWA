@@ -26,6 +26,8 @@ def send_push(title: str, body: str, url: str = "/dashboard") -> dict:
     browser unsubscribed or the device is gone for good.
     Never raises — a notification failure shouldn't break the caller (n8n).
     """
+    if not os.environ.get("VAPID_PRIVATE_KEY"):
+        return {"sent": 0, "pruned": 0, "failed": 0, "error": "VAPID keys not configured"}
     subs = db.get_push_subscriptions()
     payload = json.dumps({"title": title, "body": body, "url": url})
     sent, pruned, failed = 0, 0, 0

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { api, type Job } from "@/lib/api";
+import { api, type Job, type GmailSummary } from "@/lib/api";
 import JobCard from "@/components/JobCard";
 import PullToRefresh from "@/components/PullToRefresh";
 import SearchBar from "@/components/SearchBar";
@@ -63,6 +63,47 @@ export default function JobsPage() {
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);
+
+  // ── Email job alerts (Gmail import) ──────────────────────────────────────
+  const [gmailConfigured, setGmailConfigured] = useState(false);
+  const [gmailLast, setGmailLast] = useState<GmailSummary | null>(null);
+  const [gmailSyncing, setGmailSyncing] = useState(false);
+  const [gmailError, setGmailError] = useState("");
+
+  useEffect(() => {
+    api.gmailStatus()
+      .then((s) => { setGmailConfigured(s.configured); setGmailLast(s.last?.finished_at ? s.last : null); })
+      .catch(() => {});
+  }, []);
+
+  async function syncGmail() {
+    setGmailSyncing(true); setGmailError("");
+    const before = gmailLast?.finished_at;
+    try {
+      await api.gmailSync();
+      // Sync runs in the background on the server; poll until a new result lands.
+      const deadline = Date.now() + 180_000;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const s = await api.gmailStatus();
+        if (s.last?.finished_at && s.last.finished_at !== before) {
+          setGmailLast(s.last);
+          if (s.last.status === "error") setGmailError(`Sync failed: ${s.last.errors?.[0] ?? "unknown error"}`);
+          if (s.last.jobs_new > 0) load();
+          break;
+        }
+      }
+    } catch (e: unknown) {
+      setGmailError(e instanceof Error ? e.message : "Sync failed.");
+    }
+    setGmailSyncing(false);
+  }
+
+  const gmailLine = !gmailConfigured
+    ? "Not connected — add a Gmail App Password on the backend"
+    : !gmailLast
+    ? "Checks LinkedIn, Naukri, Indeed & Internshala alerts every 30 min"
+    : `Last sync ${new Date(gmailLast.finished_at).toLocaleString([], { dateStyle: "short", timeStyle: "short" })} · ${gmailLast.jobs_new} new of ${gmailLast.jobs_found} found`;
 
   const filteredJobs = jobs.filter((j) => {
     if (!search.trim()) return true;
@@ -294,6 +335,23 @@ export default function JobsPage() {
           <p className="text-xs mt-2" style={{ color: importMsg.includes("failed") || importMsg.includes("Could not") ? "#fca5a5" : "var(--text-2)" }}>
             {importMsg}
           </p>
+        )}
+      </div>
+
+      {/* Email alerts (LinkedIn / Naukri / Indeed / Internshala via Gmail) */}
+      <div className="card flex items-center justify-between gap-3 px-4 py-3 mb-5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium" style={{ color: "var(--text)" }}>Email job alerts</p>
+          <p className="text-xs mt-0.5 truncate" style={{ color: gmailError ? "#fca5a5" : "var(--text-3)" }}>
+            {gmailError || gmailLine}
+          </p>
+        </div>
+        {gmailConfigured && (
+          <button onClick={syncGmail} disabled={gmailSyncing}
+            className="px-4 py-2 rounded-xl text-sm font-semibold shrink-0 disabled:opacity-50 transition active:scale-95"
+            style={{ background: "var(--accent)", color: "var(--on-accent)" }}>
+            {gmailSyncing ? "Syncing…" : "Sync now"}
+          </button>
         )}
       </div>
 

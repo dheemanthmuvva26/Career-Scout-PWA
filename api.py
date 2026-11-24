@@ -92,11 +92,14 @@ def startup():
         print("typst pre-warm started")
     except Exception as e:
         print(f"typst pre-warm skipped: {e}")
+    from core import gmail_ingest
+    gmail_ingest.start_scheduler()
+    print("gmail alert import: " + ("scheduled" if gmail_ingest.is_configured() else "not configured"))
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20261114-resilient-health"
+_BUILD = "20261124-gmail-import"
 
 @app.get("/health")
 def health():
@@ -495,6 +498,27 @@ def push_notify(body: PushNotifyRequest):
     """Called by n8n (morning digest, scout results, follow-up nudges) instead
     of the old Telegram sendMessage API."""
     return push_lib.send_push(body.title, body.body, body.url)
+
+
+# ── Gmail job-alert import ────────────────────────────────────────────────────
+
+@app.post("/gmail/sync")
+def gmail_sync(background_tasks: BackgroundTasks):
+    """Import new LinkedIn/Naukri/Indeed/Internshala alert emails as jobs.
+    Runs in the background; poll GET /gmail/status for the result. Also runs
+    automatically every gmail.poll_interval_minutes."""
+    from core import gmail_ingest
+    if not gmail_ingest.is_configured():
+        raise HTTPException(status_code=400,
+                            detail="Gmail not configured — set GMAIL_ADDRESS and GMAIL_APP_PASSWORD on the backend.")
+    background_tasks.add_task(gmail_ingest.run_sync, "manual")
+    return {"ok": True, "message": "Gmail sync started"}
+
+
+@app.get("/gmail/status")
+def gmail_status():
+    from core import gmail_ingest
+    return {"configured": gmail_ingest.is_configured(), "last": gmail_ingest.last_summary()}
 
 
 # ── LinkedIn URL import ───────────────────────────────────────────────────────

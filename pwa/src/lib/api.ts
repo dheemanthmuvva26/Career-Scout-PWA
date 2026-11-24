@@ -61,6 +61,18 @@ export type Stats = {
   interview_rate: number;
 };
 
+export type GmailSummary = {
+  status: "ok" | "error" | "busy" | "disabled" | "not_configured";
+  trigger: string;
+  emails_seen: number;
+  emails_processed: number;
+  jobs_found: number;
+  jobs_new: number;
+  jobs_filtered: number;
+  errors: string[];
+  finished_at: string;
+};
+
 export const api = {
   stats: (): Promise<Stats> => apiFetch("/stats"),
 
@@ -155,7 +167,10 @@ export const api = {
     apiFetch("/skills/confirm", { method: "POST", body: JSON.stringify({ skill }) }),
   confirmedSkills: () => apiFetch("/skills/confirmed"),
 
-  pushVapidPublicKey: (): Promise<{ publicKey: string }> => apiFetch("/push/vapid-public-key"),
+  gmailSync: () => apiFetch("/gmail/sync", { method: "POST" }),
+  gmailStatus: (): Promise<{ configured: boolean; last: GmailSummary | null }> => apiFetch("/gmail/status"),
+
+  pushVapidPublicKey:(): Promise<{ publicKey: string }> => apiFetch("/push/vapid-public-key"),
   pushSubscribe: (endpoint: string, p256dh: string, auth: string) =>
     apiFetch("/push/subscribe", {
       method: "POST",
