@@ -23,6 +23,7 @@ skills:
   bi_tools:      ["Power BI", "Tableau"]
   databases:     ["MongoDB", "Neo4j"]
   other:         ["TypeScript", "VS Code Extension API", "Dialogflow CX"]
+  professional:  ["Business Requirements Documents (BRD)", "Data Quality & Profiling", "Stakeholder Requirements", "English (fluent)"]
 
 experience:
   - company: "Real Time Governance Society (RTG), Secretariat, Govt. of Andhra Pradesh"

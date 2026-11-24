@@ -461,6 +461,48 @@ def forge_ats_check(job_id: str):
     return ats_check(job_id)
 
 
+@app.get("/forge/{job_id}/content")
+def forge_content(job_id: str):
+    """The latest resume's editable content (for the in-app editor)."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    from forge.forge import load_resume_content
+    content, pdf_path = load_resume_content(job)
+    if content is None:
+        raise HTTPException(status_code=404, detail="No resume yet — forge one first")
+    return {"content": content, "pdf_path": pdf_path.name if pdf_path else None}
+
+
+class RenderBody(BaseModel):
+    content: dict
+
+
+@app.post("/forge/{job_id}/render")
+def forge_render(job_id: str, body: RenderBody):
+    """Re-render from edited content without calling the LLM. Same token/poll
+    contract as POST /forge/{job_id} (compile can take a while on a cold start)."""
+    if not get_job(job_id):
+        raise HTTPException(status_code=404, detail="Job not found")
+    token = _uuid.uuid4().hex[:12]
+    _forge_jobs[token] = {"status": "pending"}
+
+    def _run():
+        try:
+            from forge.forge import rerender_resume
+            _forge_jobs[token] = {"status": "done", **rerender_resume(job_id, body.content)}
+        except Exception as e:
+            _forge_jobs[token] = {"status": "done", "error": str(e)}
+        def _cleanup():
+            import time as _time
+            _time.sleep(300)
+            _forge_jobs.pop(token, None)
+        threading.Thread(target=_cleanup, daemon=True).start()
+
+    threading.Thread(target=_run, daemon=True).start()
+    return {"token": token, "status": "pending"}
+
+
 # ── Web Push (proactive notifications — replaces the old Telegram bot) ─────────
 
 class PushSubscribeRequest(BaseModel):

@@ -484,6 +484,52 @@ def generate_resume(job_id: str, profile_override: str | None = None,
     }
 
 
+_EDITABLE = ("summary", "skills_section", "selected_experience", "selected_projects",
+             "selected_certifications", "ats_keywords", "profile_id", "skills_order")
+
+
+def rerender_resume(job_id: str, content: dict) -> dict:
+    """
+    Re-render a resume from content the user edited in the app — no LLM call.
+    The fact checker runs in warn mode: user edits are deliberate, so nothing
+    is changed, but every unsupported number/skill is reported back.
+    Returns the content as it actually landed on the PDF (one-page fitting may
+    trim a bullet), so the editor shows the truth.
+    """
+    from forge.fact_check import check_resume
+
+    job = db.get_job(job_id)
+    if not job:
+        return {"error": f"Job {job_id} not found"}
+    master = _load_master()
+    content = {k: content[k] for k in _EDITABLE if k in content}
+
+    profile_config = dict(get_profile_by_id(content.get("profile_id") or "default")
+                          or get_profile_by_id("default") or {})
+    if content.get("skills_order"):
+        profile_config["skills_order"] = content["skills_order"]
+
+    role_certs = _load_role_certs(profile_config.get("id", "default"))
+    _, integrity = check_resume(content, master, mode="warn", allowed_certs=role_certs + [
+        c for c in (content.get("selected_certifications") or []) if c.get("issuer") == "Forage"])
+
+    company_slug = _slugify(job.get("company", "company"))
+    role_slug    = _slugify(job.get("title", "role"))
+    pdf_path     = _OUT_DIR / f"{company_slug}_{role_slug}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+
+    ok, err = _fit_to_one_page(master, content, profile_config, pdf_path)
+    if not ok:
+        return {"error": err}
+
+    sidecar = {**content, "profile_id": profile_config.get("id", "default"),
+               "skills_order": profile_config.get("skills_order", []),
+               "integrity": integrity, "edited": True}
+    stored = save_resume_files(pdf_path, sidecar)
+    db.set_resume_path(job_id, pdf_path.name)
+    return {"ok": True, "pdf_path": pdf_path.name, "content": sidecar,
+            "integrity": integrity, "stored": stored}
+
+
 def save_resume_files(pdf_path: Path, sidecar: dict) -> str:
     """Write the JSON sidecar next to the PDF, then upload both to Supabase
     Storage. Returns "supabase" when both uploaded, else "local"."""
