@@ -447,25 +447,21 @@ def generate_resume(job_id: str, profile_override: str | None = None,
     if not ok:
         return {"error": err}
 
-    db.set_resume_path(job_id, str(pdf_path))
-
-    # Save optimized content alongside PDF for ATS check
-    import json as _json
-    json_path = pdf_path.with_suffix(".json")
-    try:
-        json_path.write_text(_json.dumps({
-            "summary":                  optimized.get("summary", ""),
-            "skills_section":           optimized.get("skills_section", {}),
-            "selected_experience":      optimized.get("selected_experience", []),
-            "selected_projects":        optimized.get("selected_projects", []),
-            "selected_certifications":  optimized.get("selected_certifications", []),
-            "ats_keywords":             optimized.get("ats_keywords", []),
-            "profile_id":               profile_config.get("id", "default"),
-            "skills_order":             profile_config.get("skills_order", []),
-            "integrity":                integrity,
-        }, indent=2), encoding="utf-8")
-    except Exception:
-        pass  # non-critical
+    # Save the content next to the PDF (ATS check + in-app editor read it) and
+    # push both to Supabase Storage so they survive redeploys.
+    stored = save_resume_files(pdf_path, {
+        "summary":                  optimized.get("summary", ""),
+        "skills_section":           optimized.get("skills_section", {}),
+        "selected_experience":      optimized.get("selected_experience", []),
+        "selected_projects":        optimized.get("selected_projects", []),
+        "selected_certifications":  optimized.get("selected_certifications", []),
+        "ats_keywords":             optimized.get("ats_keywords", []),
+        "profile_id":               profile_config.get("id", "default"),
+        "skills_order":             profile_config.get("skills_order", []),
+        "integrity":                integrity,
+    })
+    # Filename only — a full path is meaningless on any other machine.
+    db.set_resume_path(job_id, pdf_path.name)
 
     score_detail: dict = {}
     try:
@@ -484,7 +480,53 @@ def generate_resume(job_id: str, profile_override: str | None = None,
         "title": job.get("title", ""),
         "company": job.get("company", ""),
         "integrity": integrity,
+        "stored": stored,
     }
+
+
+def save_resume_files(pdf_path: Path, sidecar: dict) -> str:
+    """Write the JSON sidecar next to the PDF, then upload both to Supabase
+    Storage. Returns "supabase" when both uploaded, else "local"."""
+    from core import storage
+    json_path = pdf_path.with_suffix(".json")
+    json_path.write_text(json.dumps(sidecar, indent=2, ensure_ascii=False), encoding="utf-8")
+    try:
+        ok = (storage.upload(pdf_path.name, pdf_path.read_bytes(), "application/pdf")
+              and storage.upload(json_path.name, json_path.read_bytes(), "application/json"))
+    except Exception as e:
+        print(f"[forge] storage upload failed, kept locally: {e}", flush=True)
+        ok = False
+    return "supabase" if ok else "local"
+
+
+def load_resume_content(job: dict) -> tuple[dict | None, Path | None]:
+    """Return (sidecar dict, pdf_path) for a job's latest resume, from local
+    disk or Supabase Storage. Falls back to the newest matching local file for
+    resumes made before resume_path stored a bare filename."""
+    import glob as _glob
+    from core import storage
+
+    name = Path((job.get("resume_path") or "").replace("\\", "/")).name
+    if not name:
+        company_slug = _slugify(job.get("company", "company"))
+        role_slug    = _slugify(job.get("title", "role"))
+        files = sorted(_glob.glob(str(_OUT_DIR / f"{company_slug}_{role_slug}_*.json")))
+        if not files:
+            return None, None
+        name = Path(files[-1]).with_suffix(".pdf").name
+
+    pdf_path  = _OUT_DIR / name
+    json_path = pdf_path.with_suffix(".json")
+    if not json_path.exists():
+        data = storage.download(json_path.name)
+        if data is None:
+            return None, None
+        _OUT_DIR.mkdir(parents=True, exist_ok=True)
+        json_path.write_bytes(data)  # cache locally for the editor's re-render
+    try:
+        return json.loads(json_path.read_text(encoding="utf-8")), pdf_path
+    except Exception:
+        return None, None
 
 
 def audit_resume(job_id: str) -> dict:
@@ -561,25 +603,14 @@ def ats_check(job_id: str) -> dict:
     Loads saved optimized JSON from shared/resumes/.
     """
     from core import llm
-    import json as _json
-    import glob as _glob
 
     job = db.get_job(job_id)
     if not job:
         return {"error": f"Job {job_id} not found"}
 
-    # Find the most recent optimized JSON for this job
-    company_slug = _slugify(job.get("company", "company"))
-    role_slug    = _slugify(job.get("title", "role"))
-    pattern = str(_OUT_DIR / f"{company_slug}_{role_slug}_*.json")
-    files = sorted(_glob.glob(pattern))
-    if not files:
+    optimized, _pdf = load_resume_content(job)
+    if optimized is None:
         return {"error": "No generated resume found — forge first, then run ATS check"}
-
-    try:
-        optimized = _json.loads(Path(files[-1]).read_text(encoding="utf-8"))
-    except Exception as e:
-        return {"error": f"Could not load resume data: {e}"}
 
     from forge.fact_check import graduation_status
     master = _load_master()

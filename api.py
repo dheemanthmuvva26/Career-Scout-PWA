@@ -9,7 +9,6 @@ Start: python api.py  (or: uvicorn api:app --reload --port 8000)
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import json
@@ -103,22 +102,26 @@ _BUILD = "20261124-fdip-metrics"
 
 @app.get("/health")
 def health():
-    # Touches the DB on purpose: the keepalive pings this every 10 min, and a
-    # real query is what keeps the Supabase free-tier project from pausing.
+    # Touches Supabase on purpose: the keepalive pings this, and project
+    # activity is what stops the free tier pausing after ~7 idle days. A read
+    # from a real table (not just SELECT 1), plus a Storage *API* request at
+    # most every 6h — API traffic is unambiguous activity even if direct
+    # Postgres queries turn out not to count.
     from core.db import connect
+    from core import storage
     try:
         if not _db_ready:
             err = _try_init_db()
             if err:
                 raise RuntimeError(err)
         with connect() as conn:
-            conn.execute("SELECT 1").fetchone()
+            conn.execute("SELECT id FROM jobs LIMIT 1").fetchone()
     except Exception as e:
         return JSONResponse(
             status_code=503,
             content={"status": "degraded", "build": _BUILD, "db": "down", "error": str(e)[:300]},
         )
-    return {"status": "ok", "build": _BUILD, "db": "ok"}
+    return {"status": "ok", "build": _BUILD, "db": "ok", "storage": storage.ping()}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
@@ -847,9 +850,25 @@ def run_backup():
     return {"ok": True, "backup": str(dst), "deleted": deleted}
 
 
-# ── Static files — resume PDFs served without auth ────────────────────────────
+# ── Resume PDFs — served without auth (links open in a new tab) ───────────────
+# Local disk first (fast, same-deploy forges); otherwise a short-lived signed
+# URL from Supabase Storage, so PDFs survive redeploys. Only .pdf is public —
+# the JSON content sidecars are read through authenticated /forge endpoints.
 os.makedirs("shared/resumes", exist_ok=True)
-app.mount("/resumes", StaticFiles(directory="shared/resumes"), name="resumes")
+
+@app.get("/resumes/{filename}")
+def serve_resume(filename: str):
+    from fastapi.responses import FileResponse, RedirectResponse
+    from core import storage
+    if not filename.endswith(".pdf") or not storage.safe_name(filename):
+        raise HTTPException(status_code=404, detail="Not found")
+    local = os.path.join("shared", "resumes", filename)
+    if os.path.isfile(local):
+        return FileResponse(local, media_type="application/pdf")
+    url = storage.signed_url(filename)
+    if url:
+        return RedirectResponse(url, status_code=302)
+    raise HTTPException(status_code=404, detail="Resume not found — it may predate cloud storage; forge it again")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
