@@ -96,8 +96,19 @@ def _slugify(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", (s or "").lower()).strip("_")
 
 
-def _load_master() -> dict:
-    return yaml.safe_load(_MASTER.read_text(encoding="utf-8"))
+def _load_master(with_edits: bool = True) -> dict:
+    """master_profile.yaml plus any profile edits approved in the app (stored
+    in the DB because Render's disk resets on deploy). Everything — optimizer,
+    fact checker, ATS check — reads this, so approved numbers are never
+    flagged as made up. Falls back to the YAML alone if the DB is unreachable."""
+    master = yaml.safe_load(_MASTER.read_text(encoding="utf-8"))
+    if with_edits:
+        try:
+            from forge.profile_edits import apply_edits
+            master, _ = apply_edits(master, db.get_profile_edits())
+        except Exception as e:
+            print(f"[forge] profile edits not applied: {e}", flush=True)
+    return master
 
 
 # ── Typst rendering ───────────────────────────────────────────────────────────
@@ -419,11 +430,22 @@ def generate_resume(job_id: str, profile_override: str | None = None,
         "certifications": _merge_certs(master.get("certifications", []), role_certs),
     }
 
-    optimized = optimize(job, master_for_opt, profile_config, ats_hints=ats_hints)
+    optimized = optimize(job, master_for_opt, profile_config, ats_hints=honest_hints(ats_hints))
     if optimized.get("error"):
         return {"error": optimized["error"]}
 
     _apply_forage_cert(optimized, master, job.get("company", ""))
+
+    # Fact check: the optimizer invents metrics and outcomes. Every bullet is
+    # checked against its own entry in the master profile; unsupported ones are
+    # swapped for the user's verbatim bullet (or dropped) before rendering.
+    from forge.fact_check import check_resume, llm_judge
+    forage_certs = [c for c in (optimized.get("selected_certifications") or [])
+                    if c.get("issuer") == "Forage" and c.get("date") == "Completed"]
+    optimized, integrity = check_resume(
+        optimized, master, mode="repair",
+        allowed_certs=role_certs + forage_certs, judge=llm_judge,
+    )
 
     company_slug = _slugify(job.get("company", "company"))
     role_slug    = _slugify(job.get("title", "role"))
@@ -436,22 +458,21 @@ def generate_resume(job_id: str, profile_override: str | None = None,
     if not ok:
         return {"error": err}
 
-    db.set_resume_path(job_id, str(pdf_path))
-
-    # Save optimized content alongside PDF for ATS check
-    import json as _json
-    json_path = pdf_path.with_suffix(".json")
-    try:
-        json_path.write_text(_json.dumps({
-            "summary":                  optimized.get("summary", ""),
-            "skills_section":           optimized.get("skills_section", {}),
-            "selected_experience":      optimized.get("selected_experience", []),
-            "selected_projects":        optimized.get("selected_projects", []),
-            "selected_certifications":  optimized.get("selected_certifications", []),
-            "ats_keywords":             optimized.get("ats_keywords", []),
-        }, indent=2), encoding="utf-8")
-    except Exception:
-        pass  # non-critical
+    # Save the content next to the PDF (ATS check + in-app editor read it) and
+    # push both to Supabase Storage so they survive redeploys.
+    stored = save_resume_files(pdf_path, {
+        "summary":                  optimized.get("summary", ""),
+        "skills_section":           optimized.get("skills_section", {}),
+        "selected_experience":      optimized.get("selected_experience", []),
+        "selected_projects":        optimized.get("selected_projects", []),
+        "selected_certifications":  optimized.get("selected_certifications", []),
+        "ats_keywords":             optimized.get("ats_keywords", []),
+        "profile_id":               profile_config.get("id", "default"),
+        "skills_order":             profile_config.get("skills_order", []),
+        "integrity":                integrity,
+    })
+    # Filename only — a full path is meaningless on any other machine.
+    db.set_resume_path(job_id, pdf_path.name)
 
     score_detail: dict = {}
     try:
@@ -469,7 +490,100 @@ def generate_resume(job_id: str, profile_override: str | None = None,
         "profile_used": profile_config.get("display_name", "default"),
         "title": job.get("title", ""),
         "company": job.get("company", ""),
+        "integrity": integrity,
+        "stored": stored,
     }
+
+
+_EDITABLE = ("summary", "skills_section", "selected_experience", "selected_projects",
+             "selected_certifications", "ats_keywords", "profile_id", "skills_order")
+
+
+def rerender_resume(job_id: str, content: dict) -> dict:
+    """
+    Re-render a resume from content the user edited in the app — no LLM call.
+    The fact checker runs in warn mode: user edits are deliberate, so nothing
+    is changed, but every unsupported number/skill is reported back.
+    Returns the content as it actually landed on the PDF (one-page fitting may
+    trim a bullet), so the editor shows the truth.
+    """
+    from forge.fact_check import check_resume
+
+    job = db.get_job(job_id)
+    if not job:
+        return {"error": f"Job {job_id} not found"}
+    master = _load_master()
+    content = {k: content[k] for k in _EDITABLE if k in content}
+
+    profile_config = dict(get_profile_by_id(content.get("profile_id") or "default")
+                          or get_profile_by_id("default") or {})
+    if content.get("skills_order"):
+        profile_config["skills_order"] = content["skills_order"]
+
+    role_certs = _load_role_certs(profile_config.get("id", "default"))
+    _, integrity = check_resume(content, master, mode="warn", allowed_certs=role_certs + [
+        c for c in (content.get("selected_certifications") or []) if c.get("issuer") == "Forage"])
+
+    company_slug = _slugify(job.get("company", "company"))
+    role_slug    = _slugify(job.get("title", "role"))
+    pdf_path     = _OUT_DIR / f"{company_slug}_{role_slug}_{datetime.now().strftime('%Y-%m-%d')}.pdf"
+
+    ok, err = _fit_to_one_page(master, content, profile_config, pdf_path)
+    if not ok:
+        return {"error": err}
+
+    sidecar = {**content, "profile_id": profile_config.get("id", "default"),
+               "skills_order": profile_config.get("skills_order", []),
+               "integrity": integrity, "edited": True}
+    stored = save_resume_files(pdf_path, sidecar)
+    db.set_resume_path(job_id, pdf_path.name)
+    return {"ok": True, "pdf_path": pdf_path.name, "content": sidecar,
+            "integrity": integrity, "stored": stored}
+
+
+def save_resume_files(pdf_path: Path, sidecar: dict) -> str:
+    """Write the JSON sidecar next to the PDF, then upload both to Supabase
+    Storage. Returns "supabase" when both uploaded, else "local"."""
+    from core import storage
+    json_path = pdf_path.with_suffix(".json")
+    json_path.write_text(json.dumps(sidecar, indent=2, ensure_ascii=False), encoding="utf-8")
+    try:
+        ok = (storage.upload(pdf_path.name, pdf_path.read_bytes(), "application/pdf")
+              and storage.upload(json_path.name, json_path.read_bytes(), "application/json"))
+    except Exception as e:
+        print(f"[forge] storage upload failed, kept locally: {e}", flush=True)
+        ok = False
+    return "supabase" if ok else "local"
+
+
+def load_resume_content(job: dict) -> tuple[dict | None, Path | None]:
+    """Return (sidecar dict, pdf_path) for a job's latest resume, from local
+    disk or Supabase Storage. Falls back to the newest matching local file for
+    resumes made before resume_path stored a bare filename."""
+    import glob as _glob
+    from core import storage
+
+    name = Path((job.get("resume_path") or "").replace("\\", "/")).name
+    if not name:
+        company_slug = _slugify(job.get("company", "company"))
+        role_slug    = _slugify(job.get("title", "role"))
+        files = sorted(_glob.glob(str(_OUT_DIR / f"{company_slug}_{role_slug}_*.json")))
+        if not files:
+            return None, None
+        name = Path(files[-1]).with_suffix(".pdf").name
+
+    pdf_path  = _OUT_DIR / name
+    json_path = pdf_path.with_suffix(".json")
+    if not json_path.exists():
+        data = storage.download(json_path.name)
+        if data is None:
+            return None, None
+        _OUT_DIR.mkdir(parents=True, exist_ok=True)
+        json_path.write_bytes(data)  # cache locally for the editor's re-render
+    try:
+        return json.loads(json_path.read_text(encoding="utf-8")), pdf_path
+    except Exception:
+        return None, None
 
 
 def audit_resume(job_id: str) -> dict:
@@ -546,25 +660,19 @@ def ats_check(job_id: str) -> dict:
     Loads saved optimized JSON from shared/resumes/.
     """
     from core import llm
-    import json as _json
-    import glob as _glob
 
     job = db.get_job(job_id)
     if not job:
         return {"error": f"Job {job_id} not found"}
 
-    # Find the most recent optimized JSON for this job
-    company_slug = _slugify(job.get("company", "company"))
-    role_slug    = _slugify(job.get("title", "role"))
-    pattern = str(_OUT_DIR / f"{company_slug}_{role_slug}_*.json")
-    files = sorted(_glob.glob(pattern))
-    if not files:
+    optimized, _pdf = load_resume_content(job)
+    if optimized is None:
         return {"error": "No generated resume found — forge first, then run ATS check"}
 
-    try:
-        optimized = _json.loads(Path(files[-1]).read_text(encoding="utf-8"))
-    except Exception as e:
-        return {"error": f"Could not load resume data: {e}"}
+    from forge.fact_check import graduation_status
+    master = _load_master()
+    grad = graduation_status(master)
+    facts = _candidate_facts(master, grad)
 
     jd = strip_boilerplate(job.get("description") or "")[:4000]
     summary = optimized.get("summary", "")
@@ -600,6 +708,9 @@ Experience:
 Projects:
 {proj_text}
 
+CANDIDATE FACTS (the only things a fix may use — a fix must never add anything beyond these):
+{facts}
+
 As ATS: which sections contain sufficient JD-matching keywords and will be parsed correctly?
 Which JD requirements (tools, domain terms, years of experience, certifications) have NO
 keyword match anywhere in this resume — call these out explicitly, don't omit them.
@@ -608,21 +719,82 @@ against the JD's actual requirements, not generic resume advice. What specific r
 increase selection chances?
 The overall_verdict must reflect genuine selection likelihood given the gaps found — do not
 default to an optimistic verdict when significant JD requirements are unaddressed.
+For every flagged item set "honest": true only if the fix can be made using CANDIDATE FACTS
+alone (rewording, reordering, surfacing something already true). If closing the gap would need
+a claim that isn't in the facts (a title, client work, enrollment status, a skill, a number),
+set "honest": false, keep the issue, and put a real-world action in "alternative" instead
+(e.g. a specific free course or job simulation, or targeting a different role level).
 
 Respond ONLY with valid JSON:
 {{
   "ats_pass": ["Section1","Section2"],
   "flagged": [
-    {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix"}}
+    {{"section":"SectionName","issue":"specific issue","fix":"one-line suggested fix","honest":true,"alternative":""}}
   ],
   "overall_verdict": "one concise, honest sentence on selection likelihood"
 }}"""
 
     raw = llm.score(prompt)
     try:
-        return llm.parse_json(raw)
+        result = llm.parse_json(raw)
     except Exception:
         return {"error": "ATS check parsing failed — try again"}
+    result["flagged"] = [_vet_fix(f, master, grad) for f in (result.get("flagged") or [])
+                         if isinstance(f, dict)]
+    return result
+
+
+# Fix suggestions that would put something untrue on the resume. The ATS model
+# twice suggested "add 'currently in final year'" for a candidate who graduated.
+_ENROLMENT_RE = re.compile(
+    r"final[- ]year|currently (?:pursuing|enrolled|studying|a student)|\bstudent\b|"
+    r"expected graduation|graduating in|pursuing (?:a |my |the )?(?:b\.?tech|degree|bachelor)", re.I)
+_CLIENT_RE = re.compile(r"\bclients?\b|consult(?:ing|ant|ancy)|advisory engagement", re.I)
+
+
+def _candidate_facts(master: dict, grad: dict) -> str:
+    edu = (master.get("education") or [{}])[0]
+    status = ("graduated (degree completed)" if grad["graduated"]
+              else f"currently studying, graduating {grad['end_year']}")
+    roles = "; ".join(f"{e.get('role')} at {e.get('company')} ({e.get('dates')})"
+                      for e in master.get("experience", []))
+    skills = ", ".join(s for items in (master.get("skills") or {}).values() for s in items)
+    certs = ", ".join(f"{c['name']} ({c.get('date', '')})" for c in master.get("certifications", []))
+    return (f"- Education: {edu.get('degree', '')}, {edu.get('dates', '')} — {status}\n"
+            f"- Roles held (all of them): {roles}\n"
+            f"- Skills: {skills}\n"
+            f"- Certifications: {certs}")
+
+
+def _vet_fix(f: dict, master: dict, grad: dict) -> dict:
+    """Deterministic backstop on top of the model's own honest flag."""
+    from forge.fact_check import unsupported_numbers, _all_profile_numbers
+    fix = f.get("fix") or ""
+    reason = None
+    if grad["graduated"] and _ENROLMENT_RE.search(fix):
+        reason = (f"You completed your degree in {grad['end_year']}, so this would be untrue.",
+                  "Target roles open to graduates (Associate / Analyst / Graduate Trainee) instead.")
+    elif _CLIENT_RE.search(fix) and not _CLIENT_RE.search(yaml.safe_dump(master)):
+        reason = ("Your profile has no client or consulting work.",
+                  "Complete a free consulting job simulation on Forage (e.g. PwC, Deloitte, BCG) "
+                  "and add it to your profile — then this can be claimed honestly.")
+    elif unsupported_numbers(fix, _all_profile_numbers(master)):
+        reason = ("This fix adds a number that isn't in your profile.", f.get("alternative") or "")
+    out = {**f, "honest": bool(f.get("honest", True)) and reason is None}
+    if reason:
+        out["why_not"], out["alternative"] = reason[0], reason[1] or f.get("alternative", "")
+    elif not out["honest"] and not out.get("why_not"):
+        out["why_not"] = "Would need a claim that isn't in your profile."
+    return out
+
+
+def honest_hints(ats_hints: dict | None) -> dict | None:
+    """Only ever feed honest fixes back into the optimizer on a re-forge."""
+    if not ats_hints:
+        return ats_hints
+    flagged = [f for f in (ats_hints.get("flagged") or []) if f.get("honest", True)
+               and not _ENROLMENT_RE.search(f.get("fix") or "")]
+    return {**ats_hints, "flagged": flagged}
 
 
 def _summary_message(result: dict) -> str:

@@ -2,7 +2,11 @@ name: Keep Render Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes (Render free tier sleeps after 15 idle)
+    # Best-effort only: GitHub's free scheduler ran this every 2-5h, not every
+    # 10 min, and stopped entirely for weeks (Oct 26 - Nov 24, 2026). The
+    # reliable Supabase keepalive is the daily Vercel Cron (pwa/vercel.json ->
+    # /api/keepalive). This stays as a backup and for manual runs.
+    - cron: "*/10 * * * *"
   workflow_dispatch:           # manual trigger from GitHub Actions tab
 
 jobs:

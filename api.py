@@ -9,7 +9,6 @@ Start: python api.py  (or: uvicorn api:app --reload --port 8000)
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional
 import json
@@ -99,26 +98,30 @@ def startup():
 
 # ── Health ────────────────────────────────────────────────────────────────────
 
-_BUILD = "20261124-fdip-metrics"
+_BUILD = "20261125-integrity-storage"
 
 @app.get("/health")
 def health():
-    # Touches the DB on purpose: the keepalive pings this every 10 min, and a
-    # real query is what keeps the Supabase free-tier project from pausing.
+    # Touches Supabase on purpose: the keepalive pings this, and project
+    # activity is what stops the free tier pausing after ~7 idle days. A read
+    # from a real table (not just SELECT 1), plus a Storage *API* request at
+    # most every 6h — API traffic is unambiguous activity even if direct
+    # Postgres queries turn out not to count.
     from core.db import connect
+    from core import storage
     try:
         if not _db_ready:
             err = _try_init_db()
             if err:
                 raise RuntimeError(err)
         with connect() as conn:
-            conn.execute("SELECT 1").fetchone()
+            conn.execute("SELECT id FROM jobs LIMIT 1").fetchone()
     except Exception as e:
         return JSONResponse(
             status_code=503,
             content={"status": "degraded", "build": _BUILD, "db": "down", "error": str(e)[:300]},
         )
-    return {"status": "ok", "build": _BUILD, "db": "ok"}
+    return {"status": "ok", "build": _BUILD, "db": "ok", "storage": storage.ping()}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
@@ -456,6 +459,118 @@ def forge_ats_check(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     from forge.forge import ats_check
     return ats_check(job_id)
+
+
+# ── Master profile: suggest / approve updates from a results document ─────────
+
+class SuggestBody(BaseModel):
+    text: str
+
+
+@app.post("/profile/suggest")
+def profile_suggest(body: SuggestBody):
+    """Propose bullet updates from pasted text. Nothing is saved here."""
+    from forge.forge import _load_master
+    from forge.profile_edits import suggest_edits
+    return suggest_edits(body.text, _load_master())
+
+
+class ProfileEditBody(BaseModel):
+    kind: str
+    entry_name: str
+    old_text: Optional[str] = None
+    new_text: str
+    tags: list[str] = []
+    source_quote: str = ""
+
+
+@app.post("/profile/edits")
+def profile_edit_add(body: ProfileEditBody):
+    """Save one suggestion the user approved. Numbers were checked against the
+    pasted document in /profile/suggest; the document isn't sent again here."""
+    from forge.forge import _load_master
+    from forge.profile_edits import _entry
+    from core.db import add_profile_edit
+    if body.kind not in ("experience", "project") or _entry(_load_master(), body.kind, body.entry_name) is None:
+        raise HTTPException(status_code=400, detail="Unknown profile entry")
+    return add_profile_edit(body.model_dump())
+
+
+@app.get("/profile/edits")
+def profile_edits_list():
+    from forge.forge import _load_master
+    from forge.profile_edits import apply_edits
+    from core.db import get_profile_edits
+    edits = get_profile_edits()
+    _, status = apply_edits(_load_master(with_edits=False), edits)
+    by_id = {s["id"]: s["status"] for s in status}
+    return [{**e, "status": by_id.get(e["id"], "unknown")} for e in edits]
+
+
+@app.delete("/profile/edits/{edit_id}")
+def profile_edit_delete(edit_id: str):
+    from core.db import delete_profile_edit
+    if not delete_profile_edit(edit_id):
+        raise HTTPException(status_code=404, detail="Edit not found")
+    return {"ok": True}
+
+
+@app.get("/profile/export")
+def profile_export():
+    """The master profile with approved edits applied, as YAML — paste it into
+    forge/master_profile.yaml to sync the repo."""
+    import yaml as _yaml
+    from fastapi.responses import PlainTextResponse
+    from forge.forge import _load_master
+    return PlainTextResponse(_yaml.safe_dump(_load_master(), sort_keys=False, allow_unicode=True, width=1000))
+
+
+@app.get("/forge/{job_id}/content")
+def forge_content(job_id: str):
+    """The latest resume's editable content (for the in-app editor)."""
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    from forge.forge import load_resume_content, _load_master, _load_role_certs
+    from forge.fact_check import check_resume
+    content, pdf_path = load_resume_content(job)
+    if content is None:
+        raise HTTPException(status_code=404, detail="No resume yet — forge one first")
+    # Re-check against the profile as it is NOW (approved updates included),
+    # rather than showing the report saved when the resume was made.
+    certs = _load_role_certs(content.get("profile_id") or "default") + [
+        c for c in (content.get("selected_certifications") or []) if c.get("issuer") == "Forage"]
+    _, content["integrity"] = check_resume(content, _load_master(), mode="warn", allowed_certs=certs)
+    return {"content": content, "pdf_path": pdf_path.name if pdf_path else None}
+
+
+class RenderBody(BaseModel):
+    content: dict
+
+
+@app.post("/forge/{job_id}/render")
+def forge_render(job_id: str, body: RenderBody):
+    """Re-render from edited content without calling the LLM. Same token/poll
+    contract as POST /forge/{job_id} (compile can take a while on a cold start)."""
+    if not get_job(job_id):
+        raise HTTPException(status_code=404, detail="Job not found")
+    token = _uuid.uuid4().hex[:12]
+    _forge_jobs[token] = {"status": "pending"}
+
+    def _run():
+        try:
+            from forge.forge import rerender_resume
+            _forge_jobs[token] = {"status": "done", **rerender_resume(job_id, body.content)}
+        except Exception as e:
+            _forge_jobs[token] = {"status": "done", "error": str(e)}
+        def _cleanup():
+            import time as _time
+            _time.sleep(300)
+            _forge_jobs.pop(token, None)
+        threading.Thread(target=_cleanup, daemon=True).start()
+
+    threading.Thread(target=_run, daemon=True).start()
+    return {"token": token, "status": "pending"}
 
 
 # ── Web Push (proactive notifications — replaces the old Telegram bot) ─────────
@@ -847,9 +962,25 @@ def run_backup():
     return {"ok": True, "backup": str(dst), "deleted": deleted}
 
 
-# ── Static files — resume PDFs served without auth ────────────────────────────
+# ── Resume PDFs — served without auth (links open in a new tab) ───────────────
+# Local disk first (fast, same-deploy forges); otherwise a short-lived signed
+# URL from Supabase Storage, so PDFs survive redeploys. Only .pdf is public —
+# the JSON content sidecars are read through authenticated /forge endpoints.
 os.makedirs("shared/resumes", exist_ok=True)
-app.mount("/resumes", StaticFiles(directory="shared/resumes"), name="resumes")
+
+@app.get("/resumes/{filename}")
+def serve_resume(filename: str):
+    from fastapi.responses import FileResponse, RedirectResponse
+    from core import storage
+    if not filename.endswith(".pdf") or not storage.safe_name(filename):
+        raise HTTPException(status_code=404, detail="Not found")
+    local = os.path.join("shared", "resumes", filename)
+    if os.path.isfile(local):
+        return FileResponse(local, media_type="application/pdf")
+    url = storage.signed_url(filename)
+    if url:
+        return RedirectResponse(url, status_code=302)
+    raise HTTPException(status_code=404, detail="Resume not found — it may predate cloud storage; forge it again")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

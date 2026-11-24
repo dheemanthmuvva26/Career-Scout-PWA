@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import ProfileUpdater from "@/components/ProfileUpdater";
 import { pushSupported, getPushSubscriptionStatus, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
 
 export default function SettingsPage() {
@@ -89,6 +90,15 @@ export default function SettingsPage() {
             </button>
           )}
         </div>
+      </section>
+
+      {/* Resume profile */}
+      <section className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: "var(--text-3)" }}>Resume profile</p>
+        <p className="text-xs mb-3" style={{ color: "var(--text-3)" }}>
+          Keep your project numbers current: paste a results document and approve the updates you want.
+        </p>
+        <ProfileUpdater />
       </section>
 
       {/* Target Roles */}
