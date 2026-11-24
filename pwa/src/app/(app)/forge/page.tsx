@@ -2,15 +2,17 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { api, type Job } from "@/lib/api";
+import { api, type Job, type Integrity, type AtsFlag } from "@/lib/api";
+import IntegrityReport from "@/components/IntegrityReport";
+import ResumeEditor from "@/components/ResumeEditor";
 import { PROFILES, PROFILE_DISPLAY, detectProfile, matchByDescription } from "@/lib/profiles";
 import { useViewMode } from "@/lib/viewMode";
 import SearchBar from "@/components/SearchBar";
 import MissingSkillChip from "@/components/MissingSkillChip";
 
 type AuditResult   = { score: number; missing_keywords: string[]; red_flags: string[] };
-type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string };
-type AtsResult     = { ats_pass?: string[]; flagged?: {section:string;issue:string;fix:string}[]; overall_verdict?: string; error?: string };
+type ForgeResult   = { pdf_path?: string; ats_score?: number; profile_used?: string; error?: string; integrity?: Integrity; stored?: string; opened?: boolean };
+type AtsResult     = { ats_pass?: string[]; flagged?: AtsFlag[]; overall_verdict?: string; error?: string };
 
 type ModalState = {
   open: boolean;
@@ -49,6 +51,7 @@ function ForgePageInner() {
 
   const [checkingAts, setCheckingAts]   = useState(false);
   const [atsResult, setAtsResult]       = useState<AtsResult | null>(null);
+  const [editing, setEditing]           = useState(false);
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
   const { mode } = useViewMode();
@@ -76,6 +79,7 @@ function ForgePageInner() {
     setAuditResult(null);
     setForgeResult(null);
     setAtsResult(null);
+    setEditing(false);
     setModal(CLOSED_MODAL);
   }
 
@@ -113,7 +117,7 @@ function ForgePageInner() {
     const useProfile = profileOverride === "default" ? undefined : profileOverride || undefined;
     try {
       try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
-      setForgeStatus("Analysing JD · Optimising with XYZ format…");
+      setForgeStatus("Analysing JD · tailoring bullets · fact-checking…");
       const res = await api.forge(selected.short_id || selected.id, useProfile, undefined);
       setForgeResult(res);
     } catch (e: unknown) {
@@ -134,7 +138,7 @@ function ForgePageInner() {
     const useProfile = profile === "default" ? undefined : profile || undefined;
     try {
       try { await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(25_000) }); } catch {}
-      const hints = { flagged: atsResult.flagged ?? [], missing_keywords: auditResult?.missing_keywords ?? [] };
+      const hints = { flagged: (atsResult.flagged ?? []).filter(f => f.honest !== false), missing_keywords: auditResult?.missing_keywords ?? [] };
       const res = await api.forge(selected.short_id || selected.id, useProfile, hints);
       setForgeResult(res);
     } catch (e: unknown) {
@@ -302,7 +306,7 @@ function ForgePageInner() {
         <div>
           <h1 className="mb-0.5" style={{ color: "var(--text)" }}>Resume Forge</h1>
           <p className="text-sm mb-5" style={{ color: "var(--text-3)" }}>
-            ATS optimisation · XYZ format · recruiter simulation
+            ATS optimisation · fact-checked · recruiter simulation
           </p>
 
           {sectionLabel("1 · Select a job")}
@@ -488,8 +492,17 @@ function ForgePageInner() {
           </button>
           {forging && (
             <p className="text-xs text-center mt-2" style={{ color: "var(--text-3)" }}>
-              {forgeStatus || "Optimising bullets in XYZ format…"}
+              {forgeStatus || "Tailoring and fact-checking bullets…"}
             </p>
+          )}
+
+          {selected?.resume_path && !forgeResult && !forging && (
+            <button
+              onClick={() => { setForgeResult({ pdf_path: selected.resume_path!, opened: true }); setEditing(true); }}
+              className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold transition active:scale-95"
+              style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
+              Open last resume · edit without re-forging
+            </button>
           )}
 
           {/* ── Forge result ── */}
@@ -514,7 +527,7 @@ function ForgePageInner() {
                       </svg>
                     </div>
                     <div>
-                      <p className="font-semibold text-sm" style={{ color: "#86efac" }}>Resume generated!</p>
+                      <p className="font-semibold text-sm" style={{ color: "#86efac" }}>{forgeResult.opened ? "Last resume" : "Resume generated!"}</p>
                       {forgeResult.profile_used && (
                         <p className="text-xs" style={{ color: "var(--text-3)" }}>Profile: {forgeResult.profile_used}</p>
                       )}
@@ -538,6 +551,14 @@ function ForgePageInner() {
                         Download PDF
                       </a>
                     )}
+                    <button onClick={() => setEditing(e => !e)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95"
+                      style={{ background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)" }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                        <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Edit
+                    </button>
                     <button onClick={runAtsCheck} disabled={checkingAts}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition active:scale-95 disabled:opacity-50"
                       style={{ background: "var(--accent-10)", color: "var(--accent)", border: "1px solid var(--accent-25)" }}>
@@ -546,7 +567,20 @@ function ForgePageInner() {
                         : <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z" strokeLinecap="round"/></svg>ATS Check</>}
                     </button>
                   </div>
+                  <IntegrityReport integrity={forgeResult.integrity} />
+                  {forgeResult.stored === "local" && (
+                    <p className="text-[11px] mt-2" style={{ color: "var(--text-3)" }}>
+                      Saved on the server only — cloud storage is off, so this PDF won&apos;t survive the next deploy. Download it now.
+                    </p>
+                  )}
                 </div>
+              )}
+              {editing && selected && !forgeResult.error && (
+                <ResumeEditor
+                  jobId={selected.short_id || selected.id}
+                  onClose={() => setEditing(false)}
+                  onRendered={(pdf) => setForgeResult(r => r ? { ...r, pdf_path: pdf } : r)}
+                />
               )}
             </div>
           )}
@@ -578,7 +612,18 @@ function ForgePageInner() {
                   {atsResult.flagged && atsResult.flagged.length > 0 && (
                     <div className="mb-3 space-y-2">
                       <p className="text-xs font-semibold" style={{ color: "var(--amber)" }}>⚠ Flagged sections</p>
-                      {atsResult.flagged.map((f, i) => (
+                      {atsResult.flagged.map((f, i) => f.honest === false ? (
+                        <div key={i} className="rounded-xl p-3"
+                          style={{ background: "var(--surface)", border: "1px dashed var(--border)" }}>
+                          <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--text-2)" }}>
+                            {f.section} <span className="font-normal" style={{ color: "var(--text-3)" }}>· can&apos;t fix honestly</span>
+                          </p>
+                          <p className="text-xs mb-1" style={{ color: "var(--text-2)" }}>{f.issue}</p>
+                          {f.fix && <p className="text-xs line-through" style={{ color: "var(--text-3)" }}>{f.fix}</p>}
+                          {f.why_not && <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>{f.why_not}</p>}
+                          {f.alternative && <p className="text-xs mt-1" style={{ color: "var(--accent)" }}>Instead: {f.alternative}</p>}
+                        </div>
+                      ) : (
                         <div key={i} className="rounded-xl p-3"
                           style={{ background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)" }}>
                           <p className="text-xs font-semibold mb-0.5" style={{ color: "var(--amber)" }}>{f.section}</p>
@@ -595,7 +640,7 @@ function ForgePageInner() {
                       <p className="text-xs" style={{ color: "var(--text-2)" }}>{atsResult.overall_verdict}</p>
                     </div>
                   )}
-                  {atsResult.flagged && atsResult.flagged.length > 0 && (
+                  {atsResult.flagged && atsResult.flagged.some(f => f.honest !== false) && (
                     <button onClick={reforgeWithFixes} disabled={forging}
                       className="w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                       style={{ background: "var(--blue-20)", color: "var(--blue-l)", border: "1px solid var(--blue-20)" }}>

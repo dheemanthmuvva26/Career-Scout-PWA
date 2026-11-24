@@ -73,6 +73,65 @@ export type GmailSummary = {
   finished_at: string;
 };
 
+// ── Resume integrity / editor / profile types ──────────────────────────────
+
+export type IntegrityIssue = {
+  section: string; entry: string; text: string; reason: string;
+  action: string; replacement?: string;
+};
+export type Integrity = {
+  ok: boolean; mode: "repair" | "warn"; issues: IntegrityIssue[];
+  warnings: string[]; claim_check: string;
+};
+
+export type ResumeEntry = {
+  company?: string; role?: string; dates?: string; location?: string;
+  name?: string; tech?: string[]; github?: string; bullets: string[];
+};
+export type ResumeContent = {
+  summary: string;
+  skills_section: Record<string, string[]>;
+  selected_experience: ResumeEntry[];
+  selected_projects: ResumeEntry[];
+  selected_certifications: { name: string; issuer: string; date: string }[];
+  ats_keywords?: string[];
+  profile_id?: string;
+  skills_order?: string[];
+  integrity?: Integrity;
+};
+
+export type AtsFlag = {
+  section: string; issue: string; fix: string;
+  honest?: boolean; why_not?: string; alternative?: string;
+};
+
+export type ProfileSuggestion = {
+  kind: "project" | "experience"; entry_name: string;
+  old_text: string | null; new_text: string;
+  source_quote?: string; note?: string; quote_verified?: boolean; reason?: string;
+};
+export type SuggestResult = { suggestions: ProfileSuggestion[]; rejected: ProfileSuggestion[]; error?: string };
+export type ProfileEdit = ProfileSuggestion & { id: string; created_at: string; status: string };
+
+// Poll a background forge/render token every 4s (up to 120s). Retries on
+// transient errors so a single dropped response doesn't kill the job.
+async function pollToken(token: string) {
+  const deadline = Date.now() + 120_000;
+  let pollErrors = 0;
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 4000));
+    try {
+      const result = await apiFetch(`/forge/poll/${token}`);
+      if (result.status === "done") return result;
+      pollErrors = 0;
+    } catch {
+      pollErrors++;
+      if (pollErrors >= 3) throw new Error("Poll failed 3 times — try again");
+    }
+  }
+  throw new Error("Timed out waiting for resume — try again");
+}
+
 export const api = {
   stats: (): Promise<Stats> => apiFetch("/stats"),
 
@@ -116,22 +175,35 @@ export const api = {
       `/forge/${id}${profile ? `?profile=${encodeURIComponent(profile)}` : ""}`,
       { method: "POST", body: JSON.stringify({ ats_hints: atsHints ?? null }) }
     );
-    // Poll every 4s until done (up to 120s). Retry on transient errors
-    // so a single dropped response doesn't kill the whole forge.
-    const deadline = Date.now() + 120_000;
-    let pollErrors = 0;
-    while (Date.now() < deadline) {
-      await new Promise(r => setTimeout(r, 4000));
-      try {
-        const result = await apiFetch(`/forge/poll/${token}`);
-        if (result.status === "done") return result;
-        pollErrors = 0; // reset on success
-      } catch {
-        pollErrors++;
-        if (pollErrors >= 3) throw new Error("Forge poll failed 3 times — try again");
-      }
-    }
-    throw new Error("Timed out waiting for resume — try again");
+    return pollToken(token);
+  },
+
+  forgeContent: (id: string): Promise<{ content: ResumeContent; pdf_path: string | null }> =>
+    apiFetch(`/forge/${id}/content`),
+
+  renderResume: async (id: string, content: ResumeContent) => {
+    const { token } = await apiFetch(`/forge/${id}/render`, {
+      method: "POST", body: JSON.stringify({ content }),
+    });
+    return pollToken(token);
+  },
+
+  profileSuggest: (text: string): Promise<SuggestResult> =>
+    apiFetch("/profile/suggest", { method: "POST", body: JSON.stringify({ text }) }),
+  profileEdits: (): Promise<ProfileEdit[]> => apiFetch("/profile/edits"),
+  addProfileEdit: (s: ProfileSuggestion) =>
+    apiFetch("/profile/edits", {
+      method: "POST",
+      body: JSON.stringify({
+        kind: s.kind, entry_name: s.entry_name, old_text: s.old_text,
+        new_text: s.new_text, source_quote: s.source_quote ?? "",
+      }),
+    }),
+  deleteProfileEdit: (editId: string) => apiFetch(`/profile/edits/${editId}`, { method: "DELETE" }),
+  profileExport: async (): Promise<string> => {
+    const res = await fetch(BASE + "/profile/export", { headers: { "X-API-Key": API_KEY } });
+    if (!res.ok) throw new Error(`${res.status}`);
+    return res.text();
   },
 
   scout: () => apiFetch("/scout", { method: "POST" }),

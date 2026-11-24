@@ -531,10 +531,16 @@ def forge_content(job_id: str):
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    from forge.forge import load_resume_content
+    from forge.forge import load_resume_content, _load_master, _load_role_certs
+    from forge.fact_check import check_resume
     content, pdf_path = load_resume_content(job)
     if content is None:
         raise HTTPException(status_code=404, detail="No resume yet — forge one first")
+    # Re-check against the profile as it is NOW (approved updates included),
+    # rather than showing the report saved when the resume was made.
+    certs = _load_role_certs(content.get("profile_id") or "default") + [
+        c for c in (content.get("selected_certifications") or []) if c.get("issuer") == "Forage"]
+    _, content["integrity"] = check_resume(content, _load_master(), mode="warn", allowed_certs=certs)
     return {"content": content, "pdf_path": pdf_path.name if pdf_path else None}
 
 
