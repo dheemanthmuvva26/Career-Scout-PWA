@@ -96,8 +96,19 @@ def _slugify(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", (s or "").lower()).strip("_")
 
 
-def _load_master() -> dict:
-    return yaml.safe_load(_MASTER.read_text(encoding="utf-8"))
+def _load_master(with_edits: bool = True) -> dict:
+    """master_profile.yaml plus any profile edits approved in the app (stored
+    in the DB because Render's disk resets on deploy). Everything — optimizer,
+    fact checker, ATS check — reads this, so approved numbers are never
+    flagged as made up. Falls back to the YAML alone if the DB is unreachable."""
+    master = yaml.safe_load(_MASTER.read_text(encoding="utf-8"))
+    if with_edits:
+        try:
+            from forge.profile_edits import apply_edits
+            master, _ = apply_edits(master, db.get_profile_edits())
+        except Exception as e:
+            print(f"[forge] profile edits not applied: {e}", flush=True)
+    return master
 
 
 # ── Typst rendering ───────────────────────────────────────────────────────────

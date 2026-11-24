@@ -177,6 +177,21 @@ def connect():
 
 # ── Schema init ───────────────────────────────────────────────────────────────
 
+# Approved master-profile bullet changes. Render's disk resets on deploy, so
+# edits approved in the app can't be written to master_profile.yaml there;
+# they're stored here and applied on top of the YAML at load time.
+_PROFILE_EDITS_DDL = """CREATE TABLE IF NOT EXISTS profile_edits (
+    id           TEXT PRIMARY KEY,
+    kind         TEXT NOT NULL,
+    entry_name   TEXT NOT NULL,
+    old_text     TEXT,
+    new_text     TEXT NOT NULL,
+    tags         TEXT,
+    source_quote TEXT,
+    created_at   TEXT NOT NULL
+)"""
+
+
 def init_db() -> None:
     if _USE_PG:
         _init_pg()
@@ -291,6 +306,7 @@ def _init_pg() -> None:
             jobs_found   INTEGER DEFAULT 0,
             processed_at TEXT NOT NULL
         )""",
+        _PROFILE_EDITS_DDL,
     ]
     with connect() as conn:
         for stmt in stmts:
@@ -363,6 +379,7 @@ def _init_sqlite() -> None:
         CREATE TABLE IF NOT EXISTS ingested_emails (
             message_id TEXT PRIMARY KEY, source TEXT,
             jobs_found INTEGER DEFAULT 0, processed_at TEXT NOT NULL)""")
+        conn.execute(_PROFILE_EDITS_DDL)
         for idx in [
             "CREATE INDEX IF NOT EXISTS idx_jobs_status  ON jobs(status)",
             "CREATE INDEX IF NOT EXISTS idx_jobs_score   ON jobs(score)",
@@ -952,3 +969,46 @@ if __name__ == "__main__":
     backend = "PostgreSQL" if _USE_PG else "SQLite"
     print(f"DB initialized ({backend})")
     print(f"Jobs tracked: {stats['total']} total, {stats['new']} new")
+
+
+# ── Master-profile edits ─────────────────────────────────────────────────────
+
+def add_profile_edit(edit: dict) -> dict:
+    import uuid
+    row = {
+        "id": uuid.uuid4().hex[:12],
+        "kind": edit["kind"],
+        "entry_name": edit["entry_name"],
+        "old_text": edit.get("old_text") or None,
+        "new_text": edit["new_text"],
+        "tags": json.dumps(edit.get("tags") or []),
+        "source_quote": edit.get("source_quote") or "",
+        "created_at": now_iso(),
+    }
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO profile_edits (id, kind, entry_name, old_text, new_text, tags, source_quote, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            tuple(row.values()),
+        )
+    return row
+
+
+def get_profile_edits() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute("SELECT * FROM profile_edits ORDER BY created_at").fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["tags"] = json.loads(d.get("tags") or "[]")
+        except Exception:
+            d["tags"] = []
+        out.append(d)
+    return out
+
+
+def delete_profile_edit(edit_id: str) -> bool:
+    with connect() as conn:
+        cur = conn.execute("DELETE FROM profile_edits WHERE id=?", (edit_id,))
+        return cur.rowcount > 0

@@ -461,6 +461,70 @@ def forge_ats_check(job_id: str):
     return ats_check(job_id)
 
 
+# ── Master profile: suggest / approve updates from a results document ─────────
+
+class SuggestBody(BaseModel):
+    text: str
+
+
+@app.post("/profile/suggest")
+def profile_suggest(body: SuggestBody):
+    """Propose bullet updates from pasted text. Nothing is saved here."""
+    from forge.forge import _load_master
+    from forge.profile_edits import suggest_edits
+    return suggest_edits(body.text, _load_master())
+
+
+class ProfileEditBody(BaseModel):
+    kind: str
+    entry_name: str
+    old_text: Optional[str] = None
+    new_text: str
+    tags: list[str] = []
+    source_quote: str = ""
+
+
+@app.post("/profile/edits")
+def profile_edit_add(body: ProfileEditBody):
+    """Save one suggestion the user approved. Numbers were checked against the
+    pasted document in /profile/suggest; the document isn't sent again here."""
+    from forge.forge import _load_master
+    from forge.profile_edits import _entry
+    from core.db import add_profile_edit
+    if body.kind not in ("experience", "project") or _entry(_load_master(), body.kind, body.entry_name) is None:
+        raise HTTPException(status_code=400, detail="Unknown profile entry")
+    return add_profile_edit(body.model_dump())
+
+
+@app.get("/profile/edits")
+def profile_edits_list():
+    from forge.forge import _load_master
+    from forge.profile_edits import apply_edits
+    from core.db import get_profile_edits
+    edits = get_profile_edits()
+    _, status = apply_edits(_load_master(with_edits=False), edits)
+    by_id = {s["id"]: s["status"] for s in status}
+    return [{**e, "status": by_id.get(e["id"], "unknown")} for e in edits]
+
+
+@app.delete("/profile/edits/{edit_id}")
+def profile_edit_delete(edit_id: str):
+    from core.db import delete_profile_edit
+    if not delete_profile_edit(edit_id):
+        raise HTTPException(status_code=404, detail="Edit not found")
+    return {"ok": True}
+
+
+@app.get("/profile/export")
+def profile_export():
+    """The master profile with approved edits applied, as YAML — paste it into
+    forge/master_profile.yaml to sync the repo."""
+    import yaml as _yaml
+    from fastapi.responses import PlainTextResponse
+    from forge.forge import _load_master
+    return PlainTextResponse(_yaml.safe_dump(_load_master(), sort_keys=False, allow_unicode=True, width=1000))
+
+
 @app.get("/forge/{job_id}/content")
 def forge_content(job_id: str):
     """The latest resume's editable content (for the in-app editor)."""
