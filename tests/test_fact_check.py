@@ -131,3 +131,42 @@ def test_hand_corrected_resume_has_no_number_issues():
 def test_graduation_status():
     assert graduation_status(MASTER, date(2026, 11, 24))["graduated"] is True
     assert graduation_status(MASTER, date(2026, 3, 1))["graduated"] is False
+
+
+# ── Ongoing projects keep in-progress tense ──────────────────────────────────
+
+def test_ongoing_project_past_tense_restored_without_judge():
+    # Real output from the 2026-11-25 Matrix Missions forge.
+    resume = {"selected_projects": [{
+        "name": "Agentic Credit Risk Analyst", "tech": ["Python"],
+        "bullets": ["Built an XGBoost credit default model with SHAP explanations, providing transparent risk scores for individual borrowers.",
+                    "Building a Power BI dashboard for risk officers with portfolio and case-level views"],
+    }]}
+    fixed, report = check_resume(resume, MASTER, mode="repair")
+    bullets = fixed["selected_projects"][0]["bullets"]
+    assert any(b.startswith("Building an XGBoost") for b in bullets), bullets
+    assert not any(b.startswith("Built") for b in bullets)
+    assert any("in progress" in i["reason"] for i in report["issues"])
+
+
+def test_finished_project_past_tense_is_fine():
+    resume = {"selected_projects": [{
+        "name": "AI-Assisted Citizen-Centric Knowledge Graph (CCKG)", "tech": [],
+        "bullets": ["Built a Streamlit analytics dashboard enabling stakeholders to explore governance data"],
+    }]}
+    _, report = check_resume(resume, MASTER, mode="warn")
+    assert report["issues"] == []
+
+
+def test_judge_sees_project_status_and_summary_sees_skills():
+    seen = {}
+    def spy(items):
+        seen.update({it["id"]: it["sources"] for it in items})
+        return {}
+    resume = {"summary": "Skilled in Python and SQL.",
+              "selected_projects": [{"name": "Agentic Credit Risk Analyst", "tech": [],
+                                     "bullets": ["Designing a four-agent LangChain pipeline"]}]}
+    check_resume(resume, MASTER, mode="warn", judge=spy)
+    proj = next(v for k, v in seen.items() if k.startswith("projects|"))
+    assert any("IN PROGRESS" in s for s in proj) and any(s.startswith("Tech:") for s in proj)
+    assert any(s.startswith("Skills:") and "SQL" in s for s in seen["summary"])

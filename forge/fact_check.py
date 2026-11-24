@@ -251,16 +251,31 @@ def check_resume(optimized: dict, master: dict, *, mode: str = "repair",
 
             allowed = [n for t in _entry_texts(src) for n in extract_numbers(t)]
             source_bullets = _bullet_texts(src)
+            # The judge also sees status/tech/description, so tech-only mentions
+            # aren't flagged and "Built" on an Ongoing project is.
+            judge_sources = source_bullets + [
+                f"{k.capitalize()}: {', '.join(src[k]) if isinstance(src[k], list) else src[k]}"
+                for k in ("status", "tech", "description") if src.get(k)]
+            # "Ongoing" alone isn't enough: FDIP is ongoing but reports finished
+            # results in past tense. Only entries whose own bullets are written
+            # as work in progress ("Building…") must stay that way.
+            in_progress = bool(source_bullets) and all(_reads_in_progress(s) for s in source_bullets)
+            if in_progress:
+                judge_sources.append("This work is IN PROGRESS — describing it as finished "
+                                     "(past tense: built, delivered, completed) is an unsupported claim.")
             new_bullets = []
             for b in entry.get("bullets", []) or []:
                 bad = unsupported_numbers(b, allowed)
                 if bad:
                     issue(section, label, b, f"numbers not in this entry of your profile: {', '.join(bad)}")
                     new_bullets.append(None)  # placeholder, repaired below
+                elif in_progress and _reads_finished(b):
+                    issue(section, label, b, "describes work in progress as finished (past tense)")
+                    new_bullets.append(None)
                 else:
                     new_bullets.append(b)
                     judge_items.append({"id": f"{section}|{src.get(name_key)}|{len(new_bullets)-1}",
-                                        "text": b, "sources": source_bullets})
+                                        "text": b, "sources": judge_sources})
             entry["_bullets_tmp"] = new_bullets
             entry["_src"] = src
             kept_entries.append(entry)
@@ -310,7 +325,7 @@ def check_resume(optimized: dict, master: dict, *, mode: str = "repair",
                 kept = [s for s in _sentences(summary_text) if not unsupported_numbers(s, profile_nums)]
                 if claim_reason and not bad:
                     kept = []  # judge flags the summary as a whole; rebuild it
-                new_summary = " ".join(kept) or _fallback_summary(master)
+                new_summary = " ".join(kept) or _fallback_summary(master, out)
                 issue("summary", "Summary", summary_text, reason, "rewritten", new_summary)
                 out["summary"] = new_summary
             else:
@@ -393,6 +408,21 @@ def _repair_bullets(tmp: list, original: list, source: list[str], issues: list,
     return result
 
 
+_IRREGULAR_PAST = {"built", "made", "led", "ran", "wrote", "drove", "won", "cut", "set", "grew", "took", "gave", "brought"}
+
+
+def _reads_finished(bullet: str) -> bool:
+    """True when a bullet opens with a past-tense verb ("Built", "Delivered")."""
+    first = re.sub(r"[^a-z]", "", (bullet.split() or [""])[0].lower())
+    return first in _IRREGULAR_PAST or (first.endswith("ed") and len(first) > 3)
+
+
+def _reads_in_progress(bullet: str) -> bool:
+    """True when a bullet opens with an -ing verb ("Building", "Designing")."""
+    first = re.sub(r"[^a-z]", "", (bullet.split() or [""])[0].lower())
+    return first.endswith("ing") and len(first) > 4
+
+
 _STOP = {"a", "an", "the", "and", "or", "of", "to", "in", "on", "for", "with", "by", "using",
          "across", "into", "from", "that", "as", "at", "via", "its", "their", "is", "are"}
 
@@ -411,15 +441,23 @@ def _summary_sources(master: dict) -> list[str]:
     for e in master.get("experience", []):
         srcs.append(f"Role held: {e.get('role')} at {e.get('company')} ({e.get('dates')})")
     for p in master.get("projects", []):
-        srcs.append(f"Project: {p.get('name')} — {p.get('description', '')}")
+        status = f" ({p['status']})" if p.get("status") else ""
+        srcs.append(f"Project{status}: {p.get('name')} — {p.get('description', '')}")
+    skills = [s for items in (master.get("skills") or {}).values() for s in items]
+    srcs.append(f"Skills: {', '.join(skills)}")
     return srcs
 
 
-def _fallback_summary(master: dict) -> str:
+def _fallback_summary(master: dict, resume: Optional[dict] = None) -> str:
+    """Used only when every summary sentence was rejected. Built from the
+    resume's own skills so it matches what's on the page."""
     edu = (master.get("education") or [{}])[0]
-    skills = [s for items in (master.get("skills") or {}).values() for s in items][:4]
-    deg = edu.get("degree", "Graduate")
-    return f"{deg} with hands-on internship experience in data analysis using {', '.join(skills)}."
+    degree = re.sub(r"\s*—.*", "", edu.get("degree", "")).strip() or "Graduate"
+    field = edu.get("degree", "").split("—")[-1].strip() if "—" in edu.get("degree", "") else ""
+    picked = [s for items in ((resume or {}).get("skills_section") or {}).values() for s in items][:4] \
+        or [s for items in (master.get("skills") or {}).values() for s in items][:4]
+    who = f"{degree} ({field}) graduate" if field else f"{degree} graduate"
+    return f"{who} with hands-on internship experience in data analysis using {', '.join(picked)}."
 
 
 # ── Default LLM judge ─────────────────────────────────────────────────────────
